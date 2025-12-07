@@ -7,8 +7,15 @@ from app.schemas.mood_history import (
     MoodHistoryResponse,
     MoodHistoryStats
 )
+from app.schemas.user_fact import (
+    UserFactCreate,
+    UserFactUpdate,
+    UserFactResponse,
+    UserFactsByCategory
+)
 
 __all__ = [
     "UserCreate", "UserUpdate", "UserResponse",
-    "MoodHistoryCreate", "MoodHistoryUpdate", "MoodHistoryResponse", "MoodHistoryStats"
+    "MoodHistoryCreate", "MoodHistoryUpdate", "MoodHistoryResponse", "MoodHistoryStats",
+    "UserFactCreate", "UserFactUpdate", "UserFactResponse", "UserFactsByCategory"
 ]
