@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 
 # Import your models and config
 from app.database import Base
-from app.models import User  # Import all models here
+from app.models import User, MoodHistory  # Import all models here
 from config import settings
 
 # this is the Alembic Config object, which provides
