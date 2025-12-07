@@ -287,14 +287,3 @@ docker-compose ps redis
 docker-compose logs redis
 ```
 
-## 📝 License
-
-This project is private and proprietary.
-
-## 🤝 Contributing
-
-This is a private project. Contact the maintainer for contribution guidelines.
-
-## 📧 Contact
-
-For questions or support, please contact the project maintainer.
