@@ -9,7 +9,7 @@ import json
 from time import time
 from app.utils import get_chat_logger
 
-router = APIRouter(prefix="/chat", tags=["chat"])
+router = APIRouter(prefix="/moods/chat", tags=["chat"])
 
 
 async def save_conversation_intelligently(

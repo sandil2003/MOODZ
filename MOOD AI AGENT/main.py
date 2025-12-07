@@ -87,8 +87,8 @@ async def api_info():
             "health": "/health",
             "health_db": "/health/db",
             "health_redis": "/health/redis",
-            "chat": "/api/chat",
-            "chat_stream": "/api/chat/stream"
+            "chat": "/api/moods/chat",
+            "chat_stream": "/api/moodschat/stream"
         },
         "integrations": {
             "openai": "configured" if settings.openai_api_key else "not configured",
