@@ -59,6 +59,9 @@ class Settings(BaseSettings):
         """Convert comma-separated origins to list."""
         return [origin.strip() for origin in self.allowed_origins.split(",")]
     
+    # Session Management
+    session_ttl_seconds: int = 3600  # 1 hour default
+    
     # Security
     secret_key: str = "your-secret-key-change-in-production"
     algorithm: str = "HS256"
