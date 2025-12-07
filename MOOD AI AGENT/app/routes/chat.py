@@ -4,7 +4,7 @@ from app.schemas.chat import ChatRequest, ChatResponse
 from app.services import get_mood_chain, get_session_manager, get_vector_service
 from app.models import MoodHistory
 from app.database import AsyncSessionLocal
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Dict, Any
 import json
 from time import time
 from app.utils import get_chat_logger
@@ -56,11 +56,12 @@ async def save_conversation_intelligently(
             context_id=str(session_id)
         )
         
-        # Save extracted facts to database
+        # Save extracted facts to database AND Pinecone
         if classification.get("extracted_facts"):
             from app.models import UserFact
             from app.database import AsyncSessionLocal
             
+            # Save to PostgreSQL
             async with AsyncSessionLocal() as db:
                 for fact_text in classification["extracted_facts"]:
                     fact = UserFact(
@@ -73,7 +74,18 @@ async def save_conversation_intelligently(
                 
                 await db.commit()
             
-            print(f"Saved {len(classification['extracted_facts'])} facts to database")
+            # Embed facts to Pinecone
+            for fact_text in classification["extracted_facts"]:
+                await vector_service.add_text(
+                    user_id=user_id,
+                    text=fact_text,
+                    data_type="user_fact",
+                    source="conversation_classifier",
+                    context_id=str(session_id),
+                    additional_info={"category": "auto_extracted"}
+                )
+            
+            print(f"Saved {len(classification['extracted_facts'])} facts to database and Pinecone")
         
         # Save mood to database
         if classification.get("mood") and classification["mood"] != "neutral":
@@ -203,17 +215,22 @@ async def chat_stream(
     - `data: {"error": "message"}` - Error event
     
     Background tasks:
-    - Save conversation to vector store
+    - Intelligently save conversation based on classifier
+    - Save extracted facts and mood to database
     """
     # Create streaming generator
+    classification_result = {}
+    
     async def generate():
+        nonlocal classification_result
         full_response = ""
+        
         async for event in stream_chat_response(
             request.user_id,
             request.session_id,
             request.message
         ):
-            # Extract chunk for background task
+            # Extract chunk and classification
             if '"chunk"' in event:
                 try:
                     data = json.loads(event.replace("data: ", "").strip())
@@ -222,15 +239,25 @@ async def chat_stream(
                 except:
                     pass
             
+            if '"classification"' in event:
+                try:
+                    data = json.loads(event.replace("data: ", "").strip())
+                    if "classification" in data:
+                        classification_result = data["classification"]
+                except:
+                    pass
+            
             yield event
         
         # Schedule background task after streaming completes
-        if full_response:
+        if full_response and classification_result:
             background_tasks.add_task(
-                save_to_vector_store,
+                save_conversation_intelligently,
                 request.user_id,
+                request.session_id,
                 request.message,
-                full_response
+                full_response,
+                classification_result
             )
     
     return StreamingResponse(
@@ -255,7 +282,8 @@ async def chat(
     Returns complete response after LLM finishes generation.
     
     Background tasks:
-    - Save conversation to vector store
+    - Classify conversation
+    - Intelligently save to database based on classifier
     - Log conversation to JSONL file
     """
     
@@ -275,12 +303,19 @@ async def chat(
         # Calculate latency
         latency = time() - start_time
         
+        # Classify the conversation
+        from app.services import get_classifier
+        classifier = get_classifier()
+        classification = await classifier.classify(request.message)
+        
         # Schedule background tasks
         background_tasks.add_task(
-            save_to_vector_store,
+            save_conversation_intelligently,
             request.user_id,
+            request.session_id,
             request.message,
-            response
+            response,
+            classification
         )
         
         # Log to JSONL file
@@ -292,7 +327,12 @@ async def chat(
             request.message,
             response,
             latency,
-            {"streaming": False}
+            {
+                "streaming": False,
+                "save_to_db": classification["save"],
+                "mood": classification["mood"],
+                "extracted_facts": classification["extracted_facts"]
+            }
         )
         
         return ChatResponse(
