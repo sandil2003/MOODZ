@@ -30,3 +30,6 @@ langchain-community
 langchain-openai
 # Note: langchain-pinecone has compatibility issues with Python 3.14
 # Using direct pinecone-client integration instead
+
+# Async file operations
+aiofiles
