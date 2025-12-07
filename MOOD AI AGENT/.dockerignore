@@ -1,0 +1,55 @@
+# Environment
+.env
+.env.local
+.env.*
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info
+dist
+build
+
+# Virtual Environment
+venv/
+env/
+ENV/
+moodz/
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Documentation
+README.md
+*.md
+
+# Tests
+tests/
+.pytest_cache/
+
+# Logs
+*.log
+logs/
+
+# Database
+*.db
+*.sqlite3
+postgres_data/
+redis_data/
