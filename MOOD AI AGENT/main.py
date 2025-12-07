@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from config import settings
 from app.database import init_db, close_db
 from app.redis_client import close_redis
-from app.routes import health
+from app.routes import health, chat
 
 
 @asynccontextmanager
@@ -49,6 +49,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(health.router)
+app.include_router(chat.router, prefix="/api")
 
 
 @app.get("/")
@@ -85,7 +86,9 @@ async def api_info():
             "redoc": "/redoc",
             "health": "/health",
             "health_db": "/health/db",
-            "health_redis": "/health/redis"
+            "health_redis": "/health/redis",
+            "chat": "/api/chat",
+            "chat_stream": "/api/chat/stream"
         },
         "integrations": {
             "openai": "configured" if settings.openai_api_key else "not configured",
