@@ -97,7 +97,7 @@
   transform: rotate(12deg);
 }
 
-.shape-6 {
+.rectangle {
   width: 135px;
   height: 40px;
   border: 3px solid #2C2C2C;
@@ -111,22 +111,41 @@
   pointer-events: none;
 }
 
-/* Main card */
+/* Cards Container */
+.cards-container {
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+  align-items: stretch;
+  width: 100%;
+  max-width: 1400px;
+  z-index: 10;
+  position: relative;
+}
+
+/* Card Styles */
 .card {
   background: rgba(255, 255, 255, 0.25);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.4);
   border-radius: 16px;
-  padding: 3.5rem 4rem;
-  max-width: 520px;
-  width: 100%;
+  padding: 2.5rem 2rem;
+  flex: 1;
+  min-width: 280px;
+  max-width: 400px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1),
     0 1px 3px rgba(0, 0, 0, 0.05);
   text-align: center;
   position: relative;
-  z-index: 10;
   animation: fadeInUp 0.8s ease-out;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.15),
+    0 2px 5px rgba(0, 0, 0, 0.08);
 }
 
 @keyframes fadeInUp {
@@ -142,7 +161,7 @@
 }
 
 .title {
-  font-size: 2.5rem;
+  font-size: 1.75rem;
   font-weight: 700;
   color: #2C2C2C;
   margin: 0 0 1rem 0;
@@ -150,10 +169,10 @@
 }
 
 .description {
-  font-size: 1.05rem;
+  font-size: 0.95rem;
   color: #666666;
   line-height: 1.6;
-  margin: 0 0 2.5rem 0;
+  margin: 0 0 1.5rem 0;
 }
 
 .activate-btn {
@@ -191,26 +210,54 @@
 }
 
 /* Responsive design */
+@media (max-width: 1200px) {
+  .cards-container {
+    gap: 1.5rem;
+  }
+
+  .card {
+    padding: 2rem 1.5rem;
+  }
+}
+
+@media (max-width: 968px) {
+  .cards-container {
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+  }
+
+  .card {
+    max-width: 500px;
+    width: 100%;
+  }
+}
+
 @media (max-width: 768px) {
   .header {
     padding: 1.5rem 2rem;
   }
 
   .logo {
-    font-size: 0.9rem;
+    font-size: 1.5rem;
+  }
+
+  .rectangle {
+    width: 115px;
+    height: 35px;
   }
 
   .card {
-    padding: 2.5rem 2rem;
+    padding: 2rem 1.5rem;
     max-width: 90%;
   }
 
   .title {
-    font-size: 2rem;
+    font-size: 1.5rem;
   }
 
   .description {
-    font-size: 1rem;
+    font-size: 0.9rem;
   }
 
   .shape-1 {
