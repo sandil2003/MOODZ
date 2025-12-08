@@ -9,12 +9,19 @@
   padding: 2rem 3rem;
 }
 
+.logo-container {
+  position: relative;
+  display: inline-block;
+}
+
 .logo {
-  font-size: 1rem;
+  font-size: 1.7rem;
   font-weight: 600;
   letter-spacing: 0.05em;
   color: #2C2C2C;
   margin: 0;
+  position: relative;
+  z-index: 2;
 }
 
 .main-content {
@@ -81,12 +88,27 @@
 }
 
 .shape-5 {
-  width: 110px;
-  height: 110px;
-  background-color: #8FB5A8;
-  border-radius: 50%;
+  width: 8rem;
+  height: 8rem;
+  background-color: #eed987;
+  clip-path: circle(50% at 60% 50%);
   bottom: 70%;
   right: 40%;
+  transform: rotate(12deg);
+}
+
+.shape-6 {
+  width: 135px;
+  height: 40px;
+  border: 3px solid #2C2C2C;
+  background: transparent;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  border-radius: 8px;
+  pointer-events: none;
 }
 
 /* Main card */
