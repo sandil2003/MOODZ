@@ -8,5 +8,9 @@ export const routes: Routes = [
     {
         path: 'mood-agent',
         loadComponent: () => import('./pages/mood-agent/mood-agent').then(m => m.MoodAgent)
+    },
+    {
+        path: 'mood-history',
+        loadComponent: () => import('./pages/mood-history/mood-history').then(m => m.MoodHistory)
     }
 ];

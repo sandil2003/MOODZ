@@ -1,0 +1,165 @@
+<div class="mood-history-container">
+    <!-- Header -->
+    <div class="page-header">
+        <h1 class="page-title">Mood History</h1>
+        <p class="page-subtitle">Track your emotional journey over time</p>
+    </div>
+
+    <!-- Loading State -->
+    @if (loading()) {
+    <div class="loading-state">
+        <div class="spinner"></div>
+        <p>Loading your mood history...</p>
+    </div>
+    }
+
+    <!-- Error State -->
+    @if (error()) {
+    <div class="error-state">
+        <span class="error-icon">⚠️</span>
+        <p>{{ error() }}</p>
+        <button class="retry-btn" (click)="loadData()">Retry</button>
+    </div>
+    }
+
+    <!-- Content -->
+    @if (!loading() && !error()) {
+    <div class="content-grid">
+        <!-- Statistics Card -->
+        @if (moodStats()) {
+        <div class="stats-card">
+            <h2 class="card-title">Overview (Last {{ moodStats()!.days_analyzed }} Days)</h2>
+
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-label">Total Entries</div>
+                    <div class="stat-value">{{ moodStats()!.total_entries }}</div>
+                </div>
+
+                <div class="stat-item">
+                    <div class="stat-label">Average Mood</div>
+                    <div class="stat-value" [style.color]="getMoodColor(moodStats()!.average_mood || 5)">
+                        {{ moodStats()!.average_mood?.toFixed(1) || 'N/A' }}
+                    </div>
+                </div>
+
+                <div class="stat-item">
+                    <div class="stat-label">Trend</div>
+                    <div class="stat-value">
+                        {{ getTrendIcon(moodStats()!.trend) }} {{ moodStats()!.trend }}
+                    </div>
+                </div>
+
+                <div class="stat-item">
+                    <div class="stat-label">Common Sentiment</div>
+                    <div class="stat-value">{{ moodStats()!.most_common_sentiment || 'N/A' }}</div>
+                </div>
+            </div>
+
+            <!-- Filter Buttons -->
+            <div class="filter-buttons">
+                <button class="filter-btn" [class.active]="daysFilter() === 7" (click)="changeDaysFilter(7)">
+                    7 Days
+                </button>
+                <button class="filter-btn" [class.active]="daysFilter() === 30" (click)="changeDaysFilter(30)">
+                    30 Days
+                </button>
+                <button class="filter-btn" [class.active]="daysFilter() === 90" (click)="changeDaysFilter(90)">
+                    90 Days
+                </button>
+            </div>
+        </div>
+        }
+
+        <!-- Mood History Timeline -->
+        <div class="timeline-card">
+            <h2 class="card-title">Mood Timeline</h2>
+
+            @if (moodHistory().length === 0) {
+            <div class="empty-state">
+                <p>No mood history found. Start chatting to track your moods!</p>
+            </div>
+            } @else {
+            <div class="timeline">
+                @for (entry of moodHistory(); track trackByMoodId($index, entry)) {
+                <div class="timeline-item">
+                    <div class="timeline-marker" [style.background-color]="getMoodColor(entry.mood_score)">
+                        <span class="mood-emoji">{{ getMoodEmoji(entry.mood_score) }}</span>
+                    </div>
+
+                    <div class="timeline-content">
+                        <div class="timeline-header">
+                            <span class="mood-score" [style.color]="getMoodColor(entry.mood_score)">
+                                Score: {{ entry.mood_score }}/10
+                            </span>
+                            @if (entry.sentiment_label) {
+                            <span class="sentiment-badge">{{ entry.sentiment_label }}</span>
+                            }
+                            <span class="timeline-date">{{ formatDate(entry.created_at) }}</span>
+                        </div>
+
+                        <p class="timeline-summary">{{ entry.summary }}</p>
+
+                        @if (entry.topics && entry.topics.length > 0) {
+                        <div class="topics">
+                            @for (topic of entry.topics; track topic) {
+                            <span class="topic-tag">{{ topic }}</span>
+                            }
+                        </div>
+                        }
+                    </div>
+                </div>
+                }
+            </div>
+            }
+        </div>
+
+        <!-- User Facts -->
+        <div class="facts-card">
+            <h2 class="card-title">Things I Know About You</h2>
+
+            <!-- Category Filter -->
+            <div class="category-filter">
+                <button class="category-btn" [class.active]="selectedCategory() === null"
+                    (click)="changeCategoryFilter(null)">
+                    All
+                </button>
+                <button class="category-btn" [class.active]="selectedCategory() === 'auto_extracted'"
+                    (click)="changeCategoryFilter('auto_extracted')">
+                    Auto Extracted
+                </button>
+                <button class="category-btn" [class.active]="selectedCategory() === 'Personal'"
+                    (click)="changeCategoryFilter('Personal')">
+                    Personal
+                </button>
+                <button class="category-btn" [class.active]="selectedCategory() === 'Work'"
+                    (click)="changeCategoryFilter('Work')">
+                    Work
+                </button>
+            </div>
+
+            @if (userFacts().length === 0) {
+            <div class="empty-state">
+                <p>No facts recorded yet. Keep chatting to help me learn about you!</p>
+            </div>
+            } @else {
+            <div class="facts-list">
+                @for (fact of userFacts(); track trackByFactId($index, fact)) {
+                <div class="fact-item">
+                    <div class="fact-icon">💡</div>
+                    <div class="fact-content">
+                        <p class="fact-text">{{ fact.fact_text }}</p>
+                        <div class="fact-meta">
+                            <span class="fact-category">{{ fact.category }}</span>
+                            <span class="fact-source">{{ fact.source }}</span>
+                            <span class="fact-date">{{ formatDate(fact.created_at) }}</span>
+                        </div>
+                    </div>
+                </div>
+                }
+            </div>
+            }
+        </div>
+    </div>
+    }
+</div>
