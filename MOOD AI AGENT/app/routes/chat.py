@@ -170,7 +170,7 @@ async def stream_chat_response(
         # Classify the conversation
         from app.services import get_classifier
         classifier = get_classifier()
-        classification = await classifier.classify(user_message)
+        classification = await classifier.classify(message)
         
         # Log to JSONL file (always log)
         logger = get_chat_logger()

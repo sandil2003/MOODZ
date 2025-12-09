@@ -52,7 +52,7 @@ class Settings(BaseSettings):
     pinecone_index_name: str = "moodz-embeddings"
     
     # CORS Settings
-    allowed_origins: str = "http://localhost:3000,http://localhost:8000"
+    allowed_origins: str = "http://localhost:3000,http://localhost:4200,http://localhost:8000"
     
     @property
     def cors_origins(self) -> list[str]:
