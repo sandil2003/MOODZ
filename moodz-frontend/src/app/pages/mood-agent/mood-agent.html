@@ -1,1 +1,70 @@
-<p>mood-agent works!</p>
+<div class="chat-container">
+    <!-- Header -->
+    <div class="chat-header">
+        <div class="header-content">
+            <h1 class="chat-title">Mood Agent</h1>
+            <p class="chat-subtitle">Your AI companion for emotional wellness</p>
+        </div>
+        @if (messages().length > 0) {
+        <button class="clear-btn" (click)="clearChat()" [disabled]="isStreaming()">
+            <span class="clear-icon">🗑️</span>
+            Clear Chat
+        </button>
+        }
+    </div>
+
+    <!-- Messages Container -->
+    <div class="messages-container" #messagesContainer>
+        @if (messages().length === 0) {
+        <!-- Empty State -->
+        <div class="empty-state">
+            <div class="empty-icon">💬</div>
+            <h2 class="empty-title">Start a Conversation</h2>
+            <p class="empty-text">Share how you're feeling, and I'll be here to listen and support you.</p>
+        </div>
+        } @else {
+        <!-- Messages List -->
+        <div class="messages-list">
+            @for (message of messages(); track trackByMessageId($index, message)) {
+            <div class="message-wrapper" [class.user-message]="message.role === 'user'"
+                [class.assistant-message]="message.role === 'assistant'">
+                <div class="message-bubble">
+                    <div class="message-content">{{ message.content }}</div>
+                    @if (message.isStreaming) {
+                    <div class="typing-indicator">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                    }
+                </div>
+                <div class="message-time">{{ message.timestamp | date:'short' }}</div>
+            </div>
+            }
+        </div>
+        }
+    </div>
+
+    <!-- Error Display -->
+    @if (error()) {
+    <div class="error-banner">
+        <span class="error-icon">⚠️</span>
+        <span class="error-text">{{ error() }}</span>
+    </div>
+    }
+
+    <!-- Input Area -->
+    <div class="input-container">
+        <div class="input-wrapper">
+            <textarea class="message-input" [(ngModel)]="userInput" (keypress)="onKeyPress($event)"
+                [disabled]="isStreaming()" placeholder="Type your message..." rows="1"></textarea>
+            <button class="send-btn" (click)="sendMessage()" [disabled]="!userInput().trim() || isStreaming()">
+                @if (isStreaming()) {
+                <span class="loading-spinner"></span>
+                } @else {
+                <span class="send-icon">➤</span>
+                }
+            </button>
+        </div>
+    </div>
+</div>
