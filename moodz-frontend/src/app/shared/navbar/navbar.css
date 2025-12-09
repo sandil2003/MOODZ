@@ -1,31 +1,34 @@
 .header {
-  padding: 2rem 3rem;
+    padding: 2rem 3rem;
+    background: #F5F1E8;
+    margin: 0;
 }
 
 .logo-container {
-  position: relative;
-  display: inline-block;
+    position: relative;
+    display: inline-block;
 }
 
 .logo {
-  font-size: 1.7rem;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  color: #2C2C2C;
-  margin: 0;
-  position: relative;
-  z-index: 2;
+    font-size: 1.7rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    color: #2C2C2C;
+    margin: 0;
+    position: relative;
+    z-index: 2;
 }
+
 .rectangle {
-  width: 135px;
-  height: 40px;
-  border: 3px solid #2C2C2C;
-  background: transparent;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 1;
-  border-radius: 8px;
-  pointer-events: none;
+    width: 135px;
+    height: 40px;
+    border: 3px solid #2C2C2C;
+    background: transparent;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1;
+    border-radius: 8px;
+    pointer-events: none;
 }
