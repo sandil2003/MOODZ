@@ -77,14 +77,15 @@ export class ChatService {
 
         // Create assistant message placeholder
         const assistantMessageId = uuidv4();
-        const assistantMessage: ChatMessage = {
-            id: assistantMessageId,
-            role: 'assistant',
-            content: '',
-            timestamp: new Date(),
-            isStreaming: true
-        };
-        this.messages.update(msgs => [...msgs, assistantMessage]);
+        // Commented out to prevent duplicate cards - streaming card will show instead
+        // const assistantMessage: ChatMessage = {
+        //     id: assistantMessageId,
+        //     role: 'assistant',
+        //     content: '',
+        //     timestamp: new Date(),
+        //     isStreaming: true
+        // };
+        // this.messages.update(msgs => [...msgs, assistantMessage]);
 
         try {
             await this.streamResponse(message, assistantMessageId);
@@ -156,34 +157,31 @@ export class ChatService {
                                 throw new Error(parsed.error);
                             }
 
+
                             if (parsed.chunk) {
                                 // Append chunk to current streaming message
                                 this.currentStreamingMessage.update(current => current + parsed.chunk);
-
-                                // Update the assistant message in the messages array
-                                this.messages.update(msgs =>
-                                    msgs.map(m =>
-                                        m.id === assistantMessageId
-                                            ? { ...m, content: m.content + parsed.chunk }
-                                            : m
-                                    )
-                                );
                             }
 
                             if (parsed.done) {
-                                // Mark streaming as complete
-                                this.messages.update(msgs =>
-                                    msgs.map(m =>
-                                        m.id === assistantMessageId
-                                            ? { ...m, isStreaming: false }
-                                            : m
-                                    )
-                                );
+                                // Streaming complete - add final message to history
+                                const finalContent = this.currentStreamingMessage();
+                                if (finalContent) {
+                                    const finalMessage: ChatMessage = {
+                                        id: assistantMessageId,
+                                        role: 'assistant',
+                                        content: finalContent,
+                                        timestamp: new Date(),
+                                        isStreaming: false
+                                    };
+                                    this.messages.update(msgs => [...msgs, finalMessage]);
+                                }
 
                                 // Update session ID if provided
                                 if (parsed.session_id) {
                                     this.sessionId = parsed.session_id;
                                 }
+                                break;
                             }
                         } catch (parseError) {
                             console.error('Error parsing SSE data:', parseError);
