@@ -294,6 +294,86 @@
     cursor: not-allowed;
 }
 
+/* Deep Search Button Toggle */
+.deep-search-toggle {
+    margin-top: 1rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.deep-search-btn {
+    padding: 0.5rem 1.5rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #4A5568;
+    background: transparent;
+    border: 2px solid #CBD5E0;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: inherit;
+}
+
+.deep-search-btn:hover {
+    border-color: #7B8CBA;
+    color: #7B8CBA;
+}
+
+.deep-search-btn.active {
+    background: #7B8CBA;
+    border-color: #7B8CBA;
+    color: white;
+}
+
+.deep-search-btn.active:hover {
+    background: #6A7AA8;
+    border-color: #6A7AA8;
+}
+
+/* Icon Toggle Button */
+.icon-toggle-btn {
+    width: 44px;
+    height: 44px;
+    padding: 0.5rem;
+    background: transparent;
+    border: 2px solid #CBD5E0;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.icon-toggle-btn svg {
+    fill: #4A5568;
+    transition: fill 0.3s ease;
+}
+
+.icon-toggle-btn:hover {
+    border-color: #7B8CBA;
+}
+
+.icon-toggle-btn:hover svg {
+    fill: #7B8CBA;
+}
+
+.icon-toggle-btn.active {
+    background: #7B8CBA;
+    border-color: #7B8CBA;
+}
+
+.icon-toggle-btn.active svg {
+    fill: white;
+}
+
+.icon-toggle-btn.active:hover {
+    background: #6A7AA8;
+    border-color: #6A7AA8;
+}
+
 /* Error Banner */
 .error-banner {
     position: fixed;

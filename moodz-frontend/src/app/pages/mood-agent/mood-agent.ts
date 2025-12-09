@@ -20,6 +20,8 @@ export class MoodAgent {
 
   // Local component state
   userInput = signal('');
+  deepSearchEnabled = signal(false);
+  notesEnabled = signal(false);
 
   // Reference to messages container for auto-scroll
   messagesContainer = viewChild<ElementRef>('messagesContainer');
@@ -59,6 +61,18 @@ export class MoodAgent {
   // Clear chat
   clearChat() {
     this.chatService.clearChat();
+  }
+
+  // Toggle deep search
+  toggleDeepSearch() {
+    this.deepSearchEnabled.update(enabled => !enabled);
+    console.log('Deep Search:', this.deepSearchEnabled() ? 'Enabled' : 'Disabled');
+  }
+
+  // Toggle notes
+  toggleNotes() {
+    this.notesEnabled.update(enabled => !enabled);
+    console.log('Notes:', this.notesEnabled() ? 'Enabled' : 'Disabled');
   }
 
   /**
