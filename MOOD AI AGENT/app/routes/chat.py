@@ -29,15 +29,28 @@ async def save_conversation_intelligently(
         response: AI response
         classification: Classification result from classifier
     """
+    print(f"\n{'='*60}")
+    print(f"SAVE_CONVERSATION_INTELLIGENTLY CALLED")
+    print(f"{'='*60}")
+    print(f"User ID: {user_id}")
+    print(f"Session ID: {session_id}")
+    print(f"Message: {message[:100]}...")
+    print(f"Classification: {classification}")
+    print(f"{'='*60}\n")
+    
     try:
         # Only save if classifier says so
         if not classification.get("save", False):
-            print(f"Skipping database save for message: {message[:50]}...")
+            print(f"❌ Skipping database save - classifier said save=False")
+            print(f"   Message: {message[:50]}...")
             return
+        
+        print(f"✅ Classifier said SAVE=TRUE, proceeding with save...")
         
         vector_service = get_vector_service()
         
         # Save user message with mood
+        print(f"📝 Saving user message to Pinecone...")
         await vector_service.add_text(
             user_id=user_id,
             text=message,
@@ -46,8 +59,10 @@ async def save_conversation_intelligently(
             mood_label=classification.get("mood", "neutral"),
             context_id=str(session_id)
         )
+        print(f"✅ User message saved to Pinecone")
         
         # Save assistant response
+        print(f"📝 Saving assistant response to Pinecone...")
         await vector_service.add_text(
             user_id=user_id,
             text=response,
@@ -55,15 +70,18 @@ async def save_conversation_intelligently(
             source="assistant",
             context_id=str(session_id)
         )
+        print(f"✅ Assistant response saved to Pinecone")
         
         # Save extracted facts to database AND Pinecone
         if classification.get("extracted_facts"):
+            print(f"💡 Found {len(classification['extracted_facts'])} facts to save")
             from app.models import UserFact
             from app.database import AsyncSessionLocal
             
             # Save to PostgreSQL
             async with AsyncSessionLocal() as db:
                 for fact_text in classification["extracted_facts"]:
+                    print(f"   - Saving fact: {fact_text}")
                     fact = UserFact(
                         user_id=user_id,
                         fact_text=fact_text,
@@ -73,6 +91,7 @@ async def save_conversation_intelligently(
                     db.add(fact)
                 
                 await db.commit()
+                print(f"✅ Saved {len(classification['extracted_facts'])} facts to PostgreSQL")
             
             # Embed facts to Pinecone
             for fact_text in classification["extracted_facts"]:
@@ -84,11 +103,16 @@ async def save_conversation_intelligently(
                     context_id=str(session_id),
                     additional_info={"category": "auto_extracted"}
                 )
-            
-            print(f"Saved {len(classification['extracted_facts'])} facts to database and Pinecone")
+            print(f"✅ Saved facts to Pinecone")
+        else:
+            print(f"ℹ️  No facts extracted from this message")
         
         # Save mood to database
-        if classification.get("mood") and classification["mood"] != "neutral":
+        mood_value = classification.get("mood", "neutral")
+        print(f"📊 Detected mood: {mood_value}")
+        
+        if mood_value and mood_value != "neutral":
+            print(f"💾 Saving mood to PostgreSQL...")
             from app.models import MoodHistory
             from app.database import AsyncSessionLocal
             
@@ -104,23 +128,37 @@ async def save_conversation_intelligently(
                 "hopeful": 7, "optimistic": 8
             }
             
-            mood_score = mood_scores.get(classification["mood"], 5)
+            mood_score = mood_scores.get(mood_value, 5)
+            print(f"   Mood score: {mood_score}/10")
             
             async with AsyncSessionLocal() as db:
                 mood = MoodHistory(
                     user_id=user_id,
                     mood_score=mood_score,
-                    sentiment_label=classification["mood"],
+                    sentiment_label=mood_value,
                     summary=message,
                     session_id=session_id
                 )
                 db.add(mood)
                 await db.commit()
             
-            print(f"Saved mood '{classification['mood']}' to database")
+            print(f"✅ Saved mood '{mood_value}' (score: {mood_score}) to PostgreSQL")
+        else:
+            print(f"⚠️  Mood is neutral - NOT saving to database")
+            print(f"   (Neutral moods are not saved to reduce database bloat)")
+        
+        print(f"\n{'='*60}")
+        print(f"SAVE COMPLETED SUCCESSFULLY")
+        print(f"{'='*60}\n")
         
     except Exception as e:
-        print(f"Error saving conversation: {e}")
+        print(f"\n{'='*60}")
+        print(f"❌ ERROR SAVING CONVERSATION")
+        print(f"{'='*60}")
+        print(f"Error: {e}")
+        import traceback
+        traceback.print_exc()
+        print(f"{'='*60}\n")
 
 
 async def stream_chat_response(
