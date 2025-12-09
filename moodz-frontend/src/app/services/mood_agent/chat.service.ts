@@ -32,12 +32,18 @@ export interface StreamChunk {
     providedIn: 'root'
 })
 export class ChatService {
+    // API Configuration
     private readonly API_BASE_URL = 'http://localhost:8000';
     private readonly STREAM_ENDPOINT = '/api/moods/chat/stream';
 
-    // Demo user and session IDs (replace with real auth later)
-    private readonly userId = uuidv4();
-    private sessionId = uuidv4();
+    // IMPORTANT: Using the demo user that exists in the database
+    // This is the user_id created by create_demo_user.py
+    // For production, replace this with actual user authentication
+    private readonly DEMO_USER_ID = 'c47209cb-b2f1-4c76-a7ae-19805f3926b4';
+
+    // User and Session IDs
+    private userId: string = this.DEMO_USER_ID;
+    private sessionId: string = uuidv4();
 
     // Signals for reactive state management
     messages = signal<ChatMessage[]>([]);
