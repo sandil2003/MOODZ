@@ -4,8 +4,7 @@ from contextlib import asynccontextmanager
 from config import settings
 from app.database import init_db, close_db
 from app.redis_client import close_redis
-from app.routes import health, chat
-
+from app.routes import health, chat, history, mood_data
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -50,6 +49,8 @@ app.add_middleware(
 # Include routers
 app.include_router(health.router)
 app.include_router(chat.router, prefix="/api")
+app.include_router(history.router, prefix="/api")
+app.include_router(mood_data.router, prefix="/api")
 
 
 @app.get("/")
