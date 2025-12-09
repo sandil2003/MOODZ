@@ -1,70 +1,77 @@
-<div class="chat-container">
+<div class="mood-agent-container">
     <!-- Header -->
-    <div class="chat-header">
-        <div class="header-content">
-            <h1 class="chat-title">Mood Agent</h1>
-            <p class="chat-subtitle">Your AI companion for emotional wellness</p>
-        </div>
-        @if (messages().length > 0) {
-        <button class="clear-btn" (click)="clearChat()" [disabled]="isStreaming()">
-            <span class="clear-icon">🗑️</span>
-            Clear Chat
-        </button>
-        }
+    <div class="header">
+        <h1 class="logo">MOOD-AGENT</h1>
     </div>
 
-    <!-- Messages Container -->
-    <div class="messages-container" #messagesContainer>
+    <!-- Decorative Shapes -->
+    <div class="shape shape-1"></div>
+    <div class="shape shape-2"></div>
+    <div class="shape shape-3"></div>
+    <div class="shape shape-4"></div>
+
+    <!-- Main Content -->
+    <div class="content">
+        <!-- Welcome Section -->
         @if (messages().length === 0) {
-        <!-- Empty State -->
-        <div class="empty-state">
-            <div class="empty-icon">💬</div>
-            <h2 class="empty-title">Start a Conversation</h2>
-            <p class="empty-text">Share how you're feeling, and I'll be here to listen and support you.</p>
+        <div class="welcome-section">
+            <h2 class="welcome-title">How are you feeling today?</h2>
+            <p class="welcome-subtitle">
+                Describe your current state of mind, and our AI will offer some insight.
+            </p>
         </div>
-        } @else {
-        <!-- Messages List -->
-        <div class="messages-list">
+        }
+
+        <!-- Messages Container -->
+        <div class="messages-area" #messagesContainer>
             @for (message of messages(); track trackByMessageId($index, message)) {
-            <div class="message-wrapper" [class.user-message]="message.role === 'user'"
-                [class.assistant-message]="message.role === 'assistant'">
-                <div class="message-bubble">
-                    <div class="message-content">{{ message.content }}</div>
-                    @if (message.isStreaming) {
-                    <div class="typing-indicator">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </div>
-                    }
+            @if (message.role === 'user') {
+            <!-- User Message (shown in input area) -->
+            } @else {
+            <!-- AI Response Card -->
+            <div class="ai-response-card">
+                <div class="ai-label">AI ANALYSIS</div>
+                <div class="ai-content">
+                    {{ message.content }}
                 </div>
-                <div class="message-time">{{ message.timestamp | date:'short' }}</div>
+            </div>
+            }
+            }
+
+            <!-- Streaming Message -->
+            @if (isStreaming() && currentStreamingMessage()) {
+            <div class="ai-response-card streaming">
+                <div class="ai-label">AI ANALYSIS</div>
+                <div class="ai-content">
+                    {{ currentStreamingMessage() }}
+                    <span class="typing-cursor"></span>
+                </div>
             </div>
             }
         </div>
-        }
-    </div>
 
-    <!-- Error Display -->
-    @if (error()) {
-    <div class="error-banner">
-        <span class="error-icon">⚠️</span>
-        <span class="error-text">{{ error() }}</span>
-    </div>
-    }
-
-    <!-- Input Area -->
-    <div class="input-container">
-        <div class="input-wrapper">
-            <textarea class="message-input" [(ngModel)]="userInput" (keypress)="onKeyPress($event)"
-                [disabled]="isStreaming()" placeholder="Type your message..." rows="1"></textarea>
-            <button class="send-btn" (click)="sendMessage()" [disabled]="!userInput().trim() || isStreaming()">
-                @if (isStreaming()) {
-                <span class="loading-spinner"></span>
-                } @else {
-                <span class="send-icon">➤</span>
-                }
-            </button>
+        <!-- Input Area -->
+        <div class="input-section">
+            <div class="input-wrapper">
+                <input type="text" class="message-input" [ngModel]="userInput()" (ngModelChange)="userInput.set($event)"
+                    (keypress)="onKeyPress($event)" [disabled]="isStreaming()"
+                    placeholder="I'm feeling a bit overwhelmed by my workload but excited for the weekend..." />
+                <button class="send-button" (click)="sendMessage()" [disabled]="!userInput().trim() || isStreaming()">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M18 2L9 11M18 2L12 18L9 11M18 2L2 8L9 11" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                </button>
+            </div>
         </div>
+
+        <!-- Error Banner -->
+        @if (error()) {
+        <div class="error-banner">
+            <span class="error-icon">⚠️</span>
+            <span class="error-text">{{ error() }}</span>
+            <button class="error-close" (click)="error.set(null)">×</button>
+        </div>
+        }
     </div>
 </div>

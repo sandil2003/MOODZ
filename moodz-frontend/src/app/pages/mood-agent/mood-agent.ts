@@ -16,6 +16,7 @@ export class MoodAgent {
   messages = this.chatService.messages;
   isStreaming = this.chatService.isStreaming;
   error = this.chatService.error;
+  currentStreamingMessage = this.chatService.currentStreamingMessage;
 
   // Local component state
   userInput = signal('');
@@ -33,36 +34,30 @@ export class MoodAgent {
     });
   }
 
-  /**
-   * Send message to chat service
-   */
-  async sendMessage(): Promise<void> {
+  // Send message
+  async sendMessage() {
     const message = this.userInput().trim();
     if (!message || this.isStreaming()) {
       return;
     }
 
-    // Clear input immediately
+    // Clear input
     this.userInput.set('');
 
-    // Send message
+    // Send through chat service
     await this.chatService.sendMessage(message);
   }
 
-  /**
-   * Handle Enter key press (send message)
-   */
-  onKeyPress(event: KeyboardEvent): void {
+  // Handle Enter key
+  onKeyPress(event: KeyboardEvent) {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
       this.sendMessage();
     }
   }
 
-  /**
-   * Clear all messages
-   */
-  clearChat(): void {
+  // Clear chat
+  clearChat() {
     this.chatService.clearChat();
   }
 

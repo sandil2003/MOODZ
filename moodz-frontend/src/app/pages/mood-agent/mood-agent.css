@@ -2,6 +2,344 @@
 
 :host {
     display: block;
+    min-height: 100vh;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.mood-agent-container {
+    min-height: 100vh;
+    background: #F5F1E8;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Header */
+.header {
+    padding: 2rem 2rem 1rem 2rem;
+    position: relative;
+    z-index: 10;
+}
+
+.logo {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: #2D3748;
+}
+
+/* Decorative Shapes */
+.shape {
+    position: absolute;
+    border-radius: 12px;
+    opacity: 0.6;
+}
+
+.shape-1 {
+    width: 120px;
+    height: 80px;
+    background: #E89BA0;
+    top: 80px;
+    left: 15%;
+    transform: rotate(-15deg);
+}
+
+.shape-2 {
+    width: 80px;
+    height: 80px;
+    background: #8FB5A8;
+    top: 120px;
+    left: 20%;
+    border-radius: 50%;
+}
+
+.shape-3 {
+    width: 100px;
+    height: 70px;
+    background: #7B8CBA;
+    top: 240px;
+    right: 10%;
+    transform: rotate(25deg);
+}
+
+.shape-4 {
+    width: 90px;
+    height: 60px;
+    background: #8FB5A8;
+    bottom: 200px;
+    right: 15%;
+    transform: rotate(-20deg);
+}
+
+/* Content */
+.content {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 2rem;
+    position: relative;
+    z-index: 5;
+}
+
+/* Welcome Section */
+.welcome-section {
+    text-align: center;
+    margin: 4rem 0 3rem 0;
+}
+
+.welcome-title {
+    margin: 0 0 1rem 0;
+    font-size: 2.5rem;
+    font-weight: 600;
+    color: #2D3748;
+    line-height: 1.2;
+}
+
+.welcome-subtitle {
+    margin: 0;
+    font-size: 1rem;
+    color: #4A5568;
+    line-height: 1.6;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+/* Messages Area */
+.messages-area {
+    margin-bottom: 2rem;
+    min-height: 200px;
+}
+
+/* AI Response Card */
+.ai-response-card {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.ai-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: #7B8CBA;
+    margin-bottom: 1rem;
+}
+
+.ai-content {
+    font-size: 1rem;
+    line-height: 1.8;
+    color: #2D3748;
+    white-space: pre-wrap;
+}
+
+.streaming .ai-content {
+    position: relative;
+}
+
+.typing-cursor {
+    display: inline-block;
+    width: 2px;
+    height: 1.2em;
+    background: #7B8CBA;
+    margin-left: 2px;
+    animation: blink 1s infinite;
+    vertical-align: text-bottom;
+}
+
+@keyframes blink {
+
+    0%,
+    50% {
+        opacity: 1;
+    }
+
+    51%,
+    100% {
+        opacity: 0;
+    }
+}
+
+/* Input Section */
+.input-section {
+    margin-top: 2rem;
+}
+
+.input-wrapper {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    background: white;
+    border-radius: 50px;
+    padding: 0.5rem 0.75rem;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    transition: box-shadow 0.2s;
+}
+
+.input-wrapper:focus-within {
+    box-shadow: 0 4px 16px rgba(123, 140, 186, 0.2);
+}
+
+.message-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    font-family: inherit;
+    color: #2D3748;
+    background: transparent;
+}
+
+.message-input::placeholder {
+    color: #A0AEC0;
+}
+
+.message-input:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.send-button {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: none;
+    background: #7B8CBA;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.send-button:hover:not(:disabled) {
+    background: #6A7AA8;
+    transform: scale(1.05);
+}
+
+.send-button:active:not(:disabled) {
+    transform: scale(0.95);
+}
+
+.send-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Error Banner */
+.error-banner {
+    position: fixed;
+    top: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #FED7D7;
+    color: #9B2C2C;
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    max-width: 90%;
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+.error-icon {
+    font-size: 1.25rem;
+}
+
+.error-text {
+    flex: 1;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.error-close {
+    background: none;
+    border: none;
+    color: #9B2C2C;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.error-close:hover {
+    background: rgba(155, 44, 44, 0.1);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .content {
+        padding: 1rem;
+    }
+
+    .welcome-title {
+        font-size: 2rem;
+    }
+
+    .shape {
+        opacity: 0.4;
+    }
+
+    .shape-1,
+    .shape-3,
+    .shape-4 {
+        width: 80px;
+        height: 60px;
+    }
+
+    .shape-2 {
+        width: 60px;
+        height: 60px;
+    }
+
+    .ai-response-card {
+        padding: 1.5rem;
+    }
+
+    .message-input {
+        font-size: 0.9rem;
+    }
+}
+
+:host {
+    display: block;
     height: 100vh;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
