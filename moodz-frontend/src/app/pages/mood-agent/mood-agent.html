@@ -34,26 +34,25 @@
             }
             }
 
-            <!-- Loading Indicator -->
-            @if (isStreaming() && !currentStreamingMessage()) {
-            <div class="ai-response-card loading">
-                <div class="ai-label">BREWING...</div>
+            <!-- AI Response Card (Loading or Streaming) -->
+            @if (isStreaming()) {
+            <div class="ai-response-card" [class.streaming]="currentStreamingMessage()">
+                <div class="ai-label">AI ANALYSIS</div>
+                
+                @if (!currentStreamingMessage()) {
+                <!-- Loading Dots -->
                 <div class="loading-dots">
                     <span></span>
                     <span></span>
                     <span></span>
                 </div>
-            </div>
-            }
-
-            <!-- Streaming Message -->
-            @if (isStreaming() && currentStreamingMessage()) {
-            <div class="ai-response-card streaming">
-                <div class="ai-label">AI ANALYSIS</div>
+                } @else {
+                <!-- Streaming Content -->
                 <div class="ai-content">
                     {{ currentStreamingMessage() }}
                     <span class="typing-cursor"></span>
                 </div>
+                }
             </div>
             }
         </div>
