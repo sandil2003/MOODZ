@@ -6,9 +6,11 @@
 }
 
 body,
-html {
+html,
+app-root {
     margin: 0;
     padding: 0;
     height: 100%;
     background: #F5F1E8;
+    display: block;
 }
