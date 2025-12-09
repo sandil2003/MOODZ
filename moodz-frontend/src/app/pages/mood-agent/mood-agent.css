@@ -75,7 +75,8 @@
 .content {
     max-width: 700px;
     margin: 0 auto;
-    padding: 2rem;
+    padding: 2rem 2rem 120px 2rem;
+    /* Extra bottom padding for fixed input */
     position: relative;
     z-index: 5;
 }
@@ -217,7 +218,17 @@
 
 /* Input Section */
 .input-section {
-    margin-top: 2rem;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 1.5rem 2rem;
+    z-index: 100;
+}
+
+.input-section .input-wrapper {
+    max-width: 700px;
+    margin: 0 auto;
 }
 
 .input-wrapper {
@@ -348,7 +359,11 @@
 /* Responsive */
 @media (max-width: 768px) {
     .content {
-        padding: 1rem;
+        padding: 1rem 1rem 100px 1rem;
+    }
+
+    .input-section {
+        padding: 1rem 1.5rem;
     }
 
     .welcome-title {
