@@ -59,32 +59,52 @@ export class ChatService {
     /**
      * Connect to WebSocket for deep search status updates
      */
-    private connectStatusWebSocket() {
-        if (this.statusWebSocket) {
-            return; // Already connected
-        }
-
-        const wsUrl = `ws://localhost:8000/api/moods/chat/ws/status/${this.sessionId}`;
-        this.statusWebSocket = new WebSocket(wsUrl);
-
-        this.statusWebSocket.onmessage = (event) => {
-            try {
-                const data = JSON.parse(event.data);
-                if (data.type === 'status') {
-                    this.currentStatus.set(data.content);
-                }
-            } catch (e) {
-                console.error('WebSocket message error:', e);
+    private connectStatusWebSocket(): Promise<void> {
+        return new Promise((resolve, reject) => {
+            if (this.statusWebSocket) {
+                resolve(); // Already connected
+                return;
             }
-        };
 
-        this.statusWebSocket.onerror = (error) => {
-            console.error('WebSocket error:', error);
-        };
+            const wsUrl = `ws://localhost:8000/api/moods/chat/ws/status/${this.sessionId}`;
+            console.log('🔌 Connecting to WebSocket:', wsUrl);
+            this.statusWebSocket = new WebSocket(wsUrl);
 
-        this.statusWebSocket.onclose = () => {
-            this.statusWebSocket = null;
-        };
+            this.statusWebSocket.onopen = () => {
+                console.log('✅ WebSocket connected');
+                resolve();
+            };
+
+            this.statusWebSocket.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    console.log('📨 WebSocket message:', data);
+                    if (data.type === 'status') {
+                        console.log('🔍 Status update:', data.content);
+                        this.currentStatus.set(data.content);
+                    }
+                } catch (e) {
+                    console.error('WebSocket message error:', e);
+                }
+            };
+
+            this.statusWebSocket.onerror = (error) => {
+                console.error('❌ WebSocket error:', error);
+                reject(error);
+            };
+
+            this.statusWebSocket.onclose = () => {
+                console.log('🔌 WebSocket disconnected');
+                this.statusWebSocket = null;
+            };
+
+            // Timeout after 5 seconds
+            setTimeout(() => {
+                if (this.statusWebSocket?.readyState !== WebSocket.OPEN) {
+                    reject(new Error('WebSocket connection timeout'));
+                }
+            }, 5000);
+        });
     }
 
     /**
@@ -112,7 +132,14 @@ export class ChatService {
 
         // Connect WebSocket if deep search is enabled
         if (deepSearch) {
-            this.connectStatusWebSocket();
+            try {
+                console.log('🔍 Deep search enabled, connecting WebSocket...');
+                await this.connectStatusWebSocket();
+                console.log('✅ WebSocket ready, proceeding with deep search');
+            } catch (error) {
+                console.error('❌ Failed to connect WebSocket:', error);
+                this.error.set('Failed to connect for status updates');
+            }
         }
 
         // Add user message to chat

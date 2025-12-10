@@ -58,14 +58,21 @@ class DeepResearchAgent:
         resp = await self.llm.ainvoke(messages)
         return resp.content
 
-    def update_status(self, status: str):
+
+    async def update_status(self, status: str):
+        """Send status update via callback if available."""
         if self.status_callback:
-            self.status_callback(status)
+            try:
+                await self.status_callback(status)
+                print(f"📤 Status sent: {status}")
+            except Exception as e:
+                print(f"❌ Error sending status: {e}")
+    
     # ----------------- Node Implementations -----------------
 
     async def understanding_node(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """Extract the core question and classify intent/sensitivity."""
-        self.update_status("Understanding query...")
+        await self.update_status("Understanding query...")
         user_input = state.get("input")
         prompt = (
             "You are analyzing a user's search query to find the LATEST and most CURRENT information.\n"
@@ -99,7 +106,7 @@ class DeepResearchAgent:
 
     async def search_node(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """Perform web search for the latest and most current information."""
-        self.update_status("Searching...")
+        await self.update_status("Searching...")
         understanding = state.get("understanding", {})
         core_q = understanding.get("core_question") or state.get("input")
 
@@ -135,7 +142,7 @@ class DeepResearchAgent:
 
     async def analysis_node(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze search results and extract the latest information and key insights."""
-        self.update_status("Analyzing...")
+        await self.update_status("Analyzing...")
         search_results = state.get("search_results", [])
         core_q = state.get("understanding", {}).get("core_question", state.get("input"))
 
@@ -182,7 +189,7 @@ class DeepResearchAgent:
 
     async def writer_node(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """Create a comprehensive summary of the latest information found."""
-        self.update_status("Writing...")
+        await self.update_status("Writing...")
         analysis = state.get("analysis", {})
         core_q = state.get("understanding", {}).get("core_question", state.get("input"))
 
@@ -209,7 +216,7 @@ class DeepResearchAgent:
 
         # Execute nodes in sequence
         try:
-            self.update_status("Starting Deep Search...")
+            await self.update_status("Starting Deep Search...")
             state = await self.understanding_node(state)
             state = await self.search_node(state)
             state = await self.analysis_node(state)
