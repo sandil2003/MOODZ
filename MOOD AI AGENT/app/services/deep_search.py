@@ -1,70 +1,78 @@
 """
-LangGraph workflow for a Mood Analysis Agent (Web-search only for Search Node — Option A)
+Deep Search Agent for finding the latest and most current information on topics
 
 Nodes:
- - Understanding Node: extracts core question and classifies whether user asks personal or informational (for safety)
- - Search Node: performs web search using SerpAPI (or DuckDuckGo) and fetches top evidence
- - Analysis Node: evaluates credibility of sources + creates structured summaries
- - Writer Node: Produces final deep-research report with evidence and action suggestions
+ - Understanding Node: extracts search intent and key terms
+ - Search Node: performs web search with queries optimized for latest information
+ - Analysis Node: extracts current trends, recent updates, and latest findings
+ - Writer Node: Creates comprehensive summary of the most current information found
 
-Notes:
- - This file uses LangChain for LLM and web search utilities, and a simple LangGraph-style StateGraph.
- - Replace API keys and install dependencies: langchain, langgraph (if available), serpapi, pinecone-client, redis, openai
- - The code is written to be clear and modular — adapt to your environment.
-
+Dependencies:
+ - langchain-openai
+ - langchain-core
+ - langchain-community
+ - python-dotenv
+ - google-search-results (serpapi)
 """
 
-from typing import Dict, Any, List, Tuple
+from typing import Dict, Any, List
 import os
 import asyncio
+import json
 from dotenv import load_dotenv
 
-from langchain.chat_models import ChatOpenAI
-from langchain.schema import HumanMessage, SystemMessage
-from langchain.utilities import SerpAPIWrapper
+from langchain_openai import ChatOpenAI
+from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_community.utilities import SerpAPIWrapper
 
 # ----------------- Configuration -----------------
 load_dotenv()
-SERPAPI_API_KEY = os.environ.get("SERPAPI_API_KEY", "your_serpapi_key_here")
 
 
 class DeepResearchAgent:
+    """Agent for performing deep search to find the latest and most current information on topics."""
+    
     def __init__(self, model: str = "gpt-4o-mini"):
-        self.llm = ChatOpenAI(temperature=0.0, model=model, openai_api_key=os.getenv("OPENAI_API_KEY"))
-        self.search = SerpAPIWrapper(serpapi_api_key=os.getenv("SERPAPI_API_KEY"))
+        """Initialize the deep research agent."""
+        self.llm = ChatOpenAI(
+            temperature=0.0, 
+            model=model, 
+            openai_api_key=os.getenv("OPENAI_API_KEY")
+        )
+        self.search = SerpAPIWrapper(
+            serpapi_api_key=os.getenv("SERPAPI_API_KEY")
+        )
 
     # ----------------- Helper functions -----------------
 
-    def llm_chat(prompt: str, system: str = "You are a helpful assistant.") -> str:
+    def llm_chat(self, prompt: str, system: str = "You are a helpful assistant.") -> str:
+        """Synchronous LLM chat."""
         messages = [SystemMessage(content=system), HumanMessage(content=prompt)]
-        resp = llm(messages)
+        resp = self.llm.invoke(messages)
         return resp.content
 
-
-    async def async_llm_chat(prompt: str, system: str = "You are a helpful assistant.") -> str:
+    async def async_llm_chat(self, prompt: str, system: str = "You are a helpful assistant.") -> str:
+        """Asynchronous LLM chat."""
         messages = [SystemMessage(content=system), HumanMessage(content=prompt)]
-        resp = await llm.apredict(messages=messages)
+        resp = await self.llm.ainvoke(messages)
         return resp.content
-
 
     # ----------------- Node Implementations -----------------
 
-    async def understanding_node(state: Dict[str, Any]) -> Dict[str, Any]:
+    async def understanding_node(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """Extract the core question and classify intent/sensitivity."""
         user_input = state.get("input")
         prompt = (
-            "You are the Understanding Node for a mood analysis assistant.\n"
-            "Extract the user's core question in one short sentence and classify whether it's:\n"
+            "You are analyzing a user's search query to find the LATEST and most CURRENT information.\n"
+            "Extract the user's core search topic in one short sentence and identify key search terms.\n"
+            "Classify the query type:\n"
             "- PERSONAL (user asking about their own emotions or sharing personal info)\n"
-            "- INFORMATIONAL (asking for general research on mood/mental health)\n\n"
-            f"User input: '''{user_input}'''\n\n"
-            "Return a JSON object with keys: core_question, intent (PERSONAL/INFORMATIONAL), keywords (list)."
+            "- INFORMATIONAL (seeking latest news, trends, or current information on a topic)\n\n"
+            f"User query: '''{user_input}'''\n\n"
+            "Return a JSON object with keys: core_question, intent (PERSONAL/INFORMATIONAL), keywords (list of search terms)."
         )
 
-        resp = await async_llm_chat(prompt)
-
-        # Try to parse simple model output (we keep it robust to variations)
-        # We expect something like: {"core_question": "...", "intent": "INFORMATIONAL", "keywords": ["stress", "students"]}
+        resp = await self.async_llm_chat(prompt)
 
         # Basic extraction using the LLM again to produce stable JSON
         parse_prompt = (
@@ -72,11 +80,10 @@ class DeepResearchAgent:
             "core_question, intent, keywords (list of strings).\n\n"
             f"Previous assistant text: '''{resp}'''\n"
         )
-        parsed = await async_llm_chat(parse_prompt)
+        parsed = await self.async_llm_chat(parse_prompt)
 
-        # Final minimal parsing — in production use json.loads after validation
+        # Final minimal parsing
         try:
-            import json
             parsed_json = json.loads(parsed)
         except Exception:
             # fallback: craft a safe minimal value
@@ -85,36 +92,34 @@ class DeepResearchAgent:
         state.update({"understanding": parsed_json})
         return state
 
-
-    async def search_node(state: Dict[str, Any]) -> Dict[str, Any]:
-        """Perform web search for the core question and fetch top N results with snippets and urls."""
+    async def search_node(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        """Perform web search for the latest and most current information."""
         understanding = state.get("understanding", {})
         core_q = understanding.get("core_question") or state.get("input")
 
-        # Create a set of focused queries (decomposition)
+        # Create search queries focused on latest information
         query_prompt = (
-            "Given the research question below, suggest 3 focused search queries that will help find high-quality evidence.\n\n"
-            f"Research question: '''{core_q}'''\n\n"
-            "Return a JSON array of 3 search strings."
+            "Given the search topic below, create 3 focused search queries to find the LATEST and most CURRENT information.\n"
+            "Include terms like 'latest', 'recent', '2024', '2025', 'current', 'news', 'updates' where appropriate.\n\n"
+            f"Search topic: '''{core_q}'''\n\n"
+            "Return a JSON array of 3 search query strings optimized for finding recent information."
         )
-        queries_raw = await async_llm_chat(query_prompt)
+        queries_raw = await self.async_llm_chat(query_prompt)
+        
         try:
-            import json
             queries = json.loads(queries_raw)
             if not isinstance(queries, list):
-                raise ValueError
+                raise ValueError("Not a list")
         except Exception:
-            queries = [core_q]
+            # Fallback: add "latest" to the original query
+            queries = [f"latest {core_q}", f"{core_q} 2024 2025", f"recent {core_q} news"]
 
         # For each query, run a web search and collect top results
         all_results: List[Dict[str, Any]] = []
-        max_results_per_query = 3
 
         for q in queries[:3]:
             try:
-                serp_resp = search.run(q)
-                # SerpAPIWrapper returns plain text — you can adjust this part to parse structured fields if available
-                # We'll include the query, raw_text, and top snippet for traceability
+                serp_resp = self.search.run(q)
                 all_results.append({"query": q, "raw": serp_resp})
             except Exception as e:
                 all_results.append({"query": q, "error": str(e)})
@@ -122,84 +127,86 @@ class DeepResearchAgent:
         state.update({"search_results": all_results})
         return state
 
-
-    async def analysis_node(state: Dict[str, Any]) -> Dict[str, Any]:
-        """Evaluate credibility of found sources and summarize findings into evidence items."""
+    async def analysis_node(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze search results and extract the latest information and key insights."""
         search_results = state.get("search_results", [])
         core_q = state.get("understanding", {}).get("core_question", state.get("input"))
 
-        # Build a prompt to evaluate credibility and extract key claims/evidence
+        # Build a prompt to extract latest information and key insights
         prompt = (
-            "You are an analyst. Given the research question and the search result texts below,\n"
-            "(1) extract up to 6 distinct evidence items relevant to the question. For each item include: title (short), claim (1 sentence), source (url or identifier if present), and a short credibility score (1-5) with reason.\n"
-            "(2) then produce a 3-5 sentence concise summary of the overall findings.\n\n"
-            f"Research question: '''{core_q}'''\n\n"
-            "Search results (raw text or snippets):\n"
+            "You are analyzing web search results to extract the LATEST and most CURRENT information.\n"
+            "Focus on:\n"
+            "(1) Recent developments, news, and updates (prioritize 2024-2025 information)\n"
+            "(2) Current trends and patterns\n"
+            "(3) Latest statistics, data, or findings\n"
+            "(4) Recent expert opinions or statements\n\n"
+            "Extract up to 6 key information items. For each include:\n"
+            "- title: Brief headline\n"
+            "- info: The key information or finding (1-2 sentences)\n"
+            "- source: URL or source name if available\n"
+            "- recency: How recent (e.g., '2024', 'December 2024', 'Recent')\n"
+            "- relevance: Relevance score 1-5\n\n"
+            f"Search topic: '''{core_q}'''\n\n"
+            "Search results:\n"
         )
 
         for idx, r in enumerate(search_results):
-            prompt += f"---- RESULT {idx+1} (query={r.get('query')}) ----\n{r.get('raw')[:1500]}\n\n"
+            prompt += f"---- RESULT {idx+1} (query={r.get('query')}) ----\n{r.get('raw', '')[:1500]}\n\n"
 
-        analyst_resp = await async_llm_chat(prompt)
+        analyst_resp = await self.async_llm_chat(prompt)
 
         # Ask LLM to output JSON to structure the findings
         parse_prompt = (
-            "Now return ONLY a JSON object with keys: evidence (array of items), summary (string).\n"
-            "Each evidence item must have: title, claim, source, credibility (1-5), reason.\n\n"
-            f"Analyst raw output: '''{analyst_resp}'''\n"
+            "Return ONLY a JSON object with keys: findings (array of items), summary (string).\n"
+            "Each finding item must have: title, info, source, recency, relevance (1-5).\n"
+            "Summary should be 3-5 sentences highlighting the most current and important information.\n\n"
+            f"Analysis output: '''{analyst_resp}'''\n"
         )
-        parsed = await async_llm_chat(parse_prompt)
+        parsed = await self.async_llm_chat(parse_prompt)
 
         try:
-            import json
             parsed_json = json.loads(parsed)
         except Exception:
             # fallback: minimal structure
-            parsed_json = {"evidence": [], "summary": analyst_resp}
+            parsed_json = {"findings": [], "summary": analyst_resp}
 
         state.update({"analysis": parsed_json})
         return state
 
-
-    async def writer_node(state: Dict[str, Any]) -> Dict[str, Any]:
-        """Produce the final deep-search report, with an executive summary, evidence list, and recommended actions."""
+    async def writer_node(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        """Create a comprehensive summary of the latest information found."""
         analysis = state.get("analysis", {})
         core_q = state.get("understanding", {}).get("core_question", state.get("input"))
 
         prompt = (
-            "You are a professional research writer. Using the analysis and evidence below, produce a deep-search report including:\n"
-            "- Title (1 line)\n- Executive summary (3-5 sentences)\n\n"
-            f"Research question: '''{core_q}'''\n\n"
-            f"Analysis JSON: '''{analysis}'''\n\n"
-            "Format the report in Markdown.")
+            "You are creating a comprehensive summary of the LATEST INFORMATION found on a topic.\n"
+            "Using the findings below, create a well-organized summary that includes:\n"
+            "- Title: Clear, descriptive title\n"
+            "- Overview: 2-3 sentence overview of what was found\n"
+            "- Key Findings: Bullet points of the most important current information\n"
+            "- Latest Updates: Recent developments, news, or changes\n"
+            "- Current Trends: Patterns or trends identified\n\n"
+            f"Search topic: '''{core_q}'''\n\n"
+            f"Findings: '''{analysis}'''\n\n"
+            "Format the summary in clear, readable Markdown. Focus on recency and relevance."
+        )
 
-        report = await async_llm_chat(prompt)
+        report = await self.async_llm_chat(prompt)
         state.update({"report": report})
         return state
 
-
-    # ----------------- Graph Orchestration -----------------
-
-class MoodLangGraphAgent:
-    def __init__(self):
-        self.graph_steps = [
-            ("understanding", understanding_node),
-            ("search", search_node),
-            ("analysis", analysis_node),
-            ("writer", writer_node),
-        ]
-
     async def run(self, user_input: str) -> Dict[str, Any]:
+        """Run the full deep research pipeline."""
         state: Dict[str, Any] = {"input": user_input}
 
-        for name, func in self.graph_steps:
-            try:
-                state = await func(state)
-            except Exception as e:
-                # graceful error handling: attach error and continue where possible
-                state.setdefault("errors", []).append({"step": name, "error": str(e)})
-                # break or continue depending on how critical the node is
-                break
+        # Execute nodes in sequence
+        try:
+            state = await self.understanding_node(state)
+            state = await self.search_node(state)
+            state = await self.analysis_node(state)
+            state = await self.writer_node(state)
+        except Exception as e:
+            state.setdefault("errors", []).append({"error": str(e)})
 
         return state
 
@@ -207,16 +214,20 @@ class MoodLangGraphAgent:
 # ----------------- Example Usage -----------------
 
 async def main():
-    agent = MoodLangGraphAgent()
+    """Example usage of the DeepResearchAgent for finding latest information."""
+    agent = DeepResearchAgent()
 
-    user_query = (
-        "What are the most evidence-backed interventions to reduce academic-related anxiety in university students?"
-    )
+    user_query = "What are the latest developments in AI and mental health technology?"
 
     result = await agent.run(user_query)
 
-    print("--- Final Report (Markdown) ---\n")
-    print(result.get("report"))
+    print("--- Latest Information Summary ---\n")
+    print(result.get("report", "No report generated"))
+    
+    if "errors" in result:
+        print("\n--- Errors ---")
+        for error in result["errors"]:
+            print(f"Error: {error}")
 
 
 if __name__ == "__main__":
