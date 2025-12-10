@@ -3,10 +3,11 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MoodDataService, MoodHistoryEntry, UserFact, MoodStats } from '../../services/mood_agent/mood-data.service';
 import { ChatService } from '../../services/mood_agent/chat.service';
+import { MarkdownComponent, MarkdownModule } from 'ngx-markdown';
 
 @Component({
   selector: 'app-mood-history',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MarkdownModule],
   templateUrl: './mood-history.html',
   styleUrl: './mood-history.css',
 })

@@ -144,7 +144,154 @@
     font-size: 1rem;
     line-height: 1.8;
     color: #2D3748;
-    white-space: pre-wrap;
+}
+
+/* Markdown Styles */
+.ai-content ::ng-deep {
+
+    /* Paragraphs */
+    p {
+        margin: 0 0 1rem 0;
+        line-height: 1.8;
+    }
+
+    p:last-child {
+        margin-bottom: 0;
+    }
+
+    /* Headings */
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        margin: 1.5rem 0 1rem 0;
+        font-weight: 600;
+        line-height: 1.3;
+        color: #1a202c;
+    }
+
+    h1 {
+        font-size: 1.75rem;
+    }
+
+    h2 {
+        font-size: 1.5rem;
+    }
+
+    h3 {
+        font-size: 1.25rem;
+    }
+
+    h4 {
+        font-size: 1.1rem;
+    }
+
+    /* Bold and Italic */
+    strong {
+        font-weight: 600;
+        color: #1a202c;
+    }
+
+    em {
+        font-style: italic;
+    }
+
+    /* Lists */
+    ul,
+    ol {
+        margin: 0.5rem 0 1rem 0;
+        padding-left: 1.5rem;
+    }
+
+    li {
+        margin: 0.25rem 0;
+        line-height: 1.6;
+    }
+
+    /* Code blocks */
+    pre {
+        background: #1e293b;
+        border-radius: 8px;
+        padding: 1rem;
+        margin: 1rem 0;
+        overflow-x: auto;
+        border: 1px solid #334155;
+    }
+
+    code {
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 0.9em;
+    }
+
+    pre code {
+        color: #e2e8f0;
+        background: transparent;
+        padding: 0;
+    }
+
+    /* Inline code */
+    :not(pre)>code {
+        background: #f1f5f9;
+        color: #e11d48;
+        padding: 0.2em 0.4em;
+        border-radius: 4px;
+        font-size: 0.875em;
+        border: 1px solid #e2e8f0;
+    }
+
+    /* Blockquotes */
+    blockquote {
+        border-left: 4px solid #7B8CBA;
+        padding-left: 1rem;
+        margin: 1rem 0;
+        color: #4a5568;
+        font-style: italic;
+    }
+
+    /* Links */
+    a {
+        color: #7B8CBA;
+        text-decoration: none;
+        border-bottom: 1px solid transparent;
+        transition: border-color 0.2s;
+    }
+
+    a:hover {
+        border-bottom-color: #7B8CBA;
+    }
+
+    /* Horizontal rules */
+    hr {
+        border: none;
+        border-top: 2px solid #e2e8f0;
+        margin: 1.5rem 0;
+    }
+
+    /* Tables */
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+    }
+
+    th,
+    td {
+        padding: 0.75rem;
+        text-align: left;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    th {
+        font-weight: 600;
+        background: #f8fafc;
+        color: #1a202c;
+    }
+
+    tr:hover {
+        background: #f8fafc;
+    }
 }
 
 .streaming .ai-content {
