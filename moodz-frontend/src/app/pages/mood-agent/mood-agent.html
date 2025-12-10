@@ -1,5 +1,46 @@
 <div class="mood-agent-container">
 
+    <!-- Sidebar Overlay (for mobile) -->
+    <div class="sidebar-overlay" [class.visible]="notesEnabled()" (click)="toggleNotes()"></div>
+
+    <!-- Chat History Sidebar -->
+    <div class="chat-sidebar" [class.open]="notesEnabled()">
+        <div class="sidebar-header">
+            <h3 class="sidebar-title"><b>MOOD AGENT</b></h3>
+        </div>
+
+        <div class="sidebar-content">
+            <div class="past-chats-label">Past Chats</div>
+
+            <div class="chat-history-list">
+                <div class="chat-history-item active">
+                    <span class="chat-title">Stress & Anticipation</span>
+                </div>
+                <div class="chat-history-item">
+                    <span class="chat-title">A Quiet Afternoon</span>
+                </div>
+                <div class="chat-history-item">
+                    <span class="chat-title">Creative Block</span>
+                </div>
+                <div class="chat-history-item">
+                    <span class="chat-title">Excitement for a Trip</span>
+                </div>
+                <div class="chat-history-item">
+                    <span class="chat-title">Feeling Reflective</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar-footer">
+            <button class="new-chat-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px">
+                    <path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z" />
+                </svg>
+                New Chat
+            </button>
+        </div>
+    </div>
+
     <!-- Decorative Shapes -->
     <div class="shape shape-1"></div>
     <div class="shape shape-2"></div>
