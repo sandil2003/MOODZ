@@ -67,7 +67,7 @@
             } @else {
             <!-- AI Response Card -->
             <div class="ai-response-card">
-                <div class="ai-label">AI ANALYSIS</div>
+               
                 <div class="ai-content">
                     <markdown [data]="message.content"></markdown>
                 </div>
@@ -78,7 +78,7 @@
             <!-- AI Response Card (Loading or Streaming) -->
             @if (isStreaming()) {
             <div class="ai-response-card" [class.streaming]="currentStreamingMessage()">
-                <div class="ai-label">AI ANALYSIS</div>
+         
 
                 @if (!currentStreamingMessage()) {
                 <!-- Loading Dots or Status Message -->
