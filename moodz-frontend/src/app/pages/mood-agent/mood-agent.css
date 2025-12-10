@@ -35,7 +35,7 @@
     left: 0;
     width: 240px;
     height: 100vh;
-    background: #FEFDFB;
+    background: #FAF9F6;
     box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
     z-index: 1000;
     display: flex;
@@ -175,9 +175,10 @@
 
 /* Decorative Shapes */
 .shape {
-    position: absolute;
+    position: fixed;
     border-radius: 12px;
     opacity: 0.6;
+    z-index: 1;
 }
 
 .shape-1 {
