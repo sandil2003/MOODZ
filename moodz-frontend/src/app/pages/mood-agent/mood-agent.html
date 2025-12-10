@@ -40,12 +40,19 @@
                 <div class="ai-label">AI ANALYSIS</div>
 
                 @if (!currentStreamingMessage()) {
-                <!-- Loading Dots -->
+                <!-- Loading Dots or Status Message -->
+                @if (currentStatus()) {
+                <div class="status-message">
+                    <span class="status-icon">🔍</span>
+                    {{ currentStatus() }}
+                </div>
+                } @else {
                 <div class="loading-dots">
                     <span></span>
                     <span></span>
                     <span></span>
                 </div>
+                }
                 } @else {
                 <!-- Streaming Content -->
                 <div class="ai-content">

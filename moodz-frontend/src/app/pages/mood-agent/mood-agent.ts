@@ -17,6 +17,7 @@ export class MoodAgent {
   isStreaming = this.chatService.isStreaming;
   error = this.chatService.error;
   currentStreamingMessage = this.chatService.currentStreamingMessage;
+  currentStatus = this.chatService.currentStatus;
 
   // Local component state
   userInput = signal('');
@@ -46,8 +47,8 @@ export class MoodAgent {
     // Clear input
     this.userInput.set('');
 
-    // Send through chat service
-    await this.chatService.sendMessage(message);
+    // Send through chat service with deep search flag
+    await this.chatService.sendMessage(message, this.deepSearchEnabled());
   }
 
   // Handle Enter key

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, BackgroundTasks
+from fastapi import APIRouter, BackgroundTasks, WebSocket, WebSocketDisconnect
 from fastapi.responses import StreamingResponse
 from app.schemas.chat import ChatRequest, ChatResponse
 from app.services import get_mood_chain, get_session_manager, get_vector_service
@@ -8,8 +8,34 @@ from typing import AsyncGenerator, Dict, Any
 import json
 from time import time
 from app.utils import get_chat_logger
+import asyncio
 
 router = APIRouter(prefix="/moods/chat", tags=["chat"])
+
+# WebSocket connection manager for status updates
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: Dict[str, WebSocket] = {}
+    
+    async def connect(self, websocket: WebSocket, session_id: str):
+        await websocket.accept()
+        self.active_connections[session_id] = websocket
+    
+    def disconnect(self, session_id: str):
+        if session_id in self.active_connections:
+            del self.active_connections[session_id]
+    
+    async def send_status(self, session_id: str, status: str):
+        if session_id in self.active_connections:
+            try:
+                await self.active_connections[session_id].send_json({
+                    "type": "status",
+                    "content": status
+                })
+            except:
+                pass
+
+manager = ConnectionManager()
 
 
 async def save_conversation_intelligently(
@@ -247,14 +273,13 @@ async def chat_stream(
     """
     Stream chat response in real-time.
     
+    Supports both regular chat and deep search modes.
+    Deep search mode: NO database saves (PostgreSQL, Pinecone, Redis)
+    
     Returns Server-Sent Events (SSE) stream with:
     - `data: {"chunk": "text"}` - LLM token chunks
     - `data: {"done": true, "session_id": "..."}` - Completion event
     - `data: {"error": "message"}` - Error event
-    
-    Background tasks:
-    - Intelligently save conversation based on classifier
-    - Save extracted facts and mood to database
     """
     # Create streaming generator
     classification_result = {}
@@ -263,6 +288,19 @@ async def chat_stream(
         nonlocal classification_result
         full_response = ""
         
+        # Check if deep search is enabled
+        if request.deep_search:
+            # Use deep search - NO database saves
+            async for event in stream_deep_search_response(
+                request.user_id,
+                request.session_id,
+                request.message
+            ):
+                yield event
+            # Exit early - no classification, no database save for deep search
+            return
+        
+        # Regular chat flow
         async for event in stream_chat_response(
             request.user_id,
             request.session_id,
@@ -287,7 +325,7 @@ async def chat_stream(
             
             yield event
         
-        # Schedule background task after streaming completes
+        # Schedule background task after streaming completes (ONLY for regular chat)
         if full_response and classification_result:
             background_tasks.add_task(
                 save_conversation_intelligently,
@@ -381,3 +419,38 @@ async def chat(
     except Exception as e:
         from fastapi import HTTPException
         raise HTTPException(status_code=500, detail=str(e))
+
+# WebSocket endpoint for status updates
+@router.websocket("/ws/status/{session_id}")
+async def websocket_status(websocket: WebSocket, session_id: str):
+    await manager.connect(websocket, session_id)
+    try:
+        while True:
+            try:
+                data = await asyncio.wait_for(websocket.receive_text(), timeout=1.0)
+            except asyncio.TimeoutError:
+                continue
+    except WebSocketDisconnect:
+        manager.disconnect(session_id)
+
+
+async def stream_deep_search_response(user_id, session_id, message: str) -> AsyncGenerator[str, None]:
+    try:
+        from app.services.deep_search import DeepResearchAgent
+        
+        async def send_status(status: str):
+            await manager.send_status(str(session_id), status)
+        
+        agent = DeepResearchAgent(status_callback=send_status)
+        result = await agent.run(message)
+        report = result.get("report", "No results found.")
+        
+        words = report.split()
+        for i in range(0, len(words), 3):
+            chunk = " " + " ".join(words[i:i+3])
+            yield f"data: {json.dumps({'chunk': chunk})}\n\n"
+            await asyncio.sleep(0.05)
+        
+        yield f"data: {json.dumps({'done': True, 'session_id': str(session_id), 'deep_search': True})}\n\n"
+    except Exception as e:
+        yield f"data: {json.dumps({'error': f'Deep search error: {str(e)}'})}\n\n"

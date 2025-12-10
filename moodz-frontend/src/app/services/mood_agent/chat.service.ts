@@ -13,6 +13,7 @@ export interface ChatRequest {
     user_id: string;
     session_id: string;
     message: string;
+    deep_search?: boolean;
 }
 
 export interface StreamChunk {
@@ -50,17 +51,69 @@ export class ChatService {
     isStreaming = signal(false);
     error = signal<string | null>(null);
     currentStreamingMessage = signal<string>('');
+    currentStatus = signal<string>('');  // For deep search status updates
+
+    // WebSocket for status updates
+    private statusWebSocket: WebSocket | null = null;
+
+    /**
+     * Connect to WebSocket for deep search status updates
+     */
+    private connectStatusWebSocket() {
+        if (this.statusWebSocket) {
+            return; // Already connected
+        }
+
+        const wsUrl = `ws://localhost:8000/api/moods/chat/ws/status/${this.sessionId}`;
+        this.statusWebSocket = new WebSocket(wsUrl);
+
+        this.statusWebSocket.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                if (data.type === 'status') {
+                    this.currentStatus.set(data.content);
+                }
+            } catch (e) {
+                console.error('WebSocket message error:', e);
+            }
+        };
+
+        this.statusWebSocket.onerror = (error) => {
+            console.error('WebSocket error:', error);
+        };
+
+        this.statusWebSocket.onclose = () => {
+            this.statusWebSocket = null;
+        };
+    }
+
+    /**
+     * Disconnect WebSocket
+     */
+    private disconnectStatusWebSocket() {
+        if (this.statusWebSocket) {
+            this.statusWebSocket.close();
+            this.statusWebSocket = null;
+        }
+        this.currentStatus.set('');
+    }
 
     /**
      * Send a message and stream the response in real-time
      */
-    async sendMessage(message: string): Promise<void> {
+    async sendMessage(message: string, deepSearch: boolean = false): Promise<void> {
         if (!message.trim() || this.isStreaming()) {
             return;
         }
 
-        // Clear previous errors
+        // Clear previous errors and status
         this.error.set(null);
+        this.currentStatus.set('');
+
+        // Connect WebSocket if deep search is enabled
+        if (deepSearch) {
+            this.connectStatusWebSocket();
+        }
 
         // Add user message to chat
         const userMessage: ChatMessage = {
@@ -88,7 +141,7 @@ export class ChatService {
         // this.messages.update(msgs => [...msgs, assistantMessage]);
 
         try {
-            await this.streamResponse(message, assistantMessageId);
+            await this.streamResponse(message, assistantMessageId, deepSearch);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'An error occurred';
             this.error.set(errorMessage);
@@ -98,17 +151,23 @@ export class ChatService {
         } finally {
             this.isStreaming.set(false);
             this.currentStreamingMessage.set('');
+
+            // Disconnect WebSocket after completion
+            if (deepSearch) {
+                this.disconnectStatusWebSocket();
+            }
         }
     }
 
     /**
      * Stream response using Server-Sent Events
      */
-    private async streamResponse(message: string, assistantMessageId: string): Promise<void> {
+    private async streamResponse(message: string, assistantMessageId: string, deepSearch: boolean = false): Promise<void> {
         const requestBody: ChatRequest = {
             user_id: this.userId,
             session_id: this.sessionId,
-            message
+            message,
+            deep_search: deepSearch
         };
 
         const response = await fetch(`${this.API_BASE_URL}${this.STREAM_ENDPOINT}`, {
