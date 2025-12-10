@@ -441,22 +441,55 @@ async def websocket_status(websocket: WebSocket, session_id: str):
 
 
 async def stream_deep_search_response(user_id, session_id, message: str) -> AsyncGenerator[str, None]:
+    """Stream deep search response with status updates via WebSocket."""
+    print(f"\n{'='*60}")
+    print(f"🔍 DEEP SEARCH STREAMING - Starting")
+    print(f"Session: {session_id}")
+    print(f"Message: {message}")
+    print(f"{'='*60}\n")
+    
     try:
+        print("📦 Importing DeepResearchAgent...")
         from app.services.deep_search import DeepResearchAgent
+        print("✅ Import successful")
         
         async def send_status(status: str):
+            print(f"📤 Sending status: {status}")
             await manager.send_status(str(session_id), status)
         
+        print("🤖 Initializing DeepResearchAgent...")
         agent = DeepResearchAgent(status_callback=send_status)
-        result = await agent.run(message)
-        report = result.get("report", "No results found.")
+        print("✅ Agent initialized")
         
+        print("🚀 Running deep search...")
+        result = await agent.run(message)
+        print(f"✅ Deep search completed. Result keys: {result.keys()}")
+        
+        report = result.get("report", "No results found.")
+        print(f"📄 Report length: {len(report)} characters")
+        
+        if "errors" in result:
+            print(f"⚠️  Errors in result: {result['errors']}")
+        
+        # Stream the report
         words = report.split()
+        print(f"📝 Streaming {len(words)} words...")
         for i in range(0, len(words), 3):
             chunk = " " + " ".join(words[i:i+3])
             yield f"data: {json.dumps({'chunk': chunk})}\n\n"
             await asyncio.sleep(0.05)
         
+        print("✅ Streaming completed")
         yield f"data: {json.dumps({'done': True, 'session_id': str(session_id), 'deep_search': True})}\n\n"
+        
     except Exception as e:
-        yield f"data: {json.dumps({'error': f'Deep search error: {str(e)}'})}\n\n"
+        error_msg = f"Deep search error: {str(e)}"
+        print(f"\n{'='*60}")
+        print(f"❌ DEEP SEARCH ERROR")
+        print(f"{'='*60}")
+        print(f"Error: {e}")
+        import traceback
+        traceback.print_exc()
+        print(f"{'='*60}\n")
+        yield f"data: {json.dumps({'error': error_msg})}\n\n"
+
