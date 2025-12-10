@@ -33,3 +33,5 @@ langchain-openai
 
 # Async file operations
 aiofiles
+
+google-search-results
