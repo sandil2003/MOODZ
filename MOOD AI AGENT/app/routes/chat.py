@@ -20,20 +20,26 @@ class ConnectionManager:
     async def connect(self, websocket: WebSocket, session_id: str):
         await websocket.accept()
         self.active_connections[session_id] = websocket
+        print(f"✅ WebSocket connected for session: {session_id}")
     
     def disconnect(self, session_id: str):
         if session_id in self.active_connections:
             del self.active_connections[session_id]
+            print(f"🔌 WebSocket disconnected for session: {session_id}")
     
     async def send_status(self, session_id: str, status: str):
+        print(f"📤 Attempting to send status to session {session_id}: {status}")
         if session_id in self.active_connections:
             try:
                 await self.active_connections[session_id].send_json({
                     "type": "status",
                     "content": status
                 })
-            except:
-                pass
+                print(f"✅ Status sent successfully: {status}")
+            except Exception as e:
+                print(f"❌ Error sending status: {e}")
+        else:
+            print(f"⚠️  No WebSocket connection found for session: {session_id}")
 
 manager = ConnectionManager()
 
