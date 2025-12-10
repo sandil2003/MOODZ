@@ -8,11 +8,11 @@ Nodes:
  - Writer Node: Creates comprehensive summary of the most current information found
 
 Dependencies:
- - langchain-openai
+ - langchain-google-genai
  - langchain-core
  - langchain-community
  - python-dotenv
- - google-search-results (serpapi)
+ - duckduckgo-search (free, no API key required)
 """
 
 from typing import Dict, Any, List
@@ -21,9 +21,9 @@ import asyncio
 import json
 from dotenv import load_dotenv
 
-from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, SystemMessage
-from langchain_community.utilities import SerpAPIWrapper
+from langchain_community.tools import DuckDuckGoSearchRun
+from langchain_google_genai import ChatGoogleGenerativeAI
 
 # ----------------- Configuration -----------------
 load_dotenv()
@@ -32,17 +32,17 @@ load_dotenv()
 class DeepResearchAgent:
     """Agent for performing deep search to find the latest and most current information on topics."""
     
-    def __init__(self, model: str = "gpt-4o-mini", status_callback=None):
+    def __init__(self, model: str = "gemini-2.5-flash", status_callback=None):
         """Initialize the deep research agent."""
-        self.llm = ChatOpenAI(
-            temperature=0.0, 
+        self.llm = ChatGoogleGenerativeAI(
             model=model, 
-            openai_api_key=os.getenv("OPENAI_API_KEY")
+            temperature=0.0,
+            google_api_key=os.getenv("GEMINI_API_KEY")
         )
-        self.search = SerpAPIWrapper(
-            serpapi_api_key=os.getenv("SERPAPI_API_KEY")
-        )
+        # DuckDuckGo search - free, no API key required
+        self.search = DuckDuckGoSearchRun()
         self.status_callback = status_callback
+        print("✅ Deep Search initialized with DuckDuckGo (free search)")
 
     # ----------------- Helper functions -----------------
 
@@ -110,6 +110,11 @@ class DeepResearchAgent:
         understanding = state.get("understanding", {})
         core_q = understanding.get("core_question") or state.get("input")
 
+        print(f"\n{'='*60}")
+        print(f"🔍 SEARCH NODE - Starting web search")
+        print(f"Core question: {core_q}")
+        print(f"{'='*60}\n")
+
         # Create search queries focused on latest information
         query_prompt = (
             "Given the search topic below, create 3 focused search queries to find the LATEST and most CURRENT information.\n"
@@ -119,23 +124,41 @@ class DeepResearchAgent:
         )
         queries_raw = await self.async_llm_chat(query_prompt)
         
+        print(f"📝 Generated queries (raw): {queries_raw[:200]}...")
+        
         try:
             queries = json.loads(queries_raw)
             if not isinstance(queries, list):
                 raise ValueError("Not a list")
-        except Exception:
+            print(f"✅ Parsed {len(queries)} queries successfully")
+        except Exception as e:
+            print(f"⚠️  Failed to parse queries: {e}")
             # Fallback: add "latest" to the original query
             queries = [f"latest {core_q}", f"{core_q} 2024 2025", f"recent {core_q} news"]
+            print(f"📌 Using fallback queries: {queries}")
 
         # For each query, run a web search and collect top results
         all_results: List[Dict[str, Any]] = []
 
-        for q in queries[:3]:
+        for idx, q in enumerate(queries[:3]):
+            print(f"\n🔎 Query {idx+1}: {q}")
             try:
                 serp_resp = self.search.run(q)
+                print(f"✅ Search completed. Response length: {len(str(serp_resp))}")
+                print(f"📄 Response preview: {str(serp_resp)[:300]}...")
                 all_results.append({"query": q, "raw": serp_resp})
             except Exception as e:
+                print(f"❌ Search failed: {str(e)}")
                 all_results.append({"query": q, "error": str(e)})
+
+        print(f"\n{'='*60}")
+        print(f"📊 Search Summary: {len(all_results)} results collected")
+        for idx, r in enumerate(all_results):
+            if "error" in r:
+                print(f"  Result {idx+1}: ERROR - {r['error']}")
+            else:
+                print(f"  Result {idx+1}: {len(str(r.get('raw', '')))} chars")
+        print(f"{'='*60}\n")
 
         state.update({"search_results": all_results})
         return state
