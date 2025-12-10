@@ -32,7 +32,7 @@ load_dotenv()
 class DeepResearchAgent:
     """Agent for performing deep search to find the latest and most current information on topics."""
     
-    def __init__(self, model: str = "gpt-4o-mini"):
+    def __init__(self, model: str = "gpt-4o-mini", status_callback=None):
         """Initialize the deep research agent."""
         self.llm = ChatOpenAI(
             temperature=0.0, 
@@ -42,6 +42,7 @@ class DeepResearchAgent:
         self.search = SerpAPIWrapper(
             serpapi_api_key=os.getenv("SERPAPI_API_KEY")
         )
+        self.status_callback = status_callback
 
     # ----------------- Helper functions -----------------
 
@@ -57,10 +58,14 @@ class DeepResearchAgent:
         resp = await self.llm.ainvoke(messages)
         return resp.content
 
+    def update_status(self, status: str):
+        if self.status_callback:
+            self.status_callback(status)
     # ----------------- Node Implementations -----------------
 
     async def understanding_node(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """Extract the core question and classify intent/sensitivity."""
+        self.update_status("Understanding query...")
         user_input = state.get("input")
         prompt = (
             "You are analyzing a user's search query to find the LATEST and most CURRENT information.\n"
@@ -94,6 +99,7 @@ class DeepResearchAgent:
 
     async def search_node(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """Perform web search for the latest and most current information."""
+        self.update_status("Searching...")
         understanding = state.get("understanding", {})
         core_q = understanding.get("core_question") or state.get("input")
 
@@ -129,6 +135,7 @@ class DeepResearchAgent:
 
     async def analysis_node(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze search results and extract the latest information and key insights."""
+        self.update_status("Analyzing...")
         search_results = state.get("search_results", [])
         core_q = state.get("understanding", {}).get("core_question", state.get("input"))
 
@@ -175,6 +182,7 @@ class DeepResearchAgent:
 
     async def writer_node(self, state: Dict[str, Any]) -> Dict[str, Any]:
         """Create a comprehensive summary of the latest information found."""
+        self.update_status("Writing...")
         analysis = state.get("analysis", {})
         core_q = state.get("understanding", {}).get("core_question", state.get("input"))
 
@@ -201,6 +209,7 @@ class DeepResearchAgent:
 
         # Execute nodes in sequence
         try:
+            self.update_status("Starting Deep Search...")
             state = await self.understanding_node(state)
             state = await self.search_node(state)
             state = await self.analysis_node(state)
