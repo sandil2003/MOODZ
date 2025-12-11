@@ -71,9 +71,13 @@
 
 /* Header Icons Container */
 .header-icons {
+    position: fixed;
+    top: 2rem;
+    right: 3rem;
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    z-index: 1001;
 }
 
 /* Icon Button */
