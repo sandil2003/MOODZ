@@ -4,6 +4,12 @@
     margin: 0;
 }
 
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
 .logo-container {
     position: relative;
     display: inline-block;
@@ -42,4 +48,92 @@
     z-index: 1;
     border-radius: 8px;
     pointer-events: none;
+}
+
+/* Material Icons */
+.material-icons {
+    font-family: 'Material Icons';
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: 'liga';
+}
+
+/* Header Icons Container */
+.header-icons {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Icon Button */
+.icon-button {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    text-decoration: none;
+    color: inherit;
+}
+
+.icon-button .material-icons {
+    color: #4A5568;
+    transition: color 0.2s ease;
+}
+
+.icon-button:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.icon-button:hover .material-icons {
+    color: #2D3748;
+}
+
+.icon-button:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px #7B8CBA;
+}
+
+/* Icon Button Tooltip */
+.icon-button::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background: #2D3748;
+    color: #F5F1E8;
+    padding: 0.5rem 0.875rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    letter-spacing: 0.3px;
+    transform: translateY(-4px);
+    z-index: 1002;
+}
+
+.icon-button:hover::after {
+    opacity: 1;
+    transform: translateY(0);
 }
