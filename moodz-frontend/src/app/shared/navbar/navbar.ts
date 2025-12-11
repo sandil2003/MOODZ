@@ -1,6 +1,7 @@
 import { Component, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { ThemeService } from '../../services/theme.service';
 
 @Component({
   selector: 'app-navbar',
@@ -14,6 +15,8 @@ export class Navbar {
 
   private fullTexts = ['Mood Dashboard', 'Toggle Dark Mode', 'Home'];
   private typingIntervals: any[] = [];
+
+  constructor(public themeService: ThemeService) { }
 
   showTooltip(index: number): void {
     // Clear any existing interval
@@ -62,5 +65,9 @@ export class Navbar {
     const texts = [...this.tooltipText()];
     texts[index] = '';
     this.tooltipText.set(texts);
+  }
+
+  toggleDarkMode(): void {
+    this.themeService.toggleDarkMode();
   }
 }
