@@ -254,9 +254,8 @@
     width: 120px;
     height: 80px;
     background: #E89BA0;
-    top: 80px;
+    top: 400px;
     left: 15%;
-    transform: rotate(-15deg);
     animation: float1 8s ease-in-out infinite;
 }
 
@@ -295,11 +294,11 @@
 
     0%,
     100% {
-        transform: rotate(-15deg) translateY(0) translateX(0);
+        transform: rotate(-110deg) translateY(0) translateX(0);
     }
 
     50% {
-        transform: rotate(-15deg) translateY(-20px) translateX(10px);
+        transform: rotate(-110deg) translateY(-20px) translateX(10px);
     }
 }
 

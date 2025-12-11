@@ -5,6 +5,9 @@
 
 @import "tailwindcss";
 
+/* Import Dark Mode Styles */
+@import "./app/styles/dark-mode.css";
+
 /* Set Space Grotesk as default font */
 body {
     font-family: 'Space Grotesk', sans-serif;

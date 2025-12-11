@@ -1,0 +1,271 @@
+/* ========================================
+   DARK MODE STYLES FOR MOOD AGENT
+   ======================================== */
+
+body.dark-mode .mood-agent-container {
+    background: #3A3F47;
+}
+
+/* Sidebar Dark Mode */
+body.dark-mode .chat-sidebar {
+    background: #1E2530;
+}
+
+body.dark-mode .sidebar-title {
+    color: #9CA3AF;
+}
+
+body.dark-mode .past-chats-label {
+    color: #9CA3AF;
+}
+
+body.dark-mode .chat-history-item {
+    color: #D1D5DB;
+}
+
+body.dark-mode .chat-history-item:hover {
+    background: #2D3340;
+}
+
+body.dark-mode .chat-history-item.active {
+    background: #374151;
+}
+
+body.dark-mode .chat-history-item .chat-title {
+    color: #D1D5DB;
+}
+
+body.dark-mode .chat-history-item.active .chat-title {
+    color: #60A5FA;
+}
+
+body.dark-mode .new-chat-btn {
+    color: #D1D5DB;
+    border-color: #4B5563;
+}
+
+body.dark-mode .new-chat-btn:hover {
+    border-color: #6B7280;
+    background: #374151;
+}
+
+body.dark-mode .new-chat-btn svg {
+    fill: #9CA3AF;
+}
+
+body.dark-mode .new-chat-btn:hover svg {
+    fill: #D1D5DB;
+}
+
+/* Welcome Section Dark Mode */
+body.dark-mode .welcome-title {
+    color: #F3F4F6;
+}
+
+body.dark-mode .welcome-subtitle {
+    color: #9CA3AF;
+}
+
+/* AI Response Card Dark Mode */
+body.dark-mode .ai-response-card {
+    background: #2D3340;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .ai-label {
+    color: #93C5FD;
+}
+
+body.dark-mode .ai-content {
+    color: #E5E7EB;
+}
+
+/* Markdown Dark Mode Styles */
+body.dark-mode .ai-content ::ng-deep h1,
+body.dark-mode .ai-content ::ng-deep h2,
+body.dark-mode .ai-content ::ng-deep h3,
+body.dark-mode .ai-content ::ng-deep h4,
+body.dark-mode .ai-content ::ng-deep h5,
+body.dark-mode .ai-content ::ng-deep h6 {
+    color: #F3F4F6;
+}
+
+body.dark-mode .ai-content ::ng-deep strong {
+    color: #F3F4F6;
+}
+
+body.dark-mode .ai-content ::ng-deep :not(pre)>code {
+    background: #1F2937;
+    color: #F87171;
+    border-color: #374151;
+}
+
+body.dark-mode .ai-content ::ng-deep blockquote {
+    border-left-color: #93C5FD;
+    color: #9CA3AF;
+}
+
+body.dark-mode .ai-content ::ng-deep a {
+    color: #93C5FD;
+}
+
+body.dark-mode .ai-content ::ng-deep a:hover {
+    border-bottom-color: #93C5FD;
+}
+
+body.dark-mode .ai-content ::ng-deep th {
+    background: #1F2937;
+    color: #F3F4F6;
+}
+
+body.dark-mode .ai-content ::ng-deep tr:hover {
+    background: #1F2937;
+}
+
+/* Loading Dots Dark Mode */
+body.dark-mode .loading-dots span {
+    background: #93C5FD;
+}
+
+/* Status Message Dark Mode */
+body.dark-mode .status-message {
+    color: #E5E7EB;
+}
+
+/* Input Section Dark Mode */
+body.dark-mode .message-input {
+    background: #404854;
+    color: #F3F4F6;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+    border: 1px solid #4B5563;
+}
+
+body.dark-mode .message-input:focus {
+    box-shadow: 0 4px 16px rgba(147, 197, 253, 0.2);
+    border-color: #60A5FA;
+}
+
+body.dark-mode .message-input::placeholder {
+    color: #6B7280;
+}
+
+body.dark-mode .send-button {
+    background: #60A5FA;
+}
+
+body.dark-mode .send-button:hover:not(:disabled) {
+    background: #3B82F6;
+}
+
+/* Deep Search Button Dark Mode */
+body.dark-mode .deep-search-btn {
+    color: #9CA3AF;
+    border-color: #4B5563;
+}
+
+body.dark-mode .deep-search-btn:hover {
+    border-color: #60A5FA;
+    color: #60A5FA;
+}
+
+body.dark-mode .deep-search-btn.active {
+    background: #60A5FA;
+    border-color: #60A5FA;
+    color: white;
+}
+
+body.dark-mode .deep-search-btn.active:hover {
+    background: #3B82F6;
+    border-color: #3B82F6;
+}
+
+/* Icon Toggle Button Dark Mode */
+body.dark-mode .icon-toggle-btn {
+    border-color: #4B5563;
+}
+
+body.dark-mode .icon-toggle-btn svg {
+    fill: #9CA3AF;
+}
+
+body.dark-mode .icon-toggle-btn:hover {
+    border-color: #60A5FA;
+}
+
+body.dark-mode .icon-toggle-btn:hover svg {
+    fill: #60A5FA;
+}
+
+body.dark-mode .icon-toggle-btn.active {
+    background: #60A5FA;
+    border-color: #60A5FA;
+}
+
+body.dark-mode .icon-toggle-btn.active svg {
+    fill: white;
+}
+
+body.dark-mode .icon-toggle-btn.active:hover {
+    background: #3B82F6;
+    border-color: #3B82F6;
+}
+
+/* Error Banner Dark Mode */
+body.dark-mode .error-banner {
+    background: #7F1D1D;
+    color: #FCA5A5;
+}
+
+body.dark-mode .error-close {
+    color: #FCA5A5;
+}
+
+body.dark-mode .error-close:hover {
+    background: rgba(252, 165, 165, 0.1);
+}
+
+/* Sidebar Overlay Dark Mode */
+body.dark-mode .sidebar-overlay {
+    background: rgba(0, 0, 0, 0.7);
+}
+
+/* Typing Cursor Dark Mode */
+body.dark-mode .typing-cursor {
+    background: #93C5FD;
+}
+
+/* Navbar Dark Mode */
+body.dark-mode .header {
+    background: #1E2530;
+}
+
+body.dark-mode .logo {
+    color: #F3F4F6;
+}
+
+body.dark-mode .rectangle {
+    border-color: #F3F4F6;
+}
+
+body.dark-mode .icon-button .material-icons {
+    color: #9CA3AF;
+}
+
+body.dark-mode .icon-button:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+body.dark-mode .icon-button:hover .material-icons {
+    color: #E5E7EB;
+}
+
+body.dark-mode .icon-button:focus {
+    box-shadow: 0 0 0 2px #60A5FA;
+}
+
+/* Tooltip Dark Mode */
+body.dark-mode .tooltip {
+    background: #1F2937;
+    color: #E5E7EB;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
