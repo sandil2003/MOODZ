@@ -13,6 +13,24 @@
     overflow: hidden;
 }
 
+/* Dashboard Icon */
+.dashboard-icon {
+    position: fixed;
+    top: 1.5rem;
+    right: 1.5rem;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    z-index: 1001;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+    opacity: 0.9;
+}
+
+.dashboard-icon:hover {
+    transform: scale(1.1);
+    opacity: 1;
+}
+
 /* Header */
 .header {
     padding: 2rem 2rem 1rem 2rem;
@@ -188,6 +206,7 @@
     top: 80px;
     left: 15%;
     transform: rotate(-15deg);
+    animation: float1 8s ease-in-out infinite;
 }
 
 .shape-2 {
@@ -197,6 +216,7 @@
     top: 120px;
     left: 20%;
     border-radius: 50%;
+    animation: float2 10s ease-in-out infinite;
 }
 
 .shape-3 {
@@ -206,6 +226,7 @@
     top: 240px;
     right: 10%;
     transform: rotate(25deg);
+    animation: float3 12s ease-in-out infinite;
 }
 
 .shape-4 {
@@ -215,6 +236,56 @@
     bottom: 200px;
     right: 15%;
     transform: rotate(-20deg);
+    animation: float4 9s ease-in-out infinite;
+}
+
+/* Floating Animations */
+@keyframes float1 {
+
+    0%,
+    100% {
+        transform: rotate(-15deg) translateY(0) translateX(0);
+    }
+
+    50% {
+        transform: rotate(-15deg) translateY(-20px) translateX(10px);
+    }
+}
+
+@keyframes float2 {
+
+    0%,
+    100% {
+        transform: translateY(0) translateX(0) scale(1);
+    }
+
+    50% {
+        transform: translateY(15px) translateX(-15px) scale(1.05);
+    }
+}
+
+@keyframes float3 {
+
+    0%,
+    100% {
+        transform: rotate(25deg) translateY(0) translateX(0);
+    }
+
+    50% {
+        transform: rotate(25deg) translateY(25px) translateX(-10px);
+    }
+}
+
+@keyframes float4 {
+
+    0%,
+    100% {
+        transform: rotate(-20deg) translateY(0) translateX(0);
+    }
+
+    50% {
+        transform: rotate(-20deg) translateY(-18px) translateX(12px);
+    }
 }
 
 /* Content */

@@ -1,5 +1,8 @@
 <div class="mood-agent-container">
 
+    <!-- Dashboard Icon -->
+    <img src="/dashboard1.png" alt="Dashboard" class="dashboard-icon">
+
     <!-- Sidebar Overlay (for mobile) -->
     <div class="sidebar-overlay" [class.visible]="notesEnabled()" (click)="toggleNotes()"></div>
 
@@ -67,7 +70,7 @@
             } @else {
             <!-- AI Response Card -->
             <div class="ai-response-card">
-               
+
                 <div class="ai-content">
                     <markdown [data]="message.content"></markdown>
                 </div>
@@ -78,7 +81,7 @@
             <!-- AI Response Card (Loading or Streaming) -->
             @if (isStreaming()) {
             <div class="ai-response-card" [class.streaming]="currentStreamingMessage()">
-         
+
 
                 @if (!currentStreamingMessage()) {
                 <!-- Loading Dots or Status Message -->
