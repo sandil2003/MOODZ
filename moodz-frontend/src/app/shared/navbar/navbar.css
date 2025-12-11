@@ -31,6 +31,7 @@
     text-decoration: none;
     cursor: pointer;
     transition: opacity 0.2s;
+    position: relative;
 }
 
 .logo-link:hover {
@@ -162,4 +163,17 @@
     100% {
         opacity: 0;
     }
+}
+
+/* Logo Tooltip Specific Positioning */
+.logo-tooltip {
+    top: calc(100% + 4px);
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%) translateY(-4px);
+    min-width: auto;
+}
+
+.logo-tooltip.visible {
+    transform: translateX(-50%) translateY(0);
 }

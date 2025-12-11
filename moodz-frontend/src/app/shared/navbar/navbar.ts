@@ -9,10 +9,10 @@ import { CommonModule } from '@angular/common';
   styleUrl: './navbar.css',
 })
 export class Navbar {
-  tooltipVisible = signal<boolean[]>([false, false]);
-  tooltipText = signal<string[]>(['', '']);
+  tooltipVisible = signal<boolean[]>([false, false, false]);
+  tooltipText = signal<string[]>(['', '', '']);
 
-  private fullTexts = ['Mood Dashboard', 'Toggle Dark Mode'];
+  private fullTexts = ['Mood Dashboard', 'Toggle Dark Mode', 'Home'];
   private typingIntervals: any[] = [];
 
   showTooltip(index: number): void {
