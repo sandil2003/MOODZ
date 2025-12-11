@@ -9,11 +9,18 @@
 
         <!-- Header Icons -->
         <div class="header-icons">
-            <a routerLink="/mood-history" class="icon-button" data-tooltip="Mood Dashboard">
+            <a routerLink="/mood-history" class="icon-button" (mouseenter)="showTooltip(0)"
+                (mouseleave)="hideTooltip(0)">
                 <span class="material-icons">insights</span>
+                <div class="tooltip" [class.visible]="tooltipVisible()[0]">
+                    {{ tooltipText()[0] }}
+                </div>
             </a>
-            <button class="icon-button" data-tooltip="Toggle Dark Mode">
+            <button class="icon-button" (mouseenter)="showTooltip(1)" (mouseleave)="hideTooltip(1)">
                 <span class="material-icons">dark_mode</span>
+                <div class="tooltip" [class.visible]="tooltipVisible()[1]">
+                    {{ tooltipText()[1] }}
+                </div>
             </button>
         </div>
     </div>
