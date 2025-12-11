@@ -248,7 +248,7 @@ body.dark-mode .rectangle {
 }
 
 body.dark-mode .icon-button .material-icons {
-    color: #9CA3AF;
+    color: #FFFFFF !important;
 }
 
 body.dark-mode .icon-button:hover {
@@ -256,7 +256,7 @@ body.dark-mode .icon-button:hover {
 }
 
 body.dark-mode .icon-button:hover .material-icons {
-    color: #E5E7EB;
+    color: #FFFFFF !important;
 }
 
 body.dark-mode .icon-button:focus {
