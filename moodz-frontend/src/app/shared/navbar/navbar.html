@@ -2,7 +2,12 @@
     <div class="header-content">
         <div class="logo-container">
             <h1 class="logo">
-                <a routerLink="/" class="logo-link">MOODZ</a>
+                <a routerLink="/" class="logo-link" (mouseenter)="showTooltip(2)" (mouseleave)="hideTooltip(2)">
+                    MOODZ
+                    <div class="tooltip logo-tooltip" [class.visible]="tooltipVisible()[2]">
+                        {{ tooltipText()[2] }}
+                    </div>
+                </a>
             </h1>
             <div class="rectangle"></div>
         </div>
