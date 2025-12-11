@@ -3,10 +3,11 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ChatService, ChatMessage } from '../../services/mood_agent/chat.service';
 import { MarkdownModule } from 'ngx-markdown';
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-mood-agent',
-  imports: [CommonModule, FormsModule, MarkdownModule],
+  imports: [CommonModule, FormsModule, MarkdownModule, RouterModule],
   templateUrl: './mood-agent.html',
   styleUrl: './mood-agent.css',
 })
