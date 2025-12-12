@@ -1,4 +1,4 @@
-import { Component, signal, inject, OnInit, computed } from '@angular/core';
+import { Component, signal, inject, OnInit, computed, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MoodDataService, type MoodHistoryEntry, type UserFact, type MoodStats } from '../../services/mood_agent/mood-data.service';
 import { ChatService } from '../../services/mood_agent/chat.service';
@@ -33,7 +33,7 @@ interface SentimentData {
   templateUrl: './mood-dashboard.html',
   styleUrls: ['./mood-dashboard.css', './mood-dashboard-dark.css'],
 })
-export class MoodDashboard implements OnInit {
+export class MoodDashboard implements OnInit, OnDestroy {
   // Inject services
   private moodDataService = inject(MoodDataService);
   private chatService = inject(ChatService);
@@ -60,8 +60,43 @@ export class MoodDashboard implements OnInit {
     return percentage;
   });
 
+  // Typing animation for subtitle
+  subtitleText = signal<string>('');
+  showCursor = signal<boolean>(true);
+  private fullSubtitle = "Your personal AI companion's insights into your recent emotional landscape.";
+  private typingInterval: any;
+
   async ngOnInit() {
     await this.loadDashboardData();
+    this.startTypingAnimation();
+  }
+
+  /**
+   * Start typing animation for subtitle
+   */
+  private startTypingAnimation() {
+    let charIndex = 0;
+    this.subtitleText.set('');
+    this.showCursor.set(true);
+
+    this.typingInterval = setInterval(() => {
+      if (charIndex < this.fullSubtitle.length) {
+        this.subtitleText.set(this.fullSubtitle.substring(0, charIndex + 1));
+        charIndex++;
+      } else {
+        clearInterval(this.typingInterval);
+        // Hide cursor after typing is complete
+        setTimeout(() => {
+          this.showCursor.set(false);
+        }, 500); // Wait 500ms before hiding cursor
+      }
+    }, 30); // 30ms per character for smooth typing
+  }
+
+  ngOnDestroy() {
+    if (this.typingInterval) {
+      clearInterval(this.typingInterval);
+    }
   }
 
   /**
