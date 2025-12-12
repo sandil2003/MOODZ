@@ -1,0 +1,217 @@
+<div class="relative min-h-screen overflow-hidden flex flex-col bg-cream dark:bg-background-dark">
+    <!-- Decorative Shapes -->
+    <div class="shape-1"></div>
+    <div class="shape-2"></div>
+
+    <!-- Main Content -->
+    <div class="relative z-10 p-6 md:p-12 lg:p-16 max-w-[1600px] mx-auto w-full">
+        <!-- Header Section -->
+        <header class="text-center mb-16 animate-fade-in">
+            <h1 class="text-5xl md:text-6xl font-extrabold text-text-light dark:text-white tracking-tight mb-4">
+                Mood Dashboard
+            </h1>
+            <p class="text-xl text-subtext-light dark:text-subtext-dark font-medium max-w-2xl mx-auto leading-relaxed">
+                Your personal AI companion's insights into your recent emotional landscape.
+            </p>
+        </header>
+
+        <!-- Main Grid Layout -->
+        <div class="grid grid-cols-1 xl:grid-cols-12 gap-8">
+            <!-- Left Column: Score, Sentiment, and Timeline -->
+            <div class="xl:col-span-7 space-y-8 flex flex-col">
+                <!-- Top Cards: Score and Sentiment -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Average Score Card -->
+                    <div
+                        class="group bg-card-light/80 dark:bg-card-dark/80 backdrop-blur-md p-8 rounded-3xl shadow-subtle hover:shadow-elevated border border-border-light dark:border-border-dark transition-all duration-300 transform hover:-translate-y-1 cursor-default">
+                        <div class="flex items-start justify-between mb-4">
+                            <span
+                                class="text-subtext-light dark:text-subtext-dark font-bold text-xs uppercase tracking-widest">
+                                Average Score
+                            </span>
+                            <div
+                                class="w-10 h-10 flex items-center justify-center bg-primary-DEFAULT/10 rounded-full text-primary-DEFAULT group-hover:bg-primary-DEFAULT group-hover:text-white transition-colors duration-300">
+                                <span class="material-icons-outlined text-xl">speed</span>
+                            </div>
+                        </div>
+                        <div class="flex items-baseline gap-2">
+                            <span class="text-6xl font-bold text-primary-DEFAULT dark:text-indigo-400">
+                                {{ averageScore() }}
+                            </span>
+                            <span class="text-xl text-subtext-light dark:text-subtext-dark font-medium">
+                                /{{ maxScore() }}
+                            </span>
+                        </div>
+                        <div class="mt-6 w-full bg-gray-100 dark:bg-gray-700 h-2.5 rounded-full overflow-hidden">
+                            <div class="bg-primary-DEFAULT h-full rounded-full transition-all duration-1000 ease-out group-hover:w-[55%]"
+                                [style.width.%]="(averageScore() / maxScore()) * 100"></div>
+                        </div>
+                    </div>
+
+                    <!-- Sentiment Card -->
+                    <div
+                        class="group bg-card-light/80 dark:bg-card-dark/80 backdrop-blur-md p-8 rounded-3xl shadow-subtle hover:shadow-elevated border border-border-light dark:border-border-dark transition-all duration-300 transform hover:-translate-y-1 cursor-default">
+                        <div class="flex items-start justify-between mb-4">
+                            <span
+                                class="text-subtext-light dark:text-subtext-dark font-bold text-xs uppercase tracking-widest">
+                                Sentiment
+                            </span>
+                            <div
+                                class="w-10 h-10 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-full text-gray-600 dark:text-gray-300 group-hover:bg-gray-200 dark:group-hover:bg-gray-600 transition-colors duration-300">
+                                <span class="material-icons-outlined text-xl">psychology</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3 mb-2">
+                            <span class="text-4xl font-bold text-text-light dark:text-white">
+                                {{ sentiment().label }}
+                            </span>
+                            <span
+                                class="px-3 py-1 rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-bold uppercase tracking-wide border border-yellow-200 dark:border-yellow-800">
+                                {{ sentiment().badge }}
+                            </span>
+                        </div>
+                        <p class="text-sm text-subtext-light dark:text-subtext-dark mt-auto leading-relaxed">
+                            {{ sentiment().description }}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Mood Timeline Card -->
+                <div
+                    class="flex-1 bg-card-light/80 dark:bg-card-dark/80 backdrop-blur-md p-8 rounded-3xl shadow-subtle border border-border-light dark:border-border-dark">
+                    <div class="flex items-center justify-between mb-10">
+                        <h2 class="text-2xl font-bold text-text-light dark:text-white">Mood Timeline</h2>
+                        <button
+                            class="text-sm font-semibold text-primary-DEFAULT hover:text-primary-light transition-colors flex items-center gap-1 group">
+                            History
+                            <span
+                                class="material-icons-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                        </button>
+                    </div>
+
+                    <!-- Timeline Entries -->
+                    <div class="relative pl-2">
+                        <!-- Timeline Line -->
+                        <div
+                            class="absolute left-[19px] top-3 bottom-10 w-0.5 bg-gradient-to-b from-border-light via-gray-200 to-transparent dark:from-border-dark dark:via-gray-700 rounded-full">
+                        </div>
+
+                        @for (entry of moodEntries(); track entry.id) {
+                        <div class="relative group pl-12"
+                            [class.pb-10]="entry.id !== moodEntries()[moodEntries().length - 1].id">
+                            <!-- Timeline Dot -->
+                            <div class="absolute left-[10px] top-1.5 w-5 h-5 rounded-full border-[3px] border-white dark:border-card-dark shadow-sm z-10 transition-transform duration-300 group-hover:scale-125 group-hover:shadow-md"
+                                [ngClass]="{
+                       'bg-red-400': entry.type === 'anxious',
+                       'bg-purple-400': entry.type === 'down',
+                       'bg-green-400': entry.type === 'positive'
+                     }"></div>
+
+                            <!-- Entry Content -->
+                            <div class="p-5 -mt-3 rounded-2xl border border-transparent transition-all duration-300"
+                                [ngClass]="{
+                       'bg-cream/50 dark:bg-background-dark/30': entry.id === moodEntries()[0].id,
+                       'bg-transparent': entry.id !== moodEntries()[0].id
+                     }" [class.group-hover:bg-cream]="true" [class.group-hover:border-border-light]="true"
+                                [class.dark:group-hover:bg-background-dark]="true"
+                                [class.dark:group-hover:border-border-dark]="true">
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                                    <div class="flex items-center gap-3">
+                                        <h3 class="font-bold text-lg" [ngClass]="{
+                            'text-red-500': entry.type === 'anxious',
+                            'text-purple-500': entry.type === 'down',
+                            'text-green-500': entry.type === 'positive'
+                          }">
+                                            {{ entry.title }}
+                                        </h3>
+                                        <span class="px-2.5 py-0.5 rounded-full text-xs font-bold" [ngClass]="{
+                              'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400': entry.type === 'anxious',
+                              'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400': entry.type === 'down',
+                              'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400': entry.type === 'positive'
+                            }">
+                                            {{ entry.score }}/{{ entry.maxScore }}
+                                        </span>
+                                    </div>
+                                    <span class="text-xs font-medium text-subtext-light dark:text-subtext-dark">
+                                        {{ entry.timestamp }}
+                                    </span>
+                                </div>
+                                <p class="text-gray-600 dark:text-gray-300 leading-relaxed text-sm">
+                                    {{ entry.description }}
+                                </p>
+                            </div>
+                        </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Things I Know About You -->
+            <div class="xl:col-span-5 flex flex-col h-full">
+                <div
+                    class="bg-card-light/80 dark:bg-card-dark/80 backdrop-blur-md p-8 rounded-3xl shadow-subtle border border-border-light dark:border-border-dark flex flex-col h-full relative overflow-hidden">
+                    <!-- Decorative Glow -->
+                    <div
+                        class="absolute -top-20 -right-20 w-64 h-64 bg-primary-DEFAULT/5 rounded-full blur-3xl pointer-events-none">
+                    </div>
+
+                    <!-- Header -->
+                    <div class="flex items-center gap-3 mb-8 relative z-10">
+                        <div
+                            class="p-2.5 bg-yellow-100 dark:bg-yellow-900/30 rounded-xl text-yellow-600 dark:text-yellow-400 shadow-sm">
+                            <span class="material-icons-outlined">lightbulb</span>
+                        </div>
+                        <h2 class="text-2xl font-bold text-text-light dark:text-white">Things I Know About You</h2>
+                    </div>
+
+                    <!-- Insights List -->
+                    <div class="space-y-4 flex-grow relative z-10">
+                        @for (insight of insights(); track insight.id) {
+                        <div
+                            class="group relative bg-white dark:bg-gray-800/60 p-6 rounded-2xl border border-border-light dark:border-border-dark hover:border-primary-DEFAULT/30 hover:shadow-glow hover:-translate-y-1 transition-all duration-300 cursor-default">
+                            <!-- Accent Bar -->
+                            <div class="absolute top-6 left-5 bottom-6 w-1 rounded-full opacity-30 group-hover:opacity-100 transition-opacity"
+                                [ngClass]="{
+                       'bg-primary-DEFAULT': insight.id === 1,
+                       'bg-purple-500': insight.id === 2,
+                       'bg-green-500': insight.id === 3
+                     }"></div>
+
+                            <div class="pl-5">
+                                <p
+                                    class="text-base text-text-light dark:text-gray-200 font-medium leading-relaxed group-hover:text-primary-dark dark:group-hover:text-primary-light transition-colors">
+                                    {{ insight.text }}
+                                </p>
+                                <div
+                                    class="flex items-center gap-2 mt-4 pt-3 border-t border-dashed border-border-light dark:border-border-dark/50 opacity-70 group-hover:opacity-100 transition-opacity">
+                                    <span class="material-icons-outlined text-[16px] text-subtext-light">
+                                        @if (insight.source === 'MOOD ENTRY') {
+                                        calendar_today
+                                        } @else if (insight.source === 'PATTERN ANALYSIS') {
+                                        analytics
+                                        } @else {
+                                        favorite
+                                        }
+                                    </span>
+                                    <p
+                                        class="text-xs text-subtext-light dark:text-subtext-dark font-semibold uppercase tracking-wide">
+                                        {{ insight.source }}@if (insight.date) { · {{ insight.date }} }
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        }
+                    </div>
+
+                    <!-- View All Insights Button -->
+                    <button
+                        class="w-full mt-8 py-4 px-6 text-sm font-bold uppercase tracking-widest text-white bg-text-light dark:bg-primary-DEFAULT rounded-xl hover:bg-primary-DEFAULT dark:hover:bg-primary-light hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center gap-2 group shadow-md">
+                        <span>View All Insights</span>
+                        <span
+                            class="material-icons-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
