@@ -70,8 +70,9 @@
                             </span>
                         </div>
                         <div class="mt-6 w-full bg-gray-100 dark:bg-gray-700 h-2.5 rounded-full overflow-hidden">
-                            <div class="bg-primary-DEFAULT h-full rounded-full transition-all duration-1000 ease-out group-hover:w-[55%]"
-                                [style.width.%]="(averageScore() / maxScore()) * 100"></div>
+                            <div class="h-full rounded-full transition-all duration-1000 ease-out"
+                                [style.width.%]="progressPercentage()"
+                                style="background-color: #6366F1; min-width: 2%;"></div>
                         </div>
                     </div>
 
