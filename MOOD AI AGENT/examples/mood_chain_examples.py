@@ -38,7 +38,7 @@ async def setup_test_data(user_id, session_id):
         mood1 = MoodHistory(
             user_id=user_id,
             mood_score=4,
-            sentiment_label="anxious",
+            sentiment_label="Anxious",
             summary="Feeling stressed about work deadlines",
             session_id=session_id
         )
