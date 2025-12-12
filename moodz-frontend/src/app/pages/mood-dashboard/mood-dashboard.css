@@ -159,3 +159,8 @@ html {
         opacity: 0;
     }
 }
+
+/* Capitalize only first letter of sentence */
+.first-letter-capital::first-letter {
+    text-transform: uppercase;
+}
