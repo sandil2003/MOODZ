@@ -15,7 +15,7 @@
 }
 
 :host-context(.dark) .bg-background-dark {
-    background-color: #111827;
+    background-color: #1E2530;
 }
 
 :host-context(.dark) .bg-card-light\/80 {
