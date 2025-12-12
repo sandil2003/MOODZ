@@ -1,4 +1,4 @@
-import { Component, signal, inject, OnInit } from '@angular/core';
+import { Component, signal, inject, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MoodDataService, type MoodHistoryEntry, type UserFact, type MoodStats } from '../../services/mood_agent/mood-data.service';
 import { ChatService } from '../../services/mood_agent/chat.service';
@@ -52,6 +52,13 @@ export class MoodDashboard implements OnInit {
   });
   insights = signal<Insight[]>([]);
   moodEntries = signal<MoodEntry[]>([]);
+
+  // Computed property for progress bar percentage
+  progressPercentage = computed(() => {
+    const percentage = (this.averageScore() / this.maxScore()) * 100;
+    console.log('Progress bar percentage:', percentage, 'Average:', this.averageScore(), 'Max:', this.maxScore());
+    return percentage;
+  });
 
   async ngOnInit() {
     await this.loadDashboardData();
