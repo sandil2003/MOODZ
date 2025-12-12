@@ -152,7 +152,7 @@ async def save_conversation_intelligently(
             mood_scores = {
                 "happy": 8, "joyful": 9, "excited": 8, "content": 7,
                 "sad": 3, "depressed": 2, "down": 3, "melancholic": 3,
-                "anxious": 4, "worried": 4, "nervous": 4, "stressed": 3,
+                "Anxious": 4, "worried": 4, "nervous": 4, "stressed": 3,
                 "angry": 3, "frustrated": 4, "irritated": 4,
                 "calm": 7, "peaceful": 8, "relaxed": 7,
                 "neutral": 5,

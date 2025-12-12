@@ -101,15 +101,20 @@ export class MoodDashboard implements OnInit {
    * Transform mood history entries from backend to UI format
    */
   private updateMoodEntries(entries: MoodHistoryEntry[]) {
-    const transformedEntries: MoodEntry[] = entries.map(entry => ({
-      id: entry.id,
-      title: this.generateMoodTitle(entry.sentiment_label, entry.mood_score),
-      score: entry.mood_score,
-      maxScore: 10,
-      timestamp: this.formatTimestamp(entry.created_at),
-      description: `"${entry.summary}"`,
-      type: this.mapSentimentToType(entry.sentiment_label)
-    }));
+    const transformedEntries: MoodEntry[] = entries.map(entry => {
+      const moodType = this.mapSentimentToType(entry.sentiment_label);
+      console.log(`Mood Entry: "${entry.sentiment_label}" → Type: "${moodType}" (Score: ${entry.mood_score})`);
+
+      return {
+        id: entry.id,
+        title: this.generateMoodTitle(entry.sentiment_label, entry.mood_score),
+        score: entry.mood_score,
+        maxScore: 10,
+        timestamp: this.formatTimestamp(entry.created_at),
+        description: `"${entry.summary}"`,
+        type: moodType
+      };
+    });
 
     this.moodEntries.set(transformedEntries);
   }
@@ -135,8 +140,11 @@ export class MoodDashboard implements OnInit {
     // Update average score
     this.averageScore.set(stats.average_mood || 0);
 
-    // Update sentiment
-    const sentimentLabel = stats.most_common_sentiment || 'Mixed';
+    // Update sentiment with proper capitalization
+    const rawSentiment = stats.most_common_sentiment || 'Mixed';
+    // Capitalize first letter: "anxious" → "Anxious"
+    const sentimentLabel = rawSentiment.charAt(0).toUpperCase() + rawSentiment.slice(1).toLowerCase();
+
     this.sentiment.set({
       label: sentimentLabel,
       badge: this.mapSentimentToBadge(stats.most_common_sentiment),
@@ -166,19 +174,25 @@ export class MoodDashboard implements OnInit {
       return score >= 7 ? 'Feeling Good' : score >= 4 ? 'Neutral Mood' : 'Feeling Down';
     }
 
+    // Normalize sentiment to title case for consistent mapping
+    const normalizedSentiment = sentiment.charAt(0).toUpperCase() + sentiment.slice(1).toLowerCase();
+
     const sentimentMap: Record<string, string> = {
       'Anxious': 'Feeling Anxious',
       'Stressed': 'Feeling Stressed',
       'Angry': 'Feeling Angry',
-      'Sad': 'A Bit Down',
+      'Sad': 'Feeling Sad',
       'Happy': 'Feeling Happy',
       'Excited': 'Feeling Excited',
       'Content': 'Feeling Content',
       'Calm': 'Feeling Calm',
-      'Neutral': 'Neutral Mood'
+      'Neutral': 'Neutral Mood',
+      'Worried': 'Feeling Worried',
+      'Depressed': 'Feeling Down',
+      'Joyful': 'Feeling Joyful'
     };
 
-    return sentimentMap[sentiment] || `Feeling ${sentiment}`;
+    return sentimentMap[normalizedSentiment] || `Feeling ${normalizedSentiment}`;
   }
 
   /**
@@ -187,13 +201,24 @@ export class MoodDashboard implements OnInit {
   private mapSentimentToType(sentiment: string | null): 'anxious' | 'down' | 'positive' {
     if (!sentiment) return 'down';
 
-    const anxiousTypes = ['Anxious', 'Stressed', 'Angry'];
-    const downTypes = ['Sad', 'Neutral'];
-    const positiveTypes = ['Happy', 'Excited', 'Content', 'Calm'];
+    // Normalize to lowercase for case-insensitive matching
+    const normalizedSentiment = sentiment.toLowerCase();
 
-    if (anxiousTypes.includes(sentiment)) return 'anxious';
-    if (downTypes.includes(sentiment)) return 'down';
-    if (positiveTypes.includes(sentiment)) return 'positive';
+    // Anxious/Stressed types → Red
+    const anxiousTypes = ['anxious', 'stressed', 'angry', 'worried', 'nervous', 'tense'];
+    // Down/Sad types → Purple
+    const downTypes = ['sad', 'down', 'depressed', 'melancholy', 'blue', 'unhappy', 'neutral'];
+    // Positive types → Green
+    const positiveTypes = ['happy', 'excited', 'content', 'calm', 'joyful', 'peaceful', 'relaxed', 'cheerful', 'pleased'];
+
+    if (anxiousTypes.some(type => normalizedSentiment.includes(type))) return 'anxious';
+    if (downTypes.some(type => normalizedSentiment.includes(type))) return 'down';
+    if (positiveTypes.some(type => normalizedSentiment.includes(type))) return 'positive';
+
+    // Default based on common sentiment patterns
+    if (normalizedSentiment.includes('good') || normalizedSentiment.includes('great')) return 'positive';
+    if (normalizedSentiment.includes('bad') || normalizedSentiment.includes('terrible')) return 'down';
+    if (normalizedSentiment.includes('stress') || normalizedSentiment.includes('panic')) return 'anxious';
 
     return 'down'; // Default
   }
@@ -204,13 +229,16 @@ export class MoodDashboard implements OnInit {
   private mapSentimentToBadge(sentiment: string | null): string {
     if (!sentiment) return 'NEUTRAL';
 
-    const positiveTypes = ['Happy', 'Excited', 'Content', 'Calm'];
-    const negativeTypes = ['Sad', 'Anxious', 'Stressed', 'Angry'];
-    const neutralTypes = ['Neutral'];
+    // Normalize to lowercase for case-insensitive matching
+    const normalizedSentiment = sentiment.toLowerCase();
 
-    if (positiveTypes.includes(sentiment)) return 'POSITIVE';
-    if (negativeTypes.includes(sentiment)) return 'NEGATIVE';
-    if (neutralTypes.includes(sentiment)) return 'NEUTRAL';
+    const positiveTypes = ['happy', 'excited', 'content', 'calm', 'joyful', 'peaceful', 'cheerful'];
+    const negativeTypes = ['sad', 'anxious', 'stressed', 'angry', 'worried', 'depressed', 'down'];
+    const neutralTypes = ['neutral'];
+
+    if (positiveTypes.some(type => normalizedSentiment.includes(type))) return 'POSITIVE';
+    if (negativeTypes.some(type => normalizedSentiment.includes(type))) return 'NEGATIVE';
+    if (neutralTypes.some(type => normalizedSentiment.includes(type))) return 'NEUTRAL';
 
     return 'MIXED';
   }
