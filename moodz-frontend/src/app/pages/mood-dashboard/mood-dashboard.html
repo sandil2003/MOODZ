@@ -15,6 +15,33 @@
             </p>
         </header>
 
+        <!-- Loading State -->
+        @if (isLoading()) {
+        <div class="flex flex-col items-center justify-center py-20">
+            <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-primary-DEFAULT mb-4"></div>
+            <p class="text-subtext-light dark:text-subtext-dark text-lg">Loading your mood data...</p>
+        </div>
+        }
+
+        <!-- Error State -->
+        @else if (error()) {
+        <div class="max-w-2xl mx-auto">
+            <div
+                class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-3xl p-8 text-center">
+                <span class="material-icons-outlined text-6xl text-red-500 mb-4">error_outline</span>
+                <h2 class="text-2xl font-bold text-red-700 dark:text-red-400 mb-2">Oops! Something went wrong</h2>
+                <p class="text-red-600 dark:text-red-300 mb-6">{{ error() }}</p>
+                <button (click)="retryLoad()"
+                    class="px-6 py-3 bg-primary-DEFAULT hover:bg-primary-light text-white font-semibold rounded-xl transition-colors duration-300 flex items-center gap-2 mx-auto">
+                    <span class="material-icons-outlined">refresh</span>
+                    <span>Retry</span>
+                </button>
+            </div>
+        </div>
+        }
+
+        <!-- Dashboard Content -->
+        @else {
         <!-- Main Grid Layout -->
         <div class="grid grid-cols-1 xl:grid-cols-12 gap-8">
             <!-- Left Column: Score, Sentiment, and Timeline -->
@@ -65,8 +92,12 @@
                             <span class="text-4xl font-bold text-text-light dark:text-white">
                                 {{ sentiment().label }}
                             </span>
-                            <span
-                                class="px-3 py-1 rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-bold uppercase tracking-wide border border-yellow-200 dark:border-yellow-800">
+                            <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide border"
+                                [ngClass]="{
+                        'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800': sentiment().badge === 'NEUTRAL' || sentiment().badge === 'MIXED',
+                        'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800': sentiment().badge === 'POSITIVE',
+                        'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800': sentiment().badge === 'NEGATIVE'
+                      }">
                                 {{ sentiment().badge }}
                             </span>
                         </div>
@@ -89,6 +120,16 @@
                         </button>
                     </div>
 
+                    <!-- Empty State for Timeline -->
+                    @if (moodEntries().length === 0) {
+                    <div class="text-center py-12">
+                        <span
+                            class="material-icons-outlined text-6xl text-gray-300 dark:text-gray-600 mb-4">sentiment_satisfied_alt</span>
+                        <p class="text-subtext-light dark:text-subtext-dark text-lg">No mood entries yet</p>
+                        <p class="text-sm text-subtext-light dark:text-subtext-dark mt-2">Start chatting with your AI
+                            companion to track your mood!</p>
+                    </div>
+                    } @else {
                     <!-- Timeline Entries -->
                     <div class="relative pl-2">
                         <!-- Timeline Line -->
@@ -102,33 +143,33 @@
                             <!-- Timeline Dot -->
                             <div class="absolute left-[10px] top-1.5 w-5 h-5 rounded-full border-[3px] border-white dark:border-card-dark shadow-sm z-10 transition-transform duration-300 group-hover:scale-125 group-hover:shadow-md"
                                 [ngClass]="{
-                       'bg-red-400': entry.type === 'anxious',
-                       'bg-purple-400': entry.type === 'down',
-                       'bg-green-400': entry.type === 'positive'
-                     }"></div>
+                           'bg-red-400': entry.type === 'anxious',
+                           'bg-purple-400': entry.type === 'down',
+                           'bg-green-400': entry.type === 'positive'
+                         }"></div>
 
                             <!-- Entry Content -->
                             <div class="p-5 -mt-3 rounded-2xl border border-transparent transition-all duration-300"
                                 [ngClass]="{
-                       'bg-cream/50 dark:bg-background-dark/30': entry.id === moodEntries()[0].id,
-                       'bg-transparent': entry.id !== moodEntries()[0].id
-                     }" [class.group-hover:bg-cream]="true" [class.group-hover:border-border-light]="true"
+                           'bg-cream/50 dark:bg-background-dark/30': entry.id === moodEntries()[0].id,
+                           'bg-transparent': entry.id !== moodEntries()[0].id
+                         }" [class.group-hover:bg-cream]="true" [class.group-hover:border-border-light]="true"
                                 [class.dark:group-hover:bg-background-dark]="true"
                                 [class.dark:group-hover:border-border-dark]="true">
                                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
                                     <div class="flex items-center gap-3">
                                         <h3 class="font-bold text-lg" [ngClass]="{
-                            'text-red-500': entry.type === 'anxious',
-                            'text-purple-500': entry.type === 'down',
-                            'text-green-500': entry.type === 'positive'
-                          }">
+                                'text-red-500': entry.type === 'anxious',
+                                'text-purple-500': entry.type === 'down',
+                                'text-green-500': entry.type === 'positive'
+                              }">
                                             {{ entry.title }}
                                         </h3>
                                         <span class="px-2.5 py-0.5 rounded-full text-xs font-bold" [ngClass]="{
-                              'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400': entry.type === 'anxious',
-                              'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400': entry.type === 'down',
-                              'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400': entry.type === 'positive'
-                            }">
+                                  'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400': entry.type === 'anxious',
+                                  'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400': entry.type === 'down',
+                                  'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400': entry.type === 'positive'
+                                }">
                                             {{ entry.score }}/{{ entry.maxScore }}
                                         </span>
                                     </div>
@@ -143,6 +184,7 @@
                         </div>
                         }
                     </div>
+                    }
                 </div>
             </div>
 
@@ -164,6 +206,16 @@
                         <h2 class="text-2xl font-bold text-text-light dark:text-white">Things I Know About You</h2>
                     </div>
 
+                    <!-- Empty State for Insights -->
+                    @if (insights().length === 0) {
+                    <div class="text-center py-12 flex-grow flex flex-col items-center justify-center relative z-10">
+                        <span
+                            class="material-icons-outlined text-6xl text-gray-300 dark:text-gray-600 mb-4">lightbulb</span>
+                        <p class="text-subtext-light dark:text-subtext-dark text-lg">No insights yet</p>
+                        <p class="text-sm text-subtext-light dark:text-subtext-dark mt-2">Share more about yourself to
+                            unlock personalized insights!</p>
+                    </div>
+                    } @else {
                     <!-- Insights List -->
                     <div class="space-y-4 flex-grow relative z-10">
                         @for (insight of insights(); track insight.id) {
@@ -172,10 +224,10 @@
                             <!-- Accent Bar -->
                             <div class="absolute top-6 left-5 bottom-6 w-1 rounded-full opacity-30 group-hover:opacity-100 transition-opacity"
                                 [ngClass]="{
-                       'bg-primary-DEFAULT': insight.id === 1,
-                       'bg-purple-500': insight.id === 2,
-                       'bg-green-500': insight.id === 3
-                     }"></div>
+                           'bg-primary-DEFAULT': insight.id === 1 || insight.id % 3 === 1,
+                           'bg-purple-500': insight.id === 2 || insight.id % 3 === 2,
+                           'bg-green-500': insight.id === 3 || insight.id % 3 === 0
+                         }"></div>
 
                             <div class="pl-5">
                                 <p
@@ -185,9 +237,10 @@
                                 <div
                                     class="flex items-center gap-2 mt-4 pt-3 border-t border-dashed border-border-light dark:border-border-dark/50 opacity-70 group-hover:opacity-100 transition-opacity">
                                     <span class="material-icons-outlined text-[16px] text-subtext-light">
-                                        @if (insight.source === 'MOOD ENTRY') {
+                                        @if (insight.source.includes('MOOD ENTRY') ||
+                                        insight.source.includes('MOOD_ENTRY')) {
                                         calendar_today
-                                        } @else if (insight.source === 'PATTERN ANALYSIS') {
+                                        } @else if (insight.source.includes('PATTERN')) {
                                         analytics
                                         } @else {
                                         favorite
@@ -202,6 +255,7 @@
                         </div>
                         }
                     </div>
+                    }
 
                     <!-- View All Insights Button -->
                     <button
@@ -213,5 +267,6 @@
                 </div>
             </div>
         </div>
+        }
     </div>
 </div>
