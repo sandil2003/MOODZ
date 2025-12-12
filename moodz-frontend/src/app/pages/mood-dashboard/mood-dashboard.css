@@ -1,0 +1,130 @@
+/* ========================================
+   ENHANCED MOOD DASHBOARD STYLES
+   ======================================== */
+
+/* Decorative Shapes */
+.shape-1 {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 300px;
+    height: 200px;
+    background-color: #EF4444;
+    border-radius: 1.5rem;
+    transform: rotate(-15deg) translate(-50%, -50%);
+    opacity: 0.1;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.shape-2 {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 250px;
+    height: 180px;
+    background-color: #EF4444;
+    border-radius: 1.5rem;
+    transform: rotate(10deg) translate(40%, 40%);
+    opacity: 0.1;
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* Dark mode shape adjustments */
+:host-context(.dark) .shape-1,
+:host-context(.dark) .shape-2 {
+    opacity: 0.15;
+}
+
+/* Smooth scrolling */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Animation keyframes */
+@keyframes fadeIn {
+    0% {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.6s ease-out forwards;
+}
+
+/* Custom Tailwind utilities not available in CDN */
+.bg-cream {
+    background-color: #FDFBF7;
+}
+
+.bg-background-dark {
+    background-color: #111827;
+}
+
+.bg-card-light\/80 {
+    background-color: rgba(255, 255, 255, 0.8);
+}
+
+.bg-card-dark\/80 {
+    background-color: rgba(31, 41, 55, 0.8);
+}
+
+.text-primary-dark {
+    color: #312E81;
+}
+
+.text-primary-light {
+    color: #6366F1;
+}
+
+.shadow-subtle {
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+}
+
+.shadow-elevated {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+}
+
+.shadow-glow {
+    box-shadow: 0 0 15px rgba(67, 56, 202, 0.1);
+}
+
+/* Ensure proper font family */
+:host {
+    font-family: 'Plus Jakarta Sans', 'Space Grotesk', sans-serif;
+}
+
+/* Additional responsive adjustments */
+@media (max-width: 768px) {
+
+    .shape-1,
+    .shape-2 {
+        width: 200px;
+        height: 150px;
+    }
+}
+
+/* Ensure Material Icons render properly */
+.material-icons-outlined {
+    font-family: 'Material Icons Outlined';
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    font-feature-settings: 'liga';
+    -webkit-font-feature-settings: 'liga';
+    -webkit-font-smoothing: antialiased;
+}

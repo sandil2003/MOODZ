@@ -12,5 +12,9 @@ export const routes: Routes = [
     {
         path: 'mood-history',
         loadComponent: () => import('./pages/mood-history/mood-history').then(m => m.MoodHistory)
+    },
+    {
+        path: 'mood-dashboard',
+        loadComponent: () => import('./pages/mood-dashboard/mood-dashboard').then(m => m.MoodDashboard)
     }
 ];
