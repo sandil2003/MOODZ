@@ -1,7 +1,8 @@
-import { Component, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, signal, inject, OnInit } from '@angular/core';
+import { Router, RouterLink, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ThemeService } from '../../services/theme.service';
+import { filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-navbar',
@@ -9,14 +10,32 @@ import { ThemeService } from '../../services/theme.service';
   templateUrl: './navbar.html',
   styleUrl: './navbar.css',
 })
-export class Navbar {
+export class Navbar implements OnInit {
   tooltipVisible = signal<boolean[]>([false, false, false]);
   tooltipText = signal<string[]>(['', '', '']);
+  isOnMoodDashboard = signal<boolean>(false);
 
   private fullTexts = ['Mood Dashboard', 'Toggle Dark Mode', 'Home'];
   private typingIntervals: any[] = [];
+  private router = inject(Router);
 
   constructor(public themeService: ThemeService) { }
+
+  ngOnInit() {
+    // Check initial route
+    this.checkRoute(this.router.url);
+
+    // Listen to route changes
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe((event: any) => {
+      this.checkRoute(event.urlAfterRedirects);
+    });
+  }
+
+  private checkRoute(url: string) {
+    this.isOnMoodDashboard.set(url.includes('/mood-dashboard') || url.includes('/mood-history'));
+  }
 
   showTooltip(index: number): void {
     // Clear any existing interval
