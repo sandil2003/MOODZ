@@ -17,17 +17,19 @@ export class ThemeService {
             this.darkMode.set(savedTheme === 'true');
         }
 
-        // Apply theme class to body whenever darkMode changes
+        // Apply theme class to html element whenever darkMode changes
         effect(() => {
             const isDark = this.darkMode();
             console.log('Dark mode changed to:', isDark);
 
             if (isDark) {
+                document.documentElement.classList.add('dark');
                 document.body.classList.add('dark-mode');
-                console.log('Added dark-mode class to body');
+                console.log('Added dark class to html and dark-mode class to body');
             } else {
+                document.documentElement.classList.remove('dark');
                 document.body.classList.remove('dark-mode');
-                console.log('Removed dark-mode class from body');
+                console.log('Removed dark class from html and dark-mode class from body');
             }
         });
     }

@@ -31,6 +31,57 @@ body.dark-mode .chat-history-item.active {
     background: #374151;
 }
 
+/* ========================================
+   NAVBAR DARK MODE STYLES
+   ======================================== */
+
+/* Header background - Dark Mode */
+body.dark-mode .header {
+    background: #1E2530;
+}
+
+body.dark-mode .header-mood-dashboard {
+    background: rgba(17, 24, 39, 0.95) !important;
+}
+
+/* Logo and text - Dark Mode */
+body.dark-mode .logo {
+    color: #F9FAFB;
+}
+
+body.dark-mode .logo-link:hover {
+    opacity: 0.7;
+}
+
+/* Rectangle border - Dark Mode */
+body.dark-mode .rectangle {
+    border-color: #F9FAFB;
+}
+
+/* Icon buttons - Dark Mode */
+body.dark-mode .icon-button .material-icons {
+    color: #D1D5DB;
+}
+
+body.dark-mode .icon-button:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .icon-button:hover .material-icons {
+    color: #F9FAFB;
+}
+
+body.dark-mode .icon-button:focus {
+    box-shadow: 0 0 0 2px #6366F1;
+}
+
+/* Tooltip - Dark Mode */
+body.dark-mode .tooltip {
+    background: #374151;
+    color: #F9FAFB;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
 body.dark-mode .chat-history-item .chat-title {
     color: #D1D5DB;
 }
@@ -231,36 +282,8 @@ body.dark-mode .sidebar-overlay {
 
 /* Typing Cursor Dark Mode */
 body.dark-mode .typing-cursor {
-    background: #93C5FD;
-}
-
-/* Navbar Dark Mode */
-body.dark-mode .header {
-    background: #1E2530;
-}
-
-body.dark-mode .logo {
-    color: #F3F4F6;
-}
-
-body.dark-mode .rectangle {
-    border-color: #F3F4F6;
-}
-
-body.dark-mode .icon-button .material-icons {
-    color: #FFFFFF !important;
-}
-
-body.dark-mode .icon-button:hover {
-    background: rgba(255, 255, 255, 0.05);
-}
-
-body.dark-mode .icon-button:hover .material-icons {
-    color: #FFFFFF !important;
-}
-
-body.dark-mode .icon-button:focus {
-    box-shadow: 0 0 0 2px #60A5FA;
+    background: #2D3340;
+    color: #D1D5DB;
 }
 
 /* Tooltip Dark Mode */

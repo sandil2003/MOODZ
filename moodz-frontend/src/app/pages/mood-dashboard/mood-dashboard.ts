@@ -31,7 +31,7 @@ interface SentimentData {
   selector: 'app-mood-dashboard',
   imports: [CommonModule],
   templateUrl: './mood-dashboard.html',
-  styleUrl: './mood-dashboard.css',
+  styleUrls: ['./mood-dashboard.css', './mood-dashboard-dark.css'],
 })
 export class MoodDashboard implements OnInit {
   // Inject services

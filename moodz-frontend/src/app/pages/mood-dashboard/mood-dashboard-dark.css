@@ -1,0 +1,253 @@
+/* ========================================
+   MOOD DASHBOARD DARK MODE STYLES
+   ======================================== */
+
+/* Dark mode shapes */
+:host-context(.dark) .shape-1,
+:host-context(.dark) .shape-2 {
+    opacity: 0.1;
+    background-color: #6366F1;
+}
+
+/* Background colors */
+:host-context(.dark) .bg-cream {
+    background-color: #1E2530;
+}
+
+:host-context(.dark) .bg-background-dark {
+    background-color: #111827;
+}
+
+:host-context(.dark) .bg-card-light\/80 {
+    background-color: rgba(31, 41, 55, 0.8);
+}
+
+/* Text colors */
+:host-context(.dark) .text-text-light {
+    color: #F9FAFB;
+}
+
+:host-context(.dark) .text-subtext-light {
+    color: #9CA3AF;
+}
+
+/* Border colors */
+:host-context(.dark) .border-border-light {
+    border-color: #374151;
+}
+
+/* Card backgrounds */
+:host-context(.dark) .bg-card-light\/80 {
+    background-color: rgba(31, 41, 55, 0.8);
+}
+
+/* Header text */
+:host-context(.dark) h1,
+:host-context(.dark) h2,
+:host-context(.dark) h3 {
+    color: #FFFFFF;
+}
+
+/* Average Score Card - Dark Mode */
+:host-context(.dark) .text-primary-DEFAULT {
+    color: #818CF8;
+    /* Indigo-400 */
+}
+
+/* Sentiment Card - Dark Mode */
+:host-context(.dark) .bg-gray-100 {
+    background-color: #374151;
+}
+
+:host-context(.dark) .text-gray-600 {
+    color: #9CA3AF;
+}
+
+:host-context(.dark) .group:hover .bg-gray-200 {
+    background-color: #4B5563;
+}
+
+/* Sentiment Badges - Dark Mode */
+:host-context(.dark) .bg-yellow-100 {
+    background-color: rgba(251, 191, 36, 0.3);
+}
+
+:host-context(.dark) .text-yellow-700 {
+    color: #FCD34D;
+}
+
+:host-context(.dark) .border-yellow-200 {
+    border-color: #B45309;
+}
+
+:host-context(.dark) .bg-green-100 {
+    background-color: rgba(34, 197, 94, 0.3);
+}
+
+:host-context(.dark) .text-green-700 {
+    color: #4ADE80;
+}
+
+:host-context(.dark) .border-green-200 {
+    border-color: #166534;
+}
+
+:host-context(.dark) .bg-red-100 {
+    background-color: rgba(239, 68, 68, 0.3);
+}
+
+:host-context(.dark) .text-red-700 {
+    color: #F87171;
+}
+
+:host-context(.dark) .border-red-200 {
+    border-color: #991B1B;
+}
+
+/* Mood Timeline - Dark Mode */
+:host-context(.dark) .from-border-light {
+    --tw-gradient-from: #374151;
+}
+
+:host-context(.dark) .via-gray-200 {
+    --tw-gradient-via: #4B5563;
+}
+
+:host-context(.dark) .border-white {
+    border-color: #1F2937;
+}
+
+:host-context(.dark) .bg-cream\/50 {
+    background-color: rgba(17, 24, 39, 0.3);
+}
+
+:host-context(.dark) .group:hover .bg-cream {
+    background-color: #111827;
+}
+
+:host-context(.dark) .group:hover .border-border-light {
+    border-color: #374151;
+}
+
+:host-context(.dark) .text-gray-600 {
+    color: #D1D5DB;
+}
+
+/* Mood Entry Badges - Dark Mode */
+:host-context(.dark) .bg-red-50 {
+    background-color: rgba(239, 68, 68, 0.2);
+}
+
+:host-context(.dark) .text-red-600 {
+    color: #F87171;
+}
+
+:host-context(.dark) .bg-purple-50 {
+    background-color: rgba(168, 85, 247, 0.2);
+}
+
+:host-context(.dark) .text-purple-600 {
+    color: #C084FC;
+}
+
+:host-context(.dark) .bg-green-50 {
+    background-color: rgba(34, 197, 94, 0.2);
+}
+
+:host-context(.dark) .text-green-600 {
+    color: #4ADE80;
+}
+
+/* Insights Section - Dark Mode */
+:host-context(.dark) .bg-yellow-100 {
+    background-color: rgba(251, 191, 36, 0.3);
+}
+
+:host-context(.dark) .text-yellow-600 {
+    color: #FCD34D;
+}
+
+:host-context(.dark) .bg-white {
+    background-color: rgba(55, 65, 81, 0.3);
+}
+
+:host-context(.dark) .bg-gray-700\/30 {
+    background-color: rgba(55, 65, 81, 0.3);
+}
+
+:host-context(.dark) .text-gray-200 {
+    color: #E5E7EB;
+}
+
+:host-context(.dark) .group:hover .text-primary-dark {
+    color: #A5B4FC;
+}
+
+:host-context(.dark) .border-dashed {
+    border-color: rgba(55, 65, 81, 0.5);
+}
+
+/* Progress Bar - Dark Mode */
+:host-context(.dark) .bg-gray-700 {
+    background-color: #374151;
+}
+
+/* Button - Dark Mode */
+:host-context(.dark) .bg-text-light {
+    background-color: #4338CA;
+}
+
+:host-context(.dark) .hover\:bg-primary-DEFAULT:hover {
+    background-color: #6366F1;
+}
+
+/* Icon containers - Dark Mode */
+:host-context(.dark) .bg-primary-DEFAULT\/10 {
+    background-color: rgba(99, 102, 241, 0.1);
+}
+
+/* Decorative glow - Dark Mode */
+:host-context(.dark) .bg-primary-DEFAULT\/5 {
+    background-color: rgba(99, 102, 241, 0.1);
+}
+
+/* Shadow adjustments for dark mode */
+:host-context(.dark) .shadow-subtle {
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.3);
+}
+
+:host-context(.dark) .shadow-elevated {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
+}
+
+:host-context(.dark) .shadow-glow {
+    box-shadow: 0 0 15px rgba(99, 102, 241, 0.2);
+}
+
+:host-context(.dark) .shadow-md {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.2);
+}
+
+:host-context(.dark) .shadow-lg {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -4px rgba(0, 0, 0, 0.2);
+}
+
+/* Hover border effects - Dark Mode */
+:host-context(.dark) .hover\:border-primary-DEFAULT\/30:hover {
+    border-color: rgba(99, 102, 241, 0.3);
+}
+
+/* Loading and Error States - Dark Mode */
+:host-context(.dark) .text-primary-DEFAULT {
+    color: #818CF8;
+}
+
+/* Empty State - Dark Mode */
+:host-context(.dark) .text-gray-400 {
+    color: #9CA3AF;
+}
+
+:host-context(.dark) .text-gray-500 {
+    color: #6B7280;
+}
+
