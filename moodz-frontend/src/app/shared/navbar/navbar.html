@@ -15,6 +15,7 @@
 
         <!-- Header Icons -->
         <div class="header-icons">
+            @if (!isOnHomePage()) {
             <a routerLink="/mood-dashboard" class="icon-button" (mouseenter)="showTooltip(0)"
                 (mouseleave)="hideTooltip(0)" (click)="hideTooltip(0)">
                 <span class="material-icons">insights</span>
@@ -22,6 +23,7 @@
                     {{ tooltipText()[0] }}
                 </div>
             </a>
+            }
             <button class="icon-button" (mouseenter)="showTooltip(1)" (mouseleave)="hideTooltip(1)"
                 (click)="toggleDarkMode(); hideTooltip(1)">
                 <span class="material-icons">dark_mode</span>

@@ -30,6 +30,35 @@
     animation: float 7s ease-in-out infinite 2s;
 }
 
+/* Decorative Shapes */
+.home-shape-1 {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 480px;
+    height: 290px;
+    background: linear-gradient(135deg, #F0EDE6 0%, #EBE7DF 100%);
+    border-radius: 1.5rem;
+    transform: rotate(15deg) translate(40%, -40%);
+    opacity: 0.5;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.home-shape-2 {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 450px;
+    height: 280px;
+    background: linear-gradient(135deg, #EFEAE3 0%, #E9E4DC 100%);
+    border-radius: 1.5rem;
+    transform: rotate(-12deg) translate(-40%, 40%);
+    opacity: 0.5;
+    z-index: 1;
+    pointer-events: none;
+}
+
 /* Custom Glow Shadows */
 .shadow-glow-beige {
     box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
