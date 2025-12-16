@@ -75,3 +75,33 @@
     -webkit-font-feature-settings: 'liga';
     -webkit-font-smoothing: antialiased;
 }
+
+/* User Highlight Rectangle */
+.user-highlight {
+    background: linear-gradient(135deg, #2b6cee 0%, #4a8fff 100%);
+    color: white;
+    padding: 0.25rem 1rem;
+    border-radius: 0.75rem;
+    display: inline-block;
+    box-shadow: 0 4px 12px rgba(43, 108, 238, 0.3);
+    position: relative;
+    top: -0.1em;
+    animation: rotateAlign 2.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes rotateAlign {
+    0% {
+        transform: rotate(-15deg);
+        opacity: 0.8;
+    }
+
+    40% {
+        transform: rotate(-15deg);
+        opacity: 1;
+    }
+
+    100% {
+        transform: rotate(0deg);
+        opacity: 1;
+    }
+}
