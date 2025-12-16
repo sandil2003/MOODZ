@@ -59,13 +59,6 @@
                             (mouseenter)="agent.id === 'mood' ? showMoodTooltip() : null"
                             (mouseleave)="agent.id === 'mood' ? hideMoodTooltip() : null">
                             <span class="material-symbols-outlined text-[28px]">{{ agent.icon }}</span>
-
-                            <!-- Typing Tooltip (only for mood agent) -->
-                            @if (agent.id === 'mood' && moodTooltipVisible()) {
-                            <div class="mood-tooltip">
-                                {{ moodTooltipText() }}<span class="typing-cursor-tooltip">|</span>
-                            </div>
-                            }
                         </div>
 
                         <!-- Status Badge -->
@@ -77,6 +70,13 @@
                             {{ agent.status === 'online' ? 'Online' : 'Ready' }}
                         </div>
                     </div>
+
+                    <!-- Typing Tooltip (outside image container, only for mood agent) -->
+                    @if (agent.id === 'mood' && moodTooltipVisible()) {
+                    <div class="mood-tooltip-wrapper">
+                        {{ moodTooltipText() }}<span class="typing-cursor-tooltip">|</span>
+                    </div>
+                    }
 
                     <!-- Card Content -->
                     <div class="flex flex-col flex-1 p-5 gap-3">
@@ -110,7 +110,7 @@
     <footer class="w-full border-t border-slate-200 bg-white/50 backdrop-blur-sm py-8 text-center relative z-10">
         <div class="flex flex-col items-center gap-4">
             <div class="flex items-center gap-2 text-slate-400 text-sm">
-                <span>© 2024 AI Hub</span>
+                <span>© 2025 Moodz AI</span>
                 <span class="size-1 rounded-full bg-slate-300"></span>
                 <a class="hover:text-slate-600 transition-colors" href="#">Privacy</a>
                 <span class="size-1 rounded-full bg-slate-300"></span>

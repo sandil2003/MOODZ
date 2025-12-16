@@ -116,32 +116,31 @@
 }
 
 /* Mood Icon Tooltip */
-.mood-tooltip {
+.mood-tooltip-wrapper {
     position: absolute;
-    top: calc(100% + 12px);
-    left: 50%;
-    transform: translateX(-50%);
-    background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
-    color: white;
+    top: -8px;
+    left: 18px;
+    background: linear-gradient(135deg, #E5DFD0 0%, #D9D1C0 100%);
+    color: #3D3D3D;
     padding: 0.625rem 1rem;
     border-radius: 12px;
     font-size: 0.875rem;
     font-weight: 500;
     white-space: nowrap;
-    box-shadow: 0 4px 16px rgba(217, 119, 6, 0.3);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
     z-index: 30;
     animation: tooltipFadeIn 0.2s ease;
     font-family: 'Inter', sans-serif;
+    transform: translateY(-100%);
 }
 
-.mood-tooltip::before {
+.mood-tooltip-wrapper::before {
     content: '';
     position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
+    top: 100%;
+    left: 20px;
     border: 6px solid transparent;
-    border-bottom-color: #d97706;
+    border-top-color: #D9D1C0;
 }
 
 @keyframes tooltipFadeIn {
