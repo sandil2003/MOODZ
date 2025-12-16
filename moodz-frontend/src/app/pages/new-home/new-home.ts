@@ -39,7 +39,7 @@ export class NewHomeComponent {
       icon: 'mood',
       color: 'beige',
       glowColor: 'shadow-glow-beige',
-      imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB1BspbKW_TJBQ70dh2J1BZOqWeUbjkDsUoyZ1NucKN1PjOYSZsYVRSLJ2iPtns7V1Bt3ICh8eTqiZr_B3QVQdg-ydcbtPc4D1wtdh9oq7UnN9mXLSoBJWI6G0WokoX5UL1-RyCeOzncJQs9IxM96b9s-MOr33X4yd3oceBNmQO-W4ItYoR9rUMnuliU_n-5TtzzN9wqh-dB9UcDV3KIWaPqmGd7XgqGwCnGSm340m918QjDFPn6zZtK4B63ZS78t-iB4D4qH-FBJIQ',
+      imageUrl: '/mood%20agent.548Z.png',
       status: 'online',
       route: '/mood-agent'
     },
