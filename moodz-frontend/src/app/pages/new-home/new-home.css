@@ -31,6 +31,15 @@
 }
 
 /* Custom Glow Shadows */
+.shadow-glow-beige {
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+    transition: box-shadow 0.5s ease;
+}
+
+.shadow-glow-beige:hover {
+    box-shadow: 0 0 40px -10px rgba(217, 119, 6, 0.3);
+}
+
 .shadow-glow-purple {
     box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
     transition: box-shadow 0.5s ease;
