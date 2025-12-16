@@ -92,6 +92,45 @@ export class NewHomeComponent {
     this.router.navigate([route]);
   }
 
+  // Tooltip state for mood icon
+  moodTooltipVisible = signal<boolean>(false);
+  moodTooltipText = signal<string>('');
+  private typingInterval: any = null;
+  private readonly fullTooltipText = 'How are you feeling today?';
+
+  showMoodTooltip(): void {
+    // Clear any existing interval
+    if (this.typingInterval) {
+      clearInterval(this.typingInterval);
+    }
+
+    // Show tooltip
+    this.moodTooltipVisible.set(true);
+    this.moodTooltipText.set('');
+
+    // Start typing animation
+    let charIndex = 0;
+    this.typingInterval = setInterval(() => {
+      if (charIndex < this.fullTooltipText.length) {
+        this.moodTooltipText.set(this.fullTooltipText.substring(0, charIndex + 1));
+        charIndex++;
+      } else {
+        clearInterval(this.typingInterval);
+      }
+    }, 50); // 50ms per character
+  }
+
+  hideMoodTooltip(): void {
+    // Clear typing interval
+    if (this.typingInterval) {
+      clearInterval(this.typingInterval);
+    }
+
+    // Hide tooltip
+    this.moodTooltipVisible.set(false);
+    this.moodTooltipText.set('');
+  }
+
   getColorClasses(color: string): { [key: string]: string } {
     const colorMap: { [key: string]: { [key: string]: string } } = {
       beige: {
