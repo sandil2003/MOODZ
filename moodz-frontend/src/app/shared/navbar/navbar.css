@@ -15,6 +15,10 @@
     /* Lower z-index on dashboard to allow shape overlay */
 }
 
+.header-home-page {
+    background: #f6f6f8 !important;
+}
+
 /* Ensure all navbar children stay below shape on dashboard */
 .header-mood-dashboard * {
     z-index: 1 !important;
