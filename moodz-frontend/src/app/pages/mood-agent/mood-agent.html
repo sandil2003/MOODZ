@@ -77,21 +77,20 @@
 
             <!-- AI Response Card (Loading or Streaming) -->
             @if (isStreaming()) {
+            @if (!currentStreamingMessage() && !currentStatus()) {
+            <!-- Morphing Loader (inline, no card) -->
+            <div class="morphing-loader">
+                <div class="morph-shape"></div>
+            </div>
+            } @else {
+            <!-- AI Response Card for Status or Streaming Content -->
             <div class="ai-response-card" [class.streaming]="currentStreamingMessage()">
-
-
-                @if (!currentStreamingMessage()) {
-                <!-- Loading Dots or Status Message -->
                 @if (currentStatus()) {
+                <!-- Status Message -->
                 <div class="status-message">
                     <span class="status-icon">🤖</span>
                     {{ currentStatus() }}
                 </div>
-                } @else {
-                <div class="morphing-loader">
-                    <div class="morph-shape"></div>
-                </div>
-                }
                 } @else {
                 <!-- Streaming Content -->
                 <div class="ai-content">
@@ -100,6 +99,7 @@
                 </div>
                 }
             </div>
+            }
             }
         </div>
 
