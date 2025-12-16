@@ -37,8 +37,8 @@ export class NewHomeComponent {
       subtitle: 'Emotional Intelligence',
       description: "Feeling overwhelmed? I'm here to provide empathy, track your mood patterns, and offer emotional support.",
       icon: 'mood',
-      color: 'purple',
-      glowColor: 'shadow-glow-purple',
+      color: 'beige',
+      glowColor: 'shadow-glow-beige',
       imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB1BspbKW_TJBQ70dh2J1BZOqWeUbjkDsUoyZ1NucKN1PjOYSZsYVRSLJ2iPtns7V1Bt3ICh8eTqiZr_B3QVQdg-ydcbtPc4D1wtdh9oq7UnN9mXLSoBJWI6G0WokoX5UL1-RyCeOzncJQs9IxM96b9s-MOr33X4yd3oceBNmQO-W4ItYoR9rUMnuliU_n-5TtzzN9wqh-dB9UcDV3KIWaPqmGd7XgqGwCnGSm340m918QjDFPn6zZtK4B63ZS78t-iB4D4qH-FBJIQ',
       status: 'online',
       route: '/mood-agent'
@@ -94,6 +94,12 @@ export class NewHomeComponent {
 
   getColorClasses(color: string): { [key: string]: string } {
     const colorMap: { [key: string]: { [key: string]: string } } = {
+      beige: {
+        bg: 'bg-amber-50',
+        text: 'text-amber-700',
+        hoverText: 'group-hover:text-amber-700',
+        ring: 'hover:ring-amber-200'
+      },
       purple: {
         bg: 'bg-purple-50',
         text: 'text-purple-600',
@@ -114,6 +120,6 @@ export class NewHomeComponent {
       }
     };
 
-    return colorMap[color] || colorMap['purple'];
+    return colorMap[color] || colorMap['beige'];
   }
 }
