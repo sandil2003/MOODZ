@@ -46,6 +46,13 @@ class Settings(BaseSettings):
     openai_api_key: str
     openai_model: str = "gpt-4-turbo-preview"
     
+    # Custom Model Configuration
+    use_custom_model: bool = False  # Set to True to use custom model instead of OpenAI
+    custom_model_url: str = "https://unharping-unhumidified-chara.ngrok-free.dev"  # URL of the custom model (e.g., ngrok URL)
+    custom_model_temperature: float = 0.7
+    custom_model_max_tokens: int = 2048
+    custom_model_timeout: int = 60
+    
     # Pinecone Configuration
     pinecone_api_key: str
     pinecone_environment: str
