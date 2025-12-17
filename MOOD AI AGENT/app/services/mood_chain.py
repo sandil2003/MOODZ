@@ -7,6 +7,7 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_openai import ChatOpenAI
 from app.services.session_manager import SessionManager
 from app.services.vector_service import VectorService
+from app.services.custom_model import get_custom_model
 from app.models import MoodHistory, UserFact
 from app.database import AsyncSessionLocal
 from sqlalchemy import select, desc
@@ -36,15 +37,27 @@ class MoodAgentChain:
         Args:
             session_manager: Redis session manager for short-term memory
             vector_service: Pinecone vector service for semantic search
-            model: OpenAI model to use
+            model: OpenAI model to use (ignored if using custom model)
         """
         self.session_manager = session_manager
         self.vector_service = vector_service
-        self.llm = ChatOpenAI(
-            model=model,
-            temperature=0.7,
-            openai_api_key=settings.openai_api_key
-        )
+        
+        # Choose between custom model and OpenAI based on configuration
+        if settings.use_custom_model and settings.custom_model_url:
+            print(f"Using custom model from: {settings.custom_model_url}")
+            self.llm = get_custom_model(
+                base_url=settings.custom_model_url,
+                temperature=settings.custom_model_temperature,
+                max_tokens=settings.custom_model_max_tokens,
+                timeout=settings.custom_model_timeout
+            )
+        else:
+            print(f"Using OpenAI model: {model}")
+            self.llm = ChatOpenAI(
+                model=model,
+                temperature=0.7,
+                openai_api_key=settings.openai_api_key
+            )
         
         # Build the chain
         self.chain = self._build_chain()
