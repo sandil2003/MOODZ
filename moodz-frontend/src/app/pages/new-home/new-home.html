@@ -1,124 +1,130 @@
-<div class="relative flex min-h-screen flex-col">
-    <!-- Background Gradient Blobs -->
-    <div class="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+<div class="relative min-h-screen flex flex-col items-center justify-center overflow-x-hidden">
+    <!-- Animated Background Blobs -->
+    <div class="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
         <div
-            class="absolute top-[10%] left-[15%] h-[500px] w-[500px] -translate-x-1/2 rounded-full bg-purple-200/30 blur-[120px] animate-float">
+            class="absolute top-[-10%] left-[-10%] w-[40rem] h-[40rem] bg-purple-200/40 rounded-full blur-3xl opacity-60 animate-blob">
         </div>
         <div
-            class="absolute bottom-[10%] right-[10%] h-[500px] w-[500px] translate-x-1/2 rounded-full bg-blue-200/30 blur-[120px] animate-float-delayed">
+            class="absolute top-[-10%] right-[-10%] w-[35rem] h-[35rem] bg-blue-200/40 rounded-full blur-3xl opacity-60 animate-blob animation-delay-2000">
+        </div>
+        <div
+            class="absolute bottom-[-10%] left-[20%] w-[45rem] h-[45rem] bg-green-100/40 rounded-full blur-3xl opacity-60 animate-blob animation-delay-4000">
         </div>
     </div>
 
-    <!-- Decorative Shapes -->
-
-
     <!-- Main Content -->
-    <main class="flex flex-1 flex-col items-center px-6 py-16 relative z-10">
-        <div class="flex w-full max-w-[1200px] flex-col gap-12">
+    <main
+        class="container mx-auto px-4 py-12 md:py-20 max-w-7xl flex flex-col items-center justify-center min-h-screen">
+        <!-- Header Section -->
+        <div class="text-center mb-16 animate-slide-up" style="animation-delay: 0.1s;">
+            <h1
+                class="font-display text-4xl md:text-6xl font-extrabold tracking-tight mb-4 text-slate-900 flex flex-col md:flex-row items-center justify-center gap-2 md:gap-4">
+                <span>{{ greeting() }},</span>
+                <span
+                    class="bg-primary text-white px-4 py-1 rounded-xl transform -rotate-2 hover:rotate-0 transition-transform duration-300 cursor-default shadow-lg shadow-primary/30">User</span>
+            </h1>
+            <p class="text-lg md:text-xl text-slate-500 max-w-2xl mx-auto mt-6 font-medium">
+                Your personal AI team is ready. Who would you like to consult?
+            </p>
+        </div>
 
-            <!-- Header Section -->
-            <div class="flex flex-col items-center text-center gap-3 max-w-2xl mx-auto">
-                <!-- Status Badge -->
-                <div
-                    class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/50 border border-slate-200 backdrop-blur-sm shadow-sm mb-4">
-                    <span class="relative flex h-2 w-2">
-                        <span
-                            class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                    </span>
-                    <span class="text-xs font-semibold text-slate-600 tracking-wide uppercase">All systems
-                        operational</span>
+        <!-- Agent Cards Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full max-w-6xl">
+            <!-- Mood Agent Card -->
+            <a [href]="'/mood-agent'" (click)="navigateToAgent('/mood-agent'); $event.preventDefault()"
+                class="group relative bg-white rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden border border-slate-100 animate-slide-up flex flex-col cursor-pointer"
+                style="animation-delay: 0.2s;">
+                <div class="relative h-64 overflow-hidden bg-gradient-to-br from-slate-100 to-slate-200">
+                    <img alt="Abstract fluid shapes representing mood"
+                        class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-90"
+                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuAeKBvhcQMStFoQpZP3K7-QIp7yRtfuA7gPzQtcTp4mv86zZSdbY4MxxtECcc-ti4brI4RLVHEp2wGvzvXq-zAHrhw4wAhBDcl62AcDKa7ocyhWOPvubvdzC3u3G2VGF8ROzkvisOUvaRRpDzfjsAYb6v9j51-agAxF2OKDJH6k2iNU5fM0550XLNoX51sDAxtIyJ1iNz6tk7kFgglMo0PzrEdcV9h1KYfv5_cLOz-huNR_ET55k8HwTTdpZ6tudIDuB3AVJhS3g1WL" />
+                    <div class="absolute top-4 left-4 glass-effect bg-white/90 p-2 rounded-lg shadow-sm">
+                        <span class="material-symbols-outlined text-orange-500 text-2xl">sentiment_satisfied_alt</span>
+                    </div>
+                    <div
+                        class="absolute top-4 right-4 glass-effect bg-black/20 px-3 py-1 rounded-full flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
+                        <span class="text-xs font-semibold text-white tracking-wide uppercase">Online</span>
+                    </div>
                 </div>
+                <div class="p-8 flex flex-col flex-grow">
+                    <h2 class="font-display text-2xl font-bold text-slate-900 mb-1">Mood Agent</h2>
+                    <p class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">Emotional Intelligence
+                    </p>
+                    <p class="text-slate-600 text-sm leading-relaxed mb-6 flex-grow">
+                        Feeling overwhelmed? I'm here to provide empathy, track your mood patterns, and offer genuine
+                        emotional support when you need it most.
+                    </p>
+                    <button
+                        class="w-full mt-auto bg-slate-100 hover:bg-primary hover:text-white text-slate-700 font-semibold py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 group-hover:bg-primary group-hover:text-white">
+                        Start Session <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                    </button>
+                </div>
+            </a>
 
-                <!-- Greeting -->
-                <h2
-                    class="text-4xl font-black leading-tight tracking-tight text-slate-900 md:text-6xl bg-clip-text text-transparent bg-gradient-to-r from-slate-900 via-slate-700 to-slate-900">
-                    {{ greeting() }}, <span class="user-highlight">User</span>
-                </h2>
-
-                <p class="text-xl text-slate-500 font-medium mt-2">
-                    Your personal AI team is ready. Who would you like to consult?
-                </p>
-            </div>
-
-            <!-- Agent Cards Grid -->
-            <div class="grid grid-cols-1 gap-8 md:grid-cols-3 pt-6">
-                @for (agent of agents(); track agent.id) {
-                <a [href]="agent.route" (click)="navigateToAgent(agent.route); $event.preventDefault()"
-                    class="group relative flex flex-col h-full rounded-3xl bg-white p-2 transition-all duration-500 hover:-translate-y-2 ring-1 ring-slate-100 cursor-pointer"
-                    [ngClass]="[agent.glowColor, getColorClasses(agent.color)['ring']]">
-
-                    <!-- Card Image -->
-                    <div class="relative aspect-[4/3] w-full overflow-hidden rounded-2xl"
-                        [ngClass]="getColorClasses(agent.color)['bg']">
-                        <div class="absolute inset-0 bg-gradient-to-b from-transparent to-black/5 z-10"></div>
-                        <div class="h-full w-full bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
-                            [style.background-image]="'url(' + agent.imageUrl + ')'">
-                        </div>
-
-                        <!-- Icon Badge -->
-                        <div class="absolute top-4 left-4 z-20 flex size-12 items-center justify-center rounded-xl bg-white/90 shadow-sm backdrop-blur-sm transition-transform duration-300 group-hover:scale-110"
-                            [ngClass]="getColorClasses(agent.color)['text']"
-                            (mouseenter)="agent.id === 'mood' ? showMoodTooltip() : null"
-                            (mouseleave)="agent.id === 'mood' ? hideMoodTooltip() : null">
-                            <span class="material-symbols-outlined text-[28px]">{{ agent.icon }}</span>
-                        </div>
-
-                        <!-- Status Badge -->
-                        <div
-                            class="absolute top-4 right-4 z-20 flex items-center gap-1.5 rounded-full bg-black/20 px-3 py-1 text-xs font-semibold text-white backdrop-blur-md border border-white/10">
-                            <span class="size-1.5 rounded-full bg-green-400"
-                                [ngClass]="{'animate-pulse shadow-[0_0_8px_rgba(74,222,128,0.8)]': agent.status === 'online'}">
-                            </span>
-                            {{ agent.status === 'online' ? 'Online' : 'Ready' }}
-                        </div>
+            <!-- Journal Agent Card -->
+            <a [href]="'/journal'" (click)="navigateToAgent('/journal'); $event.preventDefault()"
+                class="group relative bg-white rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden border border-slate-100 animate-slide-up flex flex-col cursor-pointer"
+                style="animation-delay: 0.3s;">
+                <div
+                    class="relative h-64 overflow-hidden bg-gradient-to-br from-indigo-100 to-indigo-200 flex items-center justify-center">
+                    <img alt="Abstract 3D rendering of ascending geometric shapes, representing thought organization and personal growth"
+                        class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-90"
+                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuA5nQPVmV2ZmgEvNtk_lb-RYZf_F9GlDdjTb-i5t6OQwwJ7WC3BRSAAupjmsfwrl3vyj0A5fIzlVAwPAuj4OGdyg2itraxbBlWrt3Zxjz9XJARMEsrB24E3t3Kh4dKj5ioum7D6wUhC-jcwWw62qWDcBpfWnVJ3f0EdPR3KWyl8gxt8-AEqUWZWj3V-S6YRSqaJn97lde8BY76J-EuUfyIuL4pYjSb6fF8N4vqg_mw7PU1pWlvzYYCDYdzfHEOIWPS8SWCLweL_l2RC" />
+                    <div class="absolute top-4 left-4 glass-effect bg-white/90 p-2 rounded-lg shadow-sm">
+                        <span class="material-symbols-outlined text-indigo-500 text-2xl">edit_note</span>
                     </div>
-
-                    <!-- Typing Tooltip (outside image container, only for mood agent) -->
-                    @if (agent.id === 'mood' && moodTooltipVisible()) {
-                    <div class="mood-tooltip-wrapper">
-                        {{ moodTooltipText() }}<span class="typing-cursor-tooltip">|</span>
+                    <div
+                        class="absolute top-4 right-4 glass-effect bg-black/20 px-3 py-1 rounded-full flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <span class="text-xs font-semibold text-white tracking-wide uppercase">Ready</span>
                     </div>
-                    }
+                </div>
+                <div class="p-8 flex flex-col flex-grow">
+                    <h2 class="font-display text-2xl font-bold text-slate-900 mb-1">Journal Agent</h2>
+                    <p class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">Reflective Analysis
+                    </p>
+                    <p class="text-slate-600 text-sm leading-relaxed mb-6 flex-grow">
+                        I'll help you structure your thoughts and chart your personal development journey, providing a
+                        space for daily reflections and idea organization.
+                    </p>
+                    <button
+                        class="w-full mt-auto bg-slate-100 hover:bg-primary hover:text-white text-slate-700 font-semibold py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 group-hover:bg-primary group-hover:text-white">
+                        Open Journal <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                    </button>
+                </div>
+            </a>
 
-                    <!-- Card Content -->
-                    <div class="flex flex-col flex-1 p-5 gap-3">
-                        <div>
-                            <h3 class="text-2xl font-bold text-slate-900 transition-colors"
-                                [ngClass]="getColorClasses(agent.color)['hoverText']">
-                                {{ agent.name }}
-                            </h3>
-                            <p class="text-sm font-medium text-slate-400 mt-1">{{ agent.subtitle }}</p>
-                        </div>
-
-                        <p class="text-slate-600 text-sm leading-relaxed">
-                            {{ agent.description }}
-                        </p>
-
-                        <!-- CTA -->
-                        <div class="mt-auto pt-4 flex items-center text-sm font-semibold opacity-0 -translate-x-4 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0"
-                            [ngClass]="getColorClasses(agent.color)['text']">
-                            {{ agent.id === 'mood' ? 'Start Session' : agent.id === 'journal' ? 'Open Journal' : 'Start
-                            Studying' }}
-                            <span class="material-symbols-outlined text-lg ml-1">arrow_forward</span>
-                        </div>
+            <!-- Study Agent Card -->
+            <a [href]="'/study'" (click)="navigateToAgent('/study'); $event.preventDefault()"
+                class="group relative bg-white rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden border border-slate-100 animate-slide-up flex flex-col cursor-pointer"
+                style="animation-delay: 0.4s;">
+                <div class="relative h-64 overflow-hidden bg-gradient-to-br from-emerald-100 to-emerald-200">
+                    <img alt="Abstract green geometric shapes"
+                        class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-90"
+                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuA9Zy2RUoWRI2H3n2_CmCZrMqnbkm6mptcR8AaQT_3xPySkNE6FZNGsBrf5L73NPE1TkRslebbF6xnYCvx0Mni6HfCS0kDiMNBsXLYy93zn_hjloG3fqOtOqs2XWm7qpv1TT0NwUGVbuY-Ne26S5x9t1JMjbJEeYkIDeE_wUrZlQN3OJlM5EqFypF-6DdOfLTs1LxeF0_DIOiEsIgQg3zty59cgs0yqxIy1ol-8GghywSK3HGjmv61XNEXc4K1AxxyVXHhaqu8hHYi9" />
+                    <div class="absolute top-4 left-4 glass-effect bg-white/90 p-2 rounded-lg shadow-sm">
+                        <span class="material-symbols-outlined text-emerald-600 text-2xl">school</span>
                     </div>
-                </a>
-                }
-            </div>
+                    <div
+                        class="absolute top-4 right-4 glass-effect bg-black/20 px-3 py-1 rounded-full flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
+                        <span class="text-xs font-semibold text-white tracking-wide uppercase">Online</span>
+                    </div>
+                </div>
+                <div class="p-8 flex flex-col flex-grow">
+                    <h2 class="font-display text-2xl font-bold text-slate-900 mb-1">Study Agent</h2>
+                    <p class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">Academic Assistant</p>
+                    <p class="text-slate-600 text-sm leading-relaxed mb-6 flex-grow">
+                        Need to focus? I can assist with research, create custom learning plans, and analyze complex
+                        topics to accelerate your learning.
+                    </p>
+                    <button
+                        class="w-full mt-auto bg-slate-100 hover:bg-primary hover:text-white text-slate-700 font-semibold py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 group-hover:bg-primary group-hover:text-white">
+                        Start Learning <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                    </button>
+                </div>
+            </a>
         </div>
     </main>
-
-    <!-- Footer -->
-    <footer class="w-full border-t border-slate-200 bg-white/50 backdrop-blur-sm py-8 text-center relative z-10">
-        <div class="flex flex-col items-center gap-4">
-            <div class="flex items-center gap-2 text-slate-400 text-sm">
-                <span>© 2025 Moodz AI</span>
-                <span class="size-1 rounded-full bg-slate-300"></span>
-                <a class="hover:text-slate-600 transition-colors" href="#">Privacy</a>
-                <span class="size-1 rounded-full bg-slate-300"></span>
-                <a class="hover:text-slate-600 transition-colors" href="#">Terms</a>
-            </div>
-        </div>
-    </footer>
 </div>
