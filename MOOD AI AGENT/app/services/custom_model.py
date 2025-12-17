@@ -113,13 +113,8 @@ class CustomModelLLM(LLM):
                     
                     # If still empty, print all keys to help debug
                     if not generated_text:
-                        print(f"⚠️  WARNING - Could not find text in response. Available keys: {list(result.keys())}")
-                        # As a last resort, try to get any string value
-                        for key, value in result.items():
-                            if isinstance(value, str) and len(value) > 10:
-                                generated_text = value
-                                print(f"   Using value from key '{key}': {value[:100]}...")
-                                break
+                        print(f"⚠️  WARNING - Model returned empty response")
+                        generated_text = ""
                 
                 elif isinstance(result, str):
                     generated_text = result
@@ -218,13 +213,8 @@ class CustomModelLLM(LLM):
                     
                     # If still empty, print all keys to help debug
                     if not generated_text:
-                        print(f"⚠️  WARNING - Could not find text in response. Available keys: {list(result.keys())}")
-                        # As a last resort, try to get any string value
-                        for key, value in result.items():
-                            if isinstance(value, str) and len(value) > 10:
-                                generated_text = value
-                                print(f"   Using value from key '{key}': {value[:100]}...")
-                                break
+                        print(f"⚠️  WARNING - Model returned empty response")
+                        generated_text = ""
                 
                 elif isinstance(result, str):
                     generated_text = result
