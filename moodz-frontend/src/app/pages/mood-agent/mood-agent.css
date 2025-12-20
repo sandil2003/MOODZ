@@ -498,6 +498,35 @@
     color: #2D3748;
 }
 
+/* User Message Card */
+.user-message-card {
+    background: #7B8CBA;
+    border-radius: 16px;
+    padding: 1rem 1.5rem;
+    margin-bottom: 1rem;
+    margin-left: auto;
+    max-width: 80%;
+    box-shadow: 0 2px 6px rgba(123, 140, 186, 0.25);
+    animation: fadeIn 0.3s ease;
+}
+
+.user-content {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #FFFFFF;
+    word-wrap: break-word;
+}
+
+/* No chats message */
+.no-chats-message {
+    padding: 1rem;
+    text-align: center;
+    color: #9CA3AF;
+    font-size: 0.875rem;
+    font-style: italic;
+}
+
+
 /* Markdown Content Styling */
 .markdown-content {
     line-height: 1.8;
