@@ -217,16 +217,26 @@ class DeepResearchAgent:
         core_q = state.get("understanding", {}).get("core_question", state.get("input"))
 
         prompt = (
-            "You are creating a comprehensive summary of the LATEST INFORMATION found on a topic.\n"
-            "Using the findings below, create a well-organized summary that includes:\n"
-            "- Title: Clear, descriptive title\n"
-            "- Overview: 2-3 sentence overview of what was found\n"
-            "- Key Findings: Bullet points of the most important current information\n"
-            "- Latest Updates: Recent developments, news, or changes\n"
-            "- Current Trends: Patterns or trends identified\n\n"
+            "You are creating a comprehensive research summary. Generate a well-formatted markdown document.\n\n"
+            "IMPORTANT FORMATTING RULES:\n"
+            "- Use # for main title (only ONE main title)\n"
+            "- Use ## for major sections\n"
+            "- Use ### for subsections\n"
+            "- Use bullet points (-) for lists\n"
+            "- Use **bold** for emphasis on key terms\n"
+            "- Use proper spacing between sections\n"
+            "- Keep paragraphs concise (2-3 sentences max)\n\n"
+            "REQUIRED STRUCTURE:\n"
+            "1. Main Title (# format)\n"
+            "2. Overview section (## Overview) - 2-3 sentences summarizing what was found\n"
+            "3. Key Findings section (## Key Findings) - Bullet points of important information\n"
+            "4. Latest Updates section (## Latest Updates) - Recent developments with dates if available\n"
+            "5. Current Trends section (## Current Trends) - Patterns or trends identified\n"
+            "6. Summary section (## Summary) - Brief conclusion\n\n"
             f"Search topic: '''{core_q}'''\n\n"
-            f"Findings: '''{analysis}'''\n\n"
-            "Format the summary in clear, readable Markdown. Focus on recency and relevance."
+            f"Research findings: '''{analysis}'''\n\n"
+            "Generate a clean, professional markdown document following the structure above. "
+            "Focus on clarity, readability, and proper markdown formatting."
         )
 
         report = await self.async_llm_chat(prompt)
