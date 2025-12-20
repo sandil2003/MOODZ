@@ -20,6 +20,8 @@ export class MoodAgent {
   error = this.chatService.error;
   currentStreamingMessage = this.chatService.currentStreamingMessage;
   currentStatus = this.chatService.currentStatus;
+  chatSessions = this.chatService.chatSessions;
+  currentSessionId = this.chatService.currentSessionId;
 
   // Local component state
   userInput = signal('');
@@ -37,6 +39,12 @@ export class MoodAgent {
         this.scrollToBottom();
       }
     });
+  }
+
+  // Lifecycle hook
+  ngOnInit() {
+    // Load chat sessions when component initializes
+    this.chatService.loadChatSessions();
   }
 
   // Send message
@@ -79,6 +87,25 @@ export class MoodAgent {
   }
 
   /**
+   * Load a specific chat session
+   */
+  async loadSession(sessionId: string) {
+    await this.chatService.loadChatSession(sessionId);
+    // Close sidebar on mobile after loading
+    this.notesEnabled.set(false);
+  }
+
+  /**
+   * Start a new chat
+   */
+  newChat() {
+    this.chatService.startNewChat();
+    this.chatService.loadChatSessions(); // Refresh sessions list
+    // Close sidebar on mobile
+    this.notesEnabled.set(false);
+  }
+
+  /**
    * Scroll to bottom of messages container
    */
   private scrollToBottom(): void {
@@ -95,5 +122,12 @@ export class MoodAgent {
    */
   trackByMessageId(index: number, message: ChatMessage): string {
     return message.id;
+  }
+
+  /**
+   * Track chat sessions by session_id for performance
+   */
+  trackBySessionId(index: number, session: any): string {
+    return session.session_id;
   }
 }

@@ -8,10 +8,17 @@ from app.schemas.user_fact import (
     UserFactCreate, UserFactUpdate, UserFactResponse, UserFactsByCategory
 )
 from app.schemas.chat import ChatRequest, ChatResponse
+from app.schemas.chat_history import (
+    ChatMessageCreate,
+    ChatMessageResponse,
+    ChatSessionSummary,
+    ChatSessionDetail
+)
 
 __all__ = [
     "UserCreate", "UserUpdate", "UserResponse", "UserLogin",
     "MoodHistoryCreate", "MoodHistoryUpdate", "MoodHistoryResponse", "MoodHistoryStats",
     "UserFactCreate", "UserFactUpdate", "UserFactResponse", "UserFactsByCategory",
-    "ChatRequest", "ChatResponse"
+    "ChatRequest", "ChatResponse",
+    "ChatMessageCreate", "ChatMessageResponse", "ChatSessionSummary", "ChatSessionDetail"
 ]

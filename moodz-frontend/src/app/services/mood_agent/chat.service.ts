@@ -29,6 +29,20 @@ export interface StreamChunk {
     error?: string;
 }
 
+export interface ChatSession {
+    session_id: string;
+    title: string;
+    last_message_time: string;
+    message_count: number;
+    first_message?: string;
+}
+
+export interface ChatSessionDetail {
+    session_id: string;
+    messages: ChatMessage[];
+    message_count: number;
+}
+
 @Injectable({
     providedIn: 'root'
 })
@@ -52,6 +66,10 @@ export class ChatService {
     error = signal<string | null>(null);
     currentStreamingMessage = signal<string>('');
     currentStatus = signal<string>('');  // For deep search status updates
+
+    // Chat history signals
+    chatSessions = signal<ChatSession[]>([]);
+    currentSessionId = signal<string>(this.sessionId);
 
     // WebSocket for status updates
     private statusWebSocket: WebSocket | null = null;
@@ -286,6 +304,7 @@ export class ChatService {
     clearChat(): void {
         this.messages.set([]);
         this.sessionId = uuidv4();
+        this.currentSessionId.set(this.sessionId);
         this.error.set(null);
         this.currentStreamingMessage.set('');
     }
@@ -302,5 +321,80 @@ export class ChatService {
      */
     getSessionId(): string {
         return this.sessionId;
+    }
+
+    /**
+     * Load all chat sessions for the current user
+     */
+    async loadChatSessions(): Promise<void> {
+        try {
+            const response = await fetch(
+                `${this.API_BASE_URL}/api/chat-history/sessions?user_id=${this.userId}`,
+                {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const sessions: ChatSession[] = await response.json();
+            this.chatSessions.set(sessions);
+            console.log('✅ Loaded', sessions.length, 'chat sessions');
+        } catch (error) {
+            console.error('Error loading chat sessions:', error);
+            this.error.set('Failed to load chat history');
+        }
+    }
+
+    /**
+     * Load a specific chat session and display its messages
+     */
+    async loadChatSession(sessionId: string): Promise<void> {
+        try {
+            const response = await fetch(
+                `${this.API_BASE_URL}/api/chat-history/sessions/${sessionId}?user_id=${this.userId}`,
+                {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const sessionDetail: ChatSessionDetail = await response.json();
+
+            // Update messages with loaded session
+            this.messages.set(sessionDetail.messages);
+
+            // Update current session ID
+            this.sessionId = sessionId;
+            this.currentSessionId.set(sessionId);
+
+            console.log('✅ Loaded session with', sessionDetail.message_count, 'messages');
+        } catch (error) {
+            console.error('Error loading chat session:', error);
+            this.error.set('Failed to load chat session');
+        }
+    }
+
+    /**
+     * Start a new chat session
+     */
+    startNewChat(): void {
+        this.messages.set([]);
+        this.sessionId = uuidv4();
+        this.currentSessionId.set(this.sessionId);
+        this.error.set(null);
+        this.currentStreamingMessage.set('');
+        console.log('✨ Started new chat session:', this.sessionId);
     }
 }

@@ -2,7 +2,7 @@ from fastapi import APIRouter, BackgroundTasks, WebSocket, WebSocketDisconnect
 from fastapi.responses import StreamingResponse
 from app.schemas.chat import ChatRequest, ChatResponse
 from app.services import get_mood_chain, get_session_manager, get_vector_service
-from app.models import MoodHistory
+from app.models import MoodHistory, ChatHistory
 from app.database import AsyncSessionLocal
 from typing import AsyncGenerator, Dict, Any
 import json
@@ -42,6 +42,43 @@ class ConnectionManager:
             print(f"⚠️  No WebSocket connection found for session: {session_id}")
 
 manager = ConnectionManager()
+
+
+async def save_chat_message_to_db(
+    user_id,
+    session_id,
+    role: str,
+    content: str,
+    deep_search: bool = False
+):
+    """
+    Save a chat message to the database.
+    
+    Args:
+        user_id: User UUID
+        session_id: Session UUID
+        role: Either 'user' or 'assistant'
+        content: Message text
+        deep_search: Whether deep search was used
+    """
+    try:
+        print(f"💾 Saving {role} message to database...")
+        async with AsyncSessionLocal() as db:
+            message = ChatHistory(
+                user_id=user_id,
+                session_id=session_id,
+                role=role,
+                content=content,
+                deep_search=deep_search
+            )
+            db.add(message)
+            await db.commit()
+        print(f"✅ {role.capitalize()} message saved to database")
+    except Exception as e:
+        print(f"❌ Error saving {role} message to database: {e}")
+        import traceback
+        traceback.print_exc()
+        # Don't raise - chat should continue even if DB save fails
 
 
 async def save_conversation_intelligently(
@@ -215,6 +252,9 @@ async def stream_chat_response(
         # Save user message to session
         await session_manager.add_user_message(session_id, message)
         
+        # Save user message to database
+        await save_chat_message_to_db(user_id, session_id, "user", message)
+        
         # Prepare input for streaming
         input_data = {
             "user_id": user_id,
@@ -236,6 +276,9 @@ async def stream_chat_response(
         
         # Save assistant response to session
         await session_manager.add_assistant_message(session_id, full_response)
+        
+        # Save assistant response to database
+        await save_chat_message_to_db(user_id, session_id, "assistant", full_response)
         
         # Classify the conversation
         from app.services import get_classifier
@@ -385,6 +428,10 @@ async def chat(
         # Calculate latency
         latency = time() - start_time
         
+        # Save messages to database
+        await save_chat_message_to_db(request.user_id, request.session_id, "user", request.message)
+        await save_chat_message_to_db(request.user_id, request.session_id, "assistant", response)
+        
         # Classify the conversation
         from app.services import get_classifier
         classifier = get_classifier()
@@ -461,6 +508,9 @@ async def stream_deep_search_response(user_id, session_id, message: str) -> Asyn
         agent = DeepResearchAgent(status_callback=send_status)
         print("✅ Agent initialized")
         
+        # Save user message to database
+        await save_chat_message_to_db(user_id, session_id, "user", message, deep_search=True)
+        
         print("🚀 Running deep search...")
         result = await agent.run(message)
         print(f"✅ Deep search completed. Result keys: {result.keys()}")
@@ -480,6 +530,10 @@ async def stream_deep_search_response(user_id, session_id, message: str) -> Asyn
             await asyncio.sleep(0.05)
         
         print("✅ Streaming completed")
+        
+        # Save assistant response to database
+        await save_chat_message_to_db(user_id, session_id, "assistant", report, deep_search=True)
+        
         yield f"data: {json.dumps({'done': True, 'session_id': str(session_id), 'deep_search': True})}\n\n"
         
     except Exception as e:

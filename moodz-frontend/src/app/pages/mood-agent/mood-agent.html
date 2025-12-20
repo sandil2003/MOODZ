@@ -29,26 +29,20 @@
             <div class="past-chats-label">Past Chats</div>
 
             <div class="chat-history-list">
-                <div class="chat-history-item active">
-                    <span class="chat-title">Stress & Anticipation</span>
+                @if (chatSessions().length === 0) {
+                <div class="no-chats-message">No past conversations yet</div>
+                }
+                @for (session of chatSessions(); track trackBySessionId($index, session)) {
+                <div class="chat-history-item" [class.active]="session.session_id === currentSessionId()"
+                    (click)="loadSession(session.session_id)">
+                    <span class="chat-title">{{ session.title }}</span>
                 </div>
-                <div class="chat-history-item">
-                    <span class="chat-title">A Quiet Afternoon</span>
-                </div>
-                <div class="chat-history-item">
-                    <span class="chat-title">Creative Block</span>
-                </div>
-                <div class="chat-history-item">
-                    <span class="chat-title">Excitement for a Trip</span>
-                </div>
-                <div class="chat-history-item">
-                    <span class="chat-title">Feeling Reflective</span>
-                </div>
+                }
             </div>
         </div>
 
         <div class="sidebar-footer">
-            <button class="new-chat-btn">
+            <button class="new-chat-btn" (click)="newChat()">
                 <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px">
                     <path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z" />
                 </svg>
@@ -79,11 +73,15 @@
         <div class="messages-area" #messagesContainer>
             @for (message of messages(); track trackByMessageId($index, message)) {
             @if (message.role === 'user') {
-            <!-- User Message (shown in input area) -->
+            <!-- User Message -->
+            <div class="user-message-card">
+                <div class="user-content">
+                    {{ message.content }}
+                </div>
+            </div>
             } @else {
             <!-- AI Response Card -->
             <div class="ai-response-card">
-
                 <div class="ai-content">
                     <div class="markdown-content" [innerHTML]="message.content | markdown"></div>
                 </div>
