@@ -120,13 +120,26 @@ class DeepResearchAgent:
             "Given the search topic below, create 3 focused search queries to find the LATEST and most CURRENT information.\n"
             "Include terms like 'latest', 'recent', '2024', '2025', 'current', 'news', 'updates' where appropriate.\n\n"
             f"Search topic: '''{core_q}'''\n\n"
-            "Return a JSON array of 3 search query strings optimized for finding recent information."
+            "Return ONLY a JSON array of 3 search query strings. Example: [\"query 1\", \"query 2\", \"query 3\"]\n"
+            "Do not include any other text, just the JSON array."
         )
         queries_raw = await self.async_llm_chat(query_prompt)
         
         print(f"📝 Generated queries (raw): {queries_raw[:200]}...")
         
         try:
+            # Try to extract JSON from markdown code blocks if present
+            import re
+            json_match = re.search(r'```(?:json)?\s*(\[.*?\])\s*```', queries_raw, re.DOTALL)
+            if json_match:
+                queries_raw = json_match.group(1)
+            
+            # Also try to find JSON array directly
+            if not queries_raw.strip().startswith('['):
+                array_match = re.search(r'\[.*?\]', queries_raw, re.DOTALL)
+                if array_match:
+                    queries_raw = array_match.group(0)
+            
             queries = json.loads(queries_raw)
             if not isinstance(queries, list):
                 raise ValueError("Not a list")
@@ -217,26 +230,23 @@ class DeepResearchAgent:
         core_q = state.get("understanding", {}).get("core_question", state.get("input"))
 
         prompt = (
-            "You are creating a comprehensive research summary. Generate a well-formatted markdown document.\n\n"
-            "IMPORTANT FORMATTING RULES:\n"
-            "- Use # for main title (only ONE main title)\n"
-            "- Use ## for major sections\n"
-            "- Use ### for subsections\n"
-            "- Use bullet points (-) for lists\n"
-            "- Use **bold** for emphasis on key terms\n"
+            "- Use bullet points for lists\n"
+            "- Use bold for emphasis on key terms\n"
             "- Use proper spacing between sections\n"
             "- Keep paragraphs concise (2-3 sentences max)\n\n"
+            "- use proper formatting (line spacing and indentation)\n"
+            "- keep the main sections seperately\n"
             "REQUIRED STRUCTURE:\n"
-            "1. Main Title (# format)\n"
-            "2. Overview section (## Overview) - 2-3 sentences summarizing what was found\n"
-            "3. Key Findings section (## Key Findings) - Bullet points of important information\n"
-            "4. Latest Updates section (## Latest Updates) - Recent developments with dates if available\n"
-            "5. Current Trends section (## Current Trends) - Patterns or trends identified\n"
-            "6. Summary section (## Summary) - Brief conclusion\n\n"
+            "1. Main Title\n"
+            "2. Overview section - 2-3 sentences summarizing what was found\n"
+            "3. Key Findings section - Bullet points of important information\n"
+            "4. Latest Updates section - Recent developments with dates if available\n"
+            "5. Current Trends section - Patterns or trends identified\n"
+            "6. Summary section - Brief conclusion\n\n"
             f"Search topic: '''{core_q}'''\n\n"
             f"Research findings: '''{analysis}'''\n\n"
-            "Generate a clean, professional markdown document following the structure above. "
-            "Focus on clarity, readability, and proper markdown formatting."
+            "Generate a clean, professional document following the structure above. "
+            "Focus on clarity, readability, and proper formatting."
         )
 
         report = await self.async_llm_chat(prompt)

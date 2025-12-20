@@ -69,7 +69,7 @@
             <div class="ai-response-card">
 
                 <div class="ai-content">
-                    <markdown [data]="message.content"></markdown>
+                    <div class="formatted-text">{{ message.content }}</div>
                 </div>
             </div>
             }
@@ -104,7 +104,7 @@
                 } @else {
                 <!-- Streaming Content -->
                 <div class="ai-content">
-                    <markdown [data]="currentStreamingMessage()"></markdown>
+                    <div class="formatted-text">{{ currentStreamingMessage() }}</div>
                     <span class="typing-cursor"></span>
                 </div>
                 }
