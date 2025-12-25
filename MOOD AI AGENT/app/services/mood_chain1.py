@@ -35,6 +35,29 @@ async def fetch_recent_conversation(
 
     return "\n".join(formatted)
 
+async def fetch_semantic_conversation(
+    user_id: str,
+    user_input: str,
+    runtime: ToolRuntime) -> str:
+
+    vector_service = runtime.context.vector_service
+
+    results = vector_service.similarity_search(
+        query=user_input,
+        user_id = user_id,
+        k=5
+    )
+    if not results:
+        return "no related past experiences found"
+    
+    formatted = ["Relevant past experiences."]
+    for r in results:
+        formatted.append(
+            f"- {r['text']} (Mood: {r['metadata'].get('mood_label')})"
+        )
+    return "\n".join(formatted)
+
+
 class MoodAgentChain:
     """
     LangChain LCEL chain for mood analysis and recommendations.
