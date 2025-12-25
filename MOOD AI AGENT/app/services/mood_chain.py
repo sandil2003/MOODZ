@@ -114,7 +114,6 @@ Guidelines:
         
         return chain
 
-    @tool(description="fetch recent conversation history for the user session")
     async def _fetch_redis_context(self, input_data: Dict[str, Any]) -> str:
         """
         Fetch recent conversation history from Redis.

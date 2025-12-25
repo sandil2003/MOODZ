@@ -12,7 +12,28 @@ from app.models import MoodHistory, UserFact
 from app.database import AsyncSessionLocal
 from sqlalchemy import select, desc
 from config import settings
+from langchain_core.tools import ToolRuntime, tool
 
+@tool(description="Fetch recent conversation history for the user session")
+async def fetch_recent_conversation(
+    session_id: str,
+    runtime: ToolRuntime
+) -> str:
+    session_manager = runtime.context.session_manager
+
+    history = await session_manager.get_recent_history(
+        session_id=session_id,
+        limit=10
+    )
+
+    if not history:
+        return "No recent conversation history."
+
+    formatted = ["Recent Conversation:"]
+    for msg in history:
+        formatted.append(f"{msg['role'].upper()}: {msg['content']}")
+
+    return "\n".join(formatted)
 
 class MoodAgentChain:
     """
