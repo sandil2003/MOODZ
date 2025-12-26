@@ -181,12 +181,15 @@ Available tools:
 - fetch_recent_conversation: Get recent chat history
 - fetch_semantic_context: Find similar past experiences  
 - fetch_user_profile: Get mood history and user facts
+Current User ID: {user_id}
+Current Session ID: {session_id}
 """
 
         prompt = ChatPromptTemplate.from_messages([
             ("system", system_prompt),
             ("human", "{input}"),
             MessagesPlaceholder(variable_name="agent_scratchpad"),
+            MessagesPlaceholder(variable_name="chat_history")
         ])
 
         agent = create_tool_calling_agent(
@@ -199,7 +202,7 @@ Available tools:
             agent=agent,
             tools=self.tools,
             verbose=True,
-            name = "ModdzAgent"
+            name = "MoodzAgent",
             max_iterations=5,
             handle_parsing_errors=True
         )
@@ -222,12 +225,13 @@ Available tools:
             str: AI response
         """
         try:
+            existing_history = await self.session_manager.get_recent_history(session_id)
             # Prepare input with context
             input_data = {
                 "input": user_message,
                 "user_id": str(user_id),
                 "session_id": str(session_id),
-                "chat_history": []
+                "chat_history": existing_history
             }
             
             # Invoke agent
