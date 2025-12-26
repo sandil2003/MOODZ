@@ -1,9 +1,9 @@
 from typing import Dict, Any, List, Optional
 from uuid import UUID
 from datetime import datetime, timedelta
-from langchain_core.runnables import RunnableParallel, RunnablePassthrough, RunnableLambda
+from langchain_core.tools import tool
+from langchain.agents import create_react_agent, AgentExecutor
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_core.output_parsers import StrOutputParser
 from langchain_openai import ChatOpenAI
 from app.services.session_manager import SessionManager
 from app.services.vector_service import VectorService
@@ -12,128 +12,284 @@ from app.models import MoodHistory, UserFact
 from app.database import AsyncSessionLocal
 from sqlalchemy import select, desc
 from config import settings
-from langchain_core.tools import ToolRuntime, tool
-from langchain.agents import create_agent
 
-@tool(description="Fetch recent conversation history for the user session")
-async def fetch_recent_conversation(
-    session_id: str,
-    runtime: ToolRuntime
-) -> str:
-    session_manager = runtime.context.session_manager
 
-    history = await session_manager.get_recent_history(
-        session_id=session_id,
-        limit=10
-    )
-
-    if not history:
-        return "No recent conversation history."
-
-    formatted = ["Recent Conversation:"]
-    for msg in history:
-        formatted.append(f"{msg['role'].upper()}: {msg['content']}")
-
-    return "\n".join(formatted)
-
-@tool(description="Fetch relevant past experiences for the user using similarity search")
-async def fetch_semantic_conversation(
-    user_id: str,
-    user_input: str,
-    runtime: ToolRuntime) -> str:
-
-    vector_service = runtime.context.vector_service
-
-    results = vector_service.similarity_search(
-        query=user_input,
-        user_id = user_id,
-        k=5
-    )
-    if not results:
-        return "no related past experiences found"
+class MoodAgentChainV2:
+    """
+    Agent-based LangChain implementation for mood analysis.
     
-    formatted = ["Relevant past experiences."]
-    for r in results:
-        formatted.append(
-            f"- {r['text']} (Mood: {r['metadata'].get('mood_label')})"
-        )
-    return "\n".join(formatted)
-
-@tool(description="Fetch structured user mood history and known user facts")
-async def fetch_mood_history(
-    user_id: str,
-    runtime: ToolRuntime
-) -> str:
-    async with AsyncSessionLocal() as db:
-        moods = (await db.execute(
-            select(MoodHistory)
-            .where(MoodHistory.user_id == user_id)
-            .order_by(desc(MoodHistory.created_at))
-            .limit(5)
-        )).scalars().all()
-
-        facts = (await db.execute(
-            select(UserFact)
-            .where(UserFact.user_id == user_id)
-            .order_by(desc(UserFact.created_at))
-            .limit(10)
-        )).scalars().all()
-
-    formatted = []
-
-    if moods:
-        formatted.append("Recent Mood History:")
-        for m in moods:
-            formatted.append(f"- {m.sentiment_label} ({m.mood_score}/10)")
-
-    if facts:
-        formatted.append("\nKnown User Facts:")
-        for f in facts:
-            formatted.append(f"- {f.fact_text}")
-
-    return "\n".join(formatted) or "No structured user data."
+    Uses tools for on-demand context fetching instead of parallel fetching.
+    The agent decides which tools to call based on the conversation.
+    """
     
-SYSTEM_PROMPT = """
-You are MOODZ, an empathetic AI mood companion.
-
-You can:
-- Recall recent conversations
-- Retrieve past emotional experiences
-- Analyze user mood patterns
-
-Use tools when they help you understand the user's emotional state better.
-Be warm, empathetic, and actionable.
-"""
-
-llm = ChatOpenAI(
-    model = "gpt-4o-mini",
-    temperature = 0.7,
-    openai_api_key = settings.openai_api_key
-)
-
-tools = [
-    fetch_recent_conversation,
-    fetch_semantic_conversation,
-    fetch_mood_history
-]
-
-agent = create_agent(
-    model = llm,
-    tools = tools,
-    system_prompt = SYSTEM_PROMPT,
-)
-
-response = await agent.invoke(
-    {
-        "messages": [
-            {"role": "user", "content": user_message}
+    def __init__(
+        self,
+        session_manager: SessionManager,
+        vector_service: VectorService,
+        model: str = "gpt-4o-mini"
+    ):
+        """
+        Initialize the mood agent chain with tools.
+        
+        Args:
+            session_manager: Redis session manager for short-term memory
+            vector_service: Pinecone vector service for semantic search
+            model: OpenAI model to use (ignored if using custom model)
+        """
+        self.session_manager = session_manager
+        self.vector_service = vector_service
+        
+        # Choose between custom model and OpenAI based on configuration
+        if settings.use_custom_model and settings.custom_model_url:
+            print(f"Using custom model from: {settings.custom_model_url}")
+            self.llm = get_custom_model(
+                base_url=settings.custom_model_url,
+                temperature=settings.custom_model_temperature,
+                max_tokens=settings.custom_model_max_tokens,
+                timeout=settings.custom_model_timeout
+            )
+        else:
+            print(f"Using OpenAI model: {model}")
+            self.llm = ChatOpenAI(
+                model=model,
+                temperature=0.7,
+                openai_api_key=settings.openai_api_key
+            )
+        
+        # Build tools and agent
+        self.tools = self._build_tools()
+        self.agent_executor = self._build_agent()
+    
+    def _build_tools(self) -> List:
+        """Build the tools for the agent."""
+        
+        @tool(description="Fetch recent conversation history for the user session.")
+        async def fetch_recent_conversation(session_id: str) -> str:
+            """Fetch recent conversation history for the user session."""
+            try:
+                history = await self.session_manager.get_recent_history(
+                    session_id=UUID(session_id),
+                    limit=10
+                )
+                
+                if not history:
+                    return "No recent conversation history."
+                
+                formatted = ["Recent Conversation:"]
+                for msg in history:
+                    role = msg.get("role", "unknown").upper()
+                    content = msg.get("content", "")
+                    formatted.append(f"{role}: {content}")
+                
+                return "\n".join(formatted)
+                
+            except Exception as e:
+                print(f"Error fetching conversation history: {e}")
+                return "Error retrieving conversation history."
+        
+        @tool(description="Fetch relevant past experiences using similarity search.")
+        async def fetch_semantic_context(user_id: str, query: str) -> str:
+            """Fetch relevant past experiences using similarity search."""
+            try:
+                results = await self.vector_service.similarity_search(
+                    query=query,
+                    user_id=UUID(user_id),
+                    k=5
+                )
+                
+                if not results:
+                    return "No related past experiences found."
+                
+                formatted = ["Relevant Past Experiences:"]
+                for i, result in enumerate(results, 1):
+                    text = result["text"]
+                    metadata = result["metadata"]
+                    mood = metadata.get("mood_label", "N/A")
+                    data_type = metadata.get("data_type", "unknown")
+                    timestamp = metadata.get("timestamp", "")
+                    
+                    formatted.append(f"\n{i}. [{data_type}] {text}")
+                    formatted.append(f"   Mood: {mood} | Time: {timestamp}")
+                
+                return "\n".join(formatted)
+                
+            except Exception as e:
+                print(f"Error fetching semantic context: {e}")
+                return "Error retrieving past experiences."
+        
+        @tool(description="Fetch structured user mood history and known user facts.")
+        async def fetch_user_profile(user_id: str) -> str:
+            """Fetch structured user mood history and known user facts."""
+            try:
+                async with AsyncSessionLocal() as db:
+                    # Get recent mood history
+                    mood_result = await db.execute(
+                        select(MoodHistory)
+                        .where(MoodHistory.user_id == UUID(user_id))
+                        .order_by(desc(MoodHistory.created_at))
+                        .limit(5)
+                    )
+                    moods = mood_result.scalars().all()
+                    
+                    # Get user facts
+                    facts_result = await db.execute(
+                        select(UserFact)
+                        .where(UserFact.user_id == UUID(user_id))
+                        .order_by(desc(UserFact.created_at))
+                        .limit(10)
+                    )
+                    facts = facts_result.scalars().all()
+                
+                formatted = []
+                
+                if moods:
+                    formatted.append("Recent Mood History:")
+                    for mood in moods:
+                        formatted.append(
+                            f"- {mood.sentiment_label} (score: {mood.mood_score}/10): {mood.summary[:100]}"
+                        )
+                
+                if facts:
+                    formatted.append("\nKnown Facts About User:")
+                    for fact in facts:
+                        formatted.append(f"- [{fact.category}] {fact.fact_text}")
+                
+                return "\n".join(formatted) or "No structured user data available."
+                
+            except Exception as e:
+                print(f"Error fetching user profile: {e}")
+                return "Error retrieving user profile."
+        
+        return [
+            fetch_recent_conversation,
+            fetch_semantic_context,
+            fetch_user_profile
         ]
-    },
-    context={
-        "session_manager": session_manager,
-        "vector_service": vector_service,
-        "user_id": str(user_id),
-        "session_id": str(session_id)
-    }
-)
+    
+    def _build_agent(self) -> AgentExecutor:
+        """Build the agent executor with tools."""
+        
+        system_prompt = """You are MOODZ, an empathetic AI mood companion and mental wellness assistant.
 
+Your role:
+- Understand and validate the user's emotions
+- Provide personalized support based on their history
+- Offer actionable suggestions for mood improvement
+- Track patterns and provide insights
+
+Available Tools:
+- fetch_recent_conversation: Get recent chat history
+- fetch_semantic_context: Find similar past experiences
+- fetch_user_profile: Get mood history and user facts
+
+Guidelines:
+- Be warm, empathetic, and non-judgmental
+- Use tools strategically - only when they add value
+- Reference past conversations and patterns when relevant
+- Provide specific, actionable advice
+- Ask clarifying questions when needed
+- Celebrate improvements and acknowledge challenges
+
+You have access to the following tools:
+
+{tools}
+
+Use the following format:
+
+Question: the input question you must answer
+Thought: you should always think about what to do
+Action: the action to take, should be one of [{tool_names}]
+Action Input: the input to the action
+Observation: the result of the action
+... (this Thought/Action/Action Input/Observation can repeat N times)
+Thought: I now know the final answer
+Final Answer: the final answer to the original input question
+
+Begin!
+
+Question: {input}
+Thought: {agent_scratchpad}"""
+        
+        prompt = ChatPromptTemplate.from_template(system_prompt)
+        
+        agent = create_react_agent(
+            llm=self.llm,
+            tools=self.tools,
+            prompt=prompt
+        )
+        
+        agent_executor = AgentExecutor(
+            agent=agent,
+            tools=self.tools,
+            verbose=True,
+            handle_parsing_errors=True,
+            max_iterations=5
+        )
+        
+        return agent_executor
+    
+    async def invoke(
+        self,
+        user_id: UUID,
+        session_id: UUID,
+        user_message: str
+    ) -> str:
+        """
+        Invoke the agent with user input.
+        
+        Args:
+            user_id: User UUID
+            session_id: Session UUID
+            user_message: User's message
+            
+        Returns:
+            str: AI response
+        """
+        try:
+            # Prepare input with context
+            input_data = {
+                "input": user_message,
+                "user_id": str(user_id),
+                "session_id": str(session_id)
+            }
+            
+            # Invoke agent
+            result = await self.agent_executor.ainvoke(input_data)
+            response = result.get("output", "")
+            
+            # Save to session history
+            await self.session_manager.add_user_message(session_id, user_message)
+            await self.session_manager.add_assistant_message(session_id, response)
+            
+            return response
+            
+        except Exception as e:
+            print(f"Error invoking agent: {e}")
+            return "I apologize, but I encountered an error processing your message. Please try again."
+
+
+# Global agent instance
+_mood_agent: Optional[MoodAgentChainV2] = None
+
+
+async def get_mood_agent() -> MoodAgentChainV2:
+    """
+    Get or create the global mood agent instance.
+    
+    Returns:
+        MoodAgentChainV2: Agent instance
+    """
+    global _mood_agent
+    
+    if _mood_agent is None:
+        from app.services import get_session_manager, get_vector_service
+        
+        session_manager = await get_session_manager()
+        vector_service = get_vector_service()
+        
+        _mood_agent = MoodAgentChainV2(
+            session_manager=session_manager,
+            vector_service=vector_service
+        )
+    
+    return _mood_agent
