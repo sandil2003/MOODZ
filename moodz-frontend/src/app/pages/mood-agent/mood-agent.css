@@ -498,6 +498,43 @@
     color: #2D3748;
 }
 
+/* Crisis Alert Card */
+.ai-response-card.crisis-alert {
+    background: linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%);
+    border: 2px solid #FCA5A5;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);
+}
+
+.crisis-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #FCA5A5;
+}
+
+.crisis-header svg {
+    color: #DC2626;
+    flex-shrink: 0;
+}
+
+.crisis-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #991B1B;
+    letter-spacing: 0.3px;
+}
+
+.crisis-alert .ai-content {
+    color: #7F1D1D;
+}
+
+.crisis-alert .markdown-content strong {
+    color: #991B1B;
+}
+
+
 /* User Message Card */
 .user-message-card {
     background: #7B8CBA;
