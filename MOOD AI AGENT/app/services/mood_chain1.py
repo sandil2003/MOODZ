@@ -13,7 +13,7 @@ from app.database import AsyncSessionLocal
 from sqlalchemy import select, desc
 from config import settings
 from langchain_community.callbacks import get_openai_callback
-
+from CrisisDetector import check_crisis
 
 class MoodAgentChainV2:
 
@@ -21,6 +21,7 @@ class MoodAgentChainV2:
         self,
         session_manager: SessionManager,
         vector_service: VectorService,
+        crisis_detector: CrisisDetector,
         model: str = "gpt-4o-mini"
     ):
         """
@@ -30,6 +31,7 @@ class MoodAgentChainV2:
         """
         self.session_manager = session_manager
         self.vector_service = vector_service
+        self.crisis_detector = crisis_detector
         
         # Choose between custom model and OpenAI based on configuration
         if settings.use_custom_model and settings.custom_model_url:
@@ -199,7 +201,7 @@ Current Session ID: {session_id}
         self,
         user_id: UUID,
         session_id: UUID,
-        user_message: str
+        user_message: str,
     ) -> str:
         """
             user_id: User UUID
@@ -209,6 +211,10 @@ Current Session ID: {session_id}
         """
         try:
             await self.session_manager.add_user_message(session_id, user_message)
+
+            crisis_info = await self.crisis_detector.check_crisis(user_message)
+            if crisis_info["score"] == 1.0:
+                return "I am sorry i cant provide context"
 
             existing_history = await self.session_manager.get_recent_history(session_id)
             # Prepare input with context
@@ -254,10 +260,12 @@ async def get_mood_agent() -> MoodAgentChainV2:
         
         session_manager = await get_session_manager()
         vector_service = get_vector_service()
+        crisis_detector = CrisisDetector()
         
         _mood_agent = MoodAgentChainV2(
             session_manager=session_manager,
-            vector_service=vector_service
+            vector_service=vector_service,
+            crisis_detector=crisis_detector
         )
     
     return _mood_agent
