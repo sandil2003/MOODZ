@@ -166,42 +166,42 @@ class MoodAgentChainV2:
             fetch_user_profile
         ]
     
-def _build_agent(self) -> AgentExecutor:
-        # 1. We add the agent_scratchpad for tool-calling reasoning
-        # 2. We explicitly tell the agent its current context (IDs) in the system prompt
-    system_prompt = """
-You are MOODZ, an empathetic AI mental wellness companion.
-Current Context:
-- User ID: {user_id}
-- Session ID: {session_id}
+    def _build_agent(self) -> AgentExecutor:
+        """Build the agent executor with tools."""
+        
+        system_prompt = """You are MOODZ, an empathetic AI mental wellness companion.
 
 Your goals:
-- Understand and validate emotions.
-- Use tools ONLY when helpful (e.g., if you need to remember something specific).
-- Personalize responses using history.
-- Never reveal internal reasoning or technical tool names to the user.
+- Understand and validate emotions
+- Use tools ONLY when helpful (e.g., if you need to remember something specific)
+- Personalize responses using history
+- Never reveal internal reasoning or technical tool names to the user
+
+Available tools:
+- fetch_recent_conversation: Get recent chat history
+- fetch_semantic_context: Find similar past experiences  
+- fetch_user_profile: Get mood history and user facts
 """
 
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", system_prompt),
-        MessagesPlaceholder(variable_name="chat_history"),
-        ("human", "{input}"),
-        MessagesPlaceholder(variable_name="agent_scratchpad"),
-    ])
+        prompt = ChatPromptTemplate.from_messages([
+            ("system", system_prompt),
+            ("human", "{input}"),
+            MessagesPlaceholder(variable_name="agent_scratchpad"),
+        ])
 
-    agent = create_tool_calling_agent(
-        llm=self.llm,
-        tools=self.tools,
-        prompt=prompt
-    )
+        agent = create_tool_calling_agent(
+            llm=self.llm,
+            tools=self.tools,
+            prompt=prompt
+        )
 
-    return AgentExecutor(
-        agent=agent,
-        tools=self.tools,
-        verbose=settings.debug,
-        max_iterations=5,
-        handle_parsing_errors=True # Recommended for robustness
-    )
+        return AgentExecutor(
+            agent=agent,
+            tools=self.tools,
+            verbose=False,
+            max_iterations=5,
+            handle_parsing_errors=True
+        )
     
     async def invoke(
         self,
@@ -225,7 +225,8 @@ Your goals:
             input_data = {
                 "input": user_message,
                 "user_id": str(user_id),
-                "session_id": str(session_id)
+                "session_id": str(session_id),
+                "chat_history": []
             }
             
             # Invoke agent
@@ -240,6 +241,8 @@ Your goals:
             
         except Exception as e:
             print(f"Error invoking agent: {e}")
+            import traceback
+            traceback.print_exc()
             return "I apologize, but I encountered an error processing your message. Please try again."
 
 
