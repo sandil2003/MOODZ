@@ -270,6 +270,9 @@ export class ChatService {
                             }
 
                             if (parsed.done) {
+                                console.log('🔍 Stream done event:', parsed);
+                                console.log('🚨 Crisis detected flag:', parsed.crisis_detected);
+
                                 // Streaming complete - add final message to history
                                 const finalContent = this.currentStreamingMessage();
                                 if (finalContent) {
@@ -281,6 +284,7 @@ export class ChatService {
                                         isStreaming: false,
                                         isCrisis: parsed.crisis_detected || false
                                     };
+                                    console.log('💬 Final message:', finalMessage);
                                     this.messages.update(msgs => [...msgs, finalMessage]);
                                 }
 

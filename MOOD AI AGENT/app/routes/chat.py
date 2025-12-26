@@ -267,8 +267,8 @@ async def stream_chat_response(
             await session_manager.add_assistant_message(session_id, crisis_message)
             await save_chat_message_to_db(user_id, session_id, "assistant", crisis_message)
 
-            yield f"data: {json.dumps({'chunk': crisis_message})}\\n\\n"
-            yield f"data: {json.dumps({'done': True, 'session_id': str(session_id), 'crisis_detected': True})}\\n\\n"
+            yield f"data: {json.dumps({'chunk': crisis_message})}\n\n"
+            yield f"data: {json.dumps({'done': True, 'session_id': str(session_id), 'crisis_detected': True})}\n\n"
             return
         
         # Prepare input for agent
