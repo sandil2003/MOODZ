@@ -2,9 +2,9 @@ from typing import Dict, Any, List, Optional
 from uuid import UUID
 from datetime import datetime, timedelta
 from langchain_core.tools import tool
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.runnables import RunnablePassthrough, RunnableLambda
+from langchain.agents.agent import AgentExecutor
+from langchain.agents.react.agent import create_react_agent
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_openai import ChatOpenAI
 from app.services.session_manager import SessionManager
 from app.services.vector_service import VectorService
@@ -17,10 +17,10 @@ from config import settings
 
 class MoodAgentChainV2:
     """
-    Simplified agent-based LangChain implementation for mood analysis.
+    Agent-based LangChain implementation for mood analysis.
     
-    Uses tool-calling with LLM to fetch context on-demand.
-    Compatible with LangChain 1.2.0+
+    Uses tools for on-demand context fetching instead of parallel fetching.
+    The agent decides which tools to call based on the conversation.
     """
     
     def __init__(
@@ -51,26 +51,20 @@ class MoodAgentChainV2:
             )
         else:
             print(f"Using OpenAI model: {model}")
-            # Use tool-calling enabled model
             self.llm = ChatOpenAI(
                 model=model,
                 temperature=0.7,
                 openai_api_key=settings.openai_api_key
             )
         
-        # Build tools
+        # Build tools and agent
         self.tools = self._build_tools()
-        
-        # Bind tools to LLM
-        self.llm_with_tools = self.llm.bind_tools(self.tools)
-        
-        # Build chain
-        self.chain = self._build_chain()
+        self.agent_executor = self._build_agent()
     
     def _build_tools(self) -> List:
         """Build the tools for the agent."""
         
-        @tool
+        @tool(description="Fetch recent conversation history for the user session.")
         async def fetch_recent_conversation(session_id: str) -> str:
             """Fetch recent conversation history for the user session."""
             try:
@@ -94,7 +88,7 @@ class MoodAgentChainV2:
                 print(f"Error fetching conversation history: {e}")
                 return "Error retrieving conversation history."
         
-        @tool
+        @tool(description="Fetch relevant past experiences using similarity search.")
         async def fetch_semantic_context(user_id: str, query: str) -> str:
             """Fetch relevant past experiences using similarity search."""
             try:
@@ -124,7 +118,7 @@ class MoodAgentChainV2:
                 print(f"Error fetching semantic context: {e}")
                 return "Error retrieving past experiences."
         
-        @tool
+        @tool(description="Fetch structured user mood history and known user facts.")
         async def fetch_user_profile(user_id: str) -> str:
             """Fetch structured user mood history and known user facts."""
             try:
@@ -173,11 +167,10 @@ class MoodAgentChainV2:
             fetch_user_profile
         ]
     
-    def _build_chain(self):
-        """Build a simple chain that uses tool-calling."""
+    def _build_agent(self) -> AgentExecutor:
+        """Build the agent executor with tools."""
         
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", """You are MOODZ, an empathetic AI mood companion and mental wellness assistant.
+        system_prompt = """You are MOODZ, an empathetic AI mood companion and mental wellness assistant.
 
 Your role:
 - Understand and validate the user's emotions
@@ -185,25 +178,56 @@ Your role:
 - Offer actionable suggestions for mood improvement
 - Track patterns and provide insights
 
-You have access to tools to:
-- Fetch recent conversation history
-- Find similar past experiences
-- Get mood history and user facts
+Available Tools:
+- fetch_recent_conversation: Get recent chat history
+- fetch_semantic_context: Find similar past experiences
+- fetch_user_profile: Get mood history and user facts
 
 Guidelines:
 - Be warm, empathetic, and non-judgmental
-- Use tools when they would help provide better support
+- Use tools strategically - only when they add value
 - Reference past conversations and patterns when relevant
 - Provide specific, actionable advice
 - Ask clarifying questions when needed
-- Celebrate improvements and acknowledge challenges"""),
-            ("human", "{user_message}")
-        ])
+- Celebrate improvements and acknowledge challenges
+
+You have access to the following tools:
+
+{tools}
+
+Use the following format:
+
+Question: the input question you must answer
+Thought: you should always think about what to do
+Action: the action to take, should be one of [{tool_names}]
+Action Input: the input to the action
+Observation: the result of the action
+... (this Thought/Action/Action Input/Observation can repeat N times)
+Thought: I now know the final answer
+Final Answer: the final answer to the original input question
+
+Begin!
+
+Question: {input}
+Thought: {agent_scratchpad}"""
         
-        # Simple chain: prompt -> LLM with tools -> parse
-        chain = prompt | self.llm_with_tools | StrOutputParser()
+        prompt = ChatPromptTemplate.from_template(system_prompt)
         
-        return chain
+        agent = create_react_agent(
+            llm=self.llm,
+            tools=self.tools,
+            prompt=prompt
+        )
+        
+        agent_executor = AgentExecutor(
+            agent=agent,
+            tools=self.tools,
+            verbose=True,
+            handle_parsing_errors=True,
+            max_iterations=5
+        )
+        
+        return agent_executor
     
     async def invoke(
         self,
@@ -212,7 +236,7 @@ Guidelines:
         user_message: str
     ) -> str:
         """
-        Invoke the chain with user input.
+        Invoke the agent with user input.
         
         Args:
             user_id: User UUID
@@ -223,15 +247,16 @@ Guidelines:
             str: AI response
         """
         try:
-            # Prepare input
+            # Prepare input with context
             input_data = {
-                "user_message": user_message,
+                "input": user_message,
                 "user_id": str(user_id),
                 "session_id": str(session_id)
             }
             
-            # Invoke chain
-            response = await self.chain.ainvoke(input_data)
+            # Invoke agent
+            result = await self.agent_executor.ainvoke(input_data)
+            response = result.get("output", "")
             
             # Save to session history
             await self.session_manager.add_user_message(session_id, user_message)
@@ -240,9 +265,7 @@ Guidelines:
             return response
             
         except Exception as e:
-            print(f"Error invoking chain: {e}")
-            import traceback
-            traceback.print_exc()
+            print(f"Error invoking agent: {e}")
             return "I apologize, but I encountered an error processing your message. Please try again."
 
 
