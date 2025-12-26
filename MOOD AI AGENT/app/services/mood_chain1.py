@@ -35,6 +35,7 @@ async def fetch_recent_conversation(
 
     return "\n".join(formatted)
 
+@tool(description="Fetch relevant past experiences for the user using similarity search")
 async def fetch_semantic_conversation(
     user_id: str,
     user_input: str,
@@ -57,6 +58,7 @@ async def fetch_semantic_conversation(
         )
     return "\n".join(formatted)
 
+@tool(description="Fetch structured user mood history and known user facts")
 async def fetch_mood_history(
     user_id: str,
     runtime: ToolRuntime
@@ -90,6 +92,17 @@ async def fetch_mood_history(
 
     return "\n".join(formatted) or "No structured user data."
     
+SYSTEM_PROMPT = """
+You are MOODZ, an empathetic AI mood companion.
+
+You can:
+- Recall recent conversations
+- Retrieve past emotional experiences
+- Analyze user mood patterns
+
+Use tools when they help you understand the user's emotional state better.
+Be warm, empathetic, and actionable.
+"""
 
 class MoodAgentChain:
     """
