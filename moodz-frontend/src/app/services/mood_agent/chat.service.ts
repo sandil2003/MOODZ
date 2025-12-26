@@ -7,6 +7,7 @@ export interface ChatMessage {
     content: string;
     timestamp: Date;
     isStreaming?: boolean;
+    isCrisis?: boolean;
 }
 
 export interface ChatRequest {
@@ -21,6 +22,7 @@ export interface StreamChunk {
     done?: boolean;
     session_id?: string;
     latency?: number;
+    crisis_detected?: boolean;
     classification?: {
         save: boolean;
         mood: string;
@@ -276,7 +278,8 @@ export class ChatService {
                                         role: 'assistant',
                                         content: finalContent,
                                         timestamp: new Date(),
-                                        isStreaming: false
+                                        isStreaming: false,
+                                        isCrisis: parsed.crisis_detected || false
                                     };
                                     this.messages.update(msgs => [...msgs, finalMessage]);
                                 }
