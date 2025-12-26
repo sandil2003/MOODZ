@@ -13,7 +13,7 @@ from app.database import AsyncSessionLocal
 from sqlalchemy import select, desc
 from config import settings
 from langchain_community.callbacks import get_openai_callback
-from CrisisDetector import check_crisis
+from app.services.crisis_detection import CrisisDetector
 
 class MoodAgentChainV2:
 
