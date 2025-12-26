@@ -15,13 +15,7 @@ from config import settings
 
 
 class MoodAgentChainV2:
-    """
-    Agent-based LangChain implementation for mood analysis.
-    
-    Uses tools for on-demand context fetching instead of parallel fetching.
-    The agent decides which tools to call based on the conversation.
-    """
-    
+
     def __init__(
         self,
         session_manager: SessionManager,
@@ -29,9 +23,6 @@ class MoodAgentChainV2:
         model: str = "gpt-4o-mini"
     ):
         """
-        Initialize the mood agent chain with tools.
-        
-        Args:
             session_manager: Redis session manager for short-term memory
             vector_service: Pinecone vector service for semantic search
             model: OpenAI model to use (ignored if using custom model)
@@ -61,11 +52,9 @@ class MoodAgentChainV2:
         self.agent_executor = self._build_agent()
     
     def _build_tools(self) -> List:
-        """Build the tools for the agent."""
         
         @tool(description="Fetch recent conversation history for the user session.")
         async def fetch_recent_conversation(session_id: str) -> str:
-            """Fetch recent conversation history for the user session."""
             try:
                 history = await self.session_manager.get_recent_history(
                     session_id=UUID(session_id),
@@ -89,7 +78,6 @@ class MoodAgentChainV2:
         
         @tool(description="Fetch relevant past experiences using similarity search.")
         async def fetch_semantic_context(user_id: str, query: str) -> str:
-            """Fetch relevant past experiences using similarity search."""
             try:
                 results = await self.vector_service.similarity_search(
                     query=query,
@@ -119,7 +107,6 @@ class MoodAgentChainV2:
         
         @tool(description="Fetch structured user mood history and known user facts.")
         async def fetch_user_profile(user_id: str) -> str:
-            """Fetch structured user mood history and known user facts."""
             try:
                 async with AsyncSessionLocal() as db:
                     # Get recent mood history
@@ -167,7 +154,6 @@ class MoodAgentChainV2:
         ]
     
     def _build_agent(self) -> AgentExecutor:
-        """Build the agent executor with tools."""
         
         system_prompt = """You are MOODZ, an empathetic AI mental wellness companion.
 
@@ -214,15 +200,10 @@ Current Session ID: {session_id}
         user_message: str
     ) -> str:
         """
-        Invoke the agent with user input.
-        
-        Args:
             user_id: User UUID
             session_id: Session UUID
             user_message: User's message
-            
-        Returns:
-            str: AI response
+
         """
         try:
             existing_history = await self.session_manager.get_recent_history(session_id)
@@ -256,12 +237,7 @@ _mood_agent: Optional[MoodAgentChainV2] = None
 
 
 async def get_mood_agent() -> MoodAgentChainV2:
-    """
-    Get or create the global mood agent instance.
-    
-    Returns:
-        MoodAgentChainV2: Agent instance
-    """
+
     global _mood_agent
     
     if _mood_agent is None:
