@@ -12,6 +12,7 @@ from app.models import MoodHistory, UserFact
 from app.database import AsyncSessionLocal
 from sqlalchemy import select, desc
 from config import settings
+from langchain_community.callbacks import get_openai_callback
 
 
 class MoodAgentChainV2:
@@ -44,7 +45,8 @@ class MoodAgentChainV2:
             self.llm = ChatOpenAI(
                 model=model,
                 temperature=0.7,
-                openai_api_key=settings.openai_api_key
+                openai_api_key=settings.openai_api_key,
+                model_kwargs={"stream_options": {"include_usage": True}}
             )
         
         # Build tools and agent
@@ -173,9 +175,9 @@ Current Session ID: {session_id}
 
         prompt = ChatPromptTemplate.from_messages([
             ("system", system_prompt),
+            MessagesPlaceholder(variable_name="chat_history"),
             ("human", "{input}"),
             MessagesPlaceholder(variable_name="agent_scratchpad"),
-            MessagesPlaceholder(variable_name="chat_history")
         ])
 
         agent = create_tool_calling_agent(
@@ -206,6 +208,8 @@ Current Session ID: {session_id}
 
         """
         try:
+            await self.session_manager.add_user_message(session_id, user_message)
+
             existing_history = await self.session_manager.get_recent_history(session_id)
             # Prepare input with context
             input_data = {
@@ -214,13 +218,18 @@ Current Session ID: {session_id}
                 "session_id": str(session_id),
                 "chat_history": existing_history
             }
+
+            with get_openai_callback() as cb:
+                result = await self.agent_executor.ainvoke(input_data)
+
+                print(f"Total tokens: {cb.total_tokens}")
+                print(f"Prompt tokens: {cb.prompt_tokens}")
+                print(f"Completion tokens: {cb.completion_tokens}")
+                print(f"Total cost: {cb.total_cost}")
             
-            # Invoke agent
-            result = await self.agent_executor.ainvoke(input_data)
             response = result.get("output", "")
             
             # Save to session history
-            await self.session_manager.add_user_message(session_id, user_message)
             await self.session_manager.add_assistant_message(session_id, response)
             
             return response
