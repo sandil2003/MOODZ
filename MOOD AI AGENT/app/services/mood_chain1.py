@@ -1,7 +1,7 @@
 from typing import List, Optional
 from uuid import UUID
 from langchain_core.tools import tool
-from langchain.agents import AgentExecutor, create_tool_calling_agent
+from langchain_classic.agents import create_tool_calling_agent, AgentExecutor
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_openai import ChatOpenAI
 
@@ -166,42 +166,42 @@ class MoodAgentChainV2:
             fetch_user_profile
         ]
     
-   def _build_agent(self) -> AgentExecutor:
-        system_prompt = """
+def _build_agent(self) -> AgentExecutor:
+        # 1. We add the agent_scratchpad for tool-calling reasoning
+        # 2. We explicitly tell the agent its current context (IDs) in the system prompt
+    system_prompt = """
 You are MOODZ, an empathetic AI mental wellness companion.
+Current Context:
+- User ID: {user_id}
+- Session ID: {session_id}
 
 Your goals:
-- Understand and validate emotions
-- Use tools ONLY when helpful
-- Personalize responses using history
-- Offer gentle, actionable support
-- Never reveal internal reasoning
-
-Tool usage rules:
-- Use fetch_recent_conversation for chat continuity
-- Use fetch_semantic_context to find similar past experiences
-- Use fetch_user_profile for structured history
+- Understand and validate emotions.
+- Use tools ONLY when helpful (e.g., if you need to remember something specific).
+- Personalize responses using history.
+- Never reveal internal reasoning or technical tool names to the user.
 """
 
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", system_prompt),
-            MessagesPlaceholder(variable_name="chat_history"),
-            ("human", "{input}")
-        ])
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", system_prompt),
+        MessagesPlaceholder(variable_name="chat_history"),
+        ("human", "{input}"),
+        MessagesPlaceholder(variable_name="agent_scratchpad"),
+    ])
 
-        agent = create_tool_calling_agent(
-            llm=self.llm,
-            tools=self.tools,
-            prompt=prompt
-        )
+    agent = create_tool_calling_agent(
+        llm=self.llm,
+        tools=self.tools,
+        prompt=prompt
+    )
 
-        return AgentExecutor(
-            agent=agent,
-            tools=self.tools,
-            verbose=settings.debug,
-            max_iterations=5
-        )
-
+    return AgentExecutor(
+        agent=agent,
+        tools=self.tools,
+        verbose=settings.debug,
+        max_iterations=5,
+        handle_parsing_errors=True # Recommended for robustness
+    )
     
     async def invoke(
         self,
