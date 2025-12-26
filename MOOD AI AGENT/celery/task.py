@@ -1,9 +1,12 @@
-import resend 
+
 from app.database import SessionLocal
 from app.models import User
 from .celery_app import app
+import asyncio
+from app.database import AsyncSessionLocal
+from sqlalchemy import select
 
-@app.task(name="app.tasks.send_daily_tips")
+@app.task(name="mood_app.tasks.send_daily_tips")
 def send_daily_tips():
     # Because Celery is sync, we use asyncio.run to call our async logic
     asyncio.run(process_tips())
@@ -17,4 +20,15 @@ async def process_tips():
         for user in users:
             send_individual_email.delay(user.email, "Keep breathing!")
         db.close()
-        
+
+@app.task
+def send_individual_email(email, tip):
+    # Logic to send actual email
+    print(f"Sending tip to {email}: {tip}")
+    # Example using a service:
+    # resend.Emails.send({
+    #     "from": "Moodz <hello@moodz.ai>",
+    #     "to": email,
+    #     "subject": "Your Daily Mental Health Tip",
+    #     "text": tip
+    # })

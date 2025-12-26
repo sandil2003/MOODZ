@@ -8,5 +8,5 @@ app.conf.beat_schedule = {
         'task': 'mood_app.tasks.send_daily_tips',
         'schedule': crontab(hour=8, minute=0),
     },
-    app.conf.timezone = 'UTC'
 }
+app.conf.timezone = 'UTC'
