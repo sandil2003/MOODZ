@@ -13,6 +13,7 @@ from app.database import AsyncSessionLocal
 from sqlalchemy import select, desc
 from config import settings
 from langchain_core.tools import ToolRuntime, tool
+from langchain.agents import create_agent
 
 @tool(description="Fetch recent conversation history for the user session")
 async def fetch_recent_conversation(
@@ -103,6 +104,24 @@ You can:
 Use tools when they help you understand the user's emotional state better.
 Be warm, empathetic, and actionable.
 """
+
+llm = ChatOpenAI(
+    model = "gpt-4o-mini",
+    temperature = 0.7,
+    openai_api_key = settings.openai_api_key
+)
+
+tools = [
+    fetch_recent_conversation,
+    fetch_semantic_conversation,
+    fetch_mood_history
+]
+
+agent = create_agent(
+    model = llm,
+    tools = tools,
+    system_prompt = SYSTEM_PROMPT,
+)
 
 class MoodAgentChain:
     """
