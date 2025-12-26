@@ -9,6 +9,6 @@ from app.services.classifier import ConversationClassifier, get_classifier
 __all__ = [
     "SessionManager", "get_session_manager",
     "VectorService", "get_vector_service",
-    "MoodAgentChain", "get_mood_chain",
+    "MoodAgentChain", "get_mood_chain",  # Export aliases for backward compatibility
     "ConversationClassifier", "get_classifier"
 ]
