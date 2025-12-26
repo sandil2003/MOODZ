@@ -255,6 +255,21 @@ async def stream_chat_response(
         # Save user message to database
         await save_chat_message_to_db(user_id, session_id, "user", message)
         
+        # ⚠️ CRISIS DETECTION - Check before processing
+        from app.services.crisis_detection import CrisisDetector
+        crisis_detector = CrisisDetector()
+        crisis_info = await crisis_detector.check_crisis(message)
+        
+        if crisis_info["score"] == 1.0:
+            crisis_message = "I'm really concerned about what you're sharing. Please reach out to a mental health professional or crisis helpline immediately. You can call the National Suicide Prevention Lifeline at 988 (US) or visit your local emergency services."
+            
+            await session_manager.add_assistant_message(session_id, crisis_message)
+            await save_chat_message_to_db(user_id, session_id, "assistant", crisis_message)
+
+            yield f"data: {json.dumps({'chunk': crisis_message})}\\n\\n"
+            yield f"data: {json.dumps({'done': True, 'session_id': str(session_id), 'crisis_detected': True})}\\n\\n"
+            return
+        
         # Prepare input for agent
         input_data = {
             "input": message,
