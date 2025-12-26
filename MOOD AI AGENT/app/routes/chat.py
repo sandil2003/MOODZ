@@ -255,20 +255,23 @@ async def stream_chat_response(
         # Save user message to database
         await save_chat_message_to_db(user_id, session_id, "user", message)
         
-        # Prepare input for streaming
+        # Prepare input for agent
         input_data = {
-            "user_id": user_id,
-            "session_id": session_id,
-            "user_message": message
+            "input": message,
+            "user_id": str(user_id),
+            "session_id": str(session_id),
+            "chat_history": []
         }
         
-        # Stream response
+        # Stream response from agent
         full_response = ""
         
-        async for chunk in chain.chain.astream(input_data):
-            if chunk:
-                full_response += chunk
-                # Format as Server-Sent Event
+        async for event in chain.agent_executor.astream(input_data):
+            # Extract the output from agent events
+            if "output" in event:
+                chunk = event["output"]
+                full_response = chunk
+                # Stream the complete output
                 yield f"data: {json.dumps({'chunk': chunk})}\n\n"
         
         # Calculate latency
@@ -311,6 +314,9 @@ async def stream_chat_response(
         
     except Exception as e:
         error_msg = f"Error: {str(e)}"
+        print(f"Error in stream_chat_response: {e}")
+        import traceback
+        traceback.print_exc()
         yield f"data: {json.dumps({'error': error_msg})}\n\n"
 
 
