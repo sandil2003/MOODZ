@@ -198,7 +198,8 @@ Available tools:
         return AgentExecutor(
             agent=agent,
             tools=self.tools,
-            verbose=False,
+            verbose=True,
+            name = "ModdzAgent"
             max_iterations=5,
             handle_parsing_errors=True
         )
