@@ -57,6 +57,39 @@ async def fetch_semantic_conversation(
         )
     return "\n".join(formatted)
 
+async def fetch_mood_history(
+    user_id: str,
+    runtime: ToolRuntime
+) -> str:
+    async with AsyncSessionLocal() as db:
+        moods = (await db.execute(
+            select(MoodHistory)
+            .where(MoodHistory.user_id == user_id)
+            .order_by(desc(MoodHistory.created_at))
+            .limit(5)
+        )).scalars().all()
+
+        facts = (await db.execute(
+            select(UserFact)
+            .where(UserFact.user_id == user_id)
+            .order_by(desc(UserFact.created_at))
+            .limit(10)
+        )).scalars().all()
+
+    formatted = []
+
+    if moods:
+        formatted.append("Recent Mood History:")
+        for m in moods:
+            formatted.append(f"- {m.sentiment_label} ({m.mood_score}/10)")
+
+    if facts:
+        formatted.append("\nKnown User Facts:")
+        for f in facts:
+            formatted.append(f"- {f.fact_text}")
+
+    return "\n".join(formatted) or "No structured user data."
+    
 
 class MoodAgentChain:
     """
