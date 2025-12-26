@@ -39,3 +39,4 @@ duckduckgo-search
 langchain-google-genai
 google-generativeai
 duckduckgo-search
+Celery
