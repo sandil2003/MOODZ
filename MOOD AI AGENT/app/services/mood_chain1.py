@@ -1,11 +1,10 @@
-from typing import Dict, Any, List, Optional
+from typing import List, Optional
 from uuid import UUID
-from datetime import datetime, timedelta
 from langchain_core.tools import tool
-from langchain.agents.agent import AgentExecutor
-from langchain.agents.react.agent import create_react_agent
+from langchain.agents import AgentExecutor, create_tool_calling_agent
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_openai import ChatOpenAI
+
 from app.services.session_manager import SessionManager
 from app.services.vector_service import VectorService
 from app.services.custom_model import get_custom_model
@@ -167,67 +166,42 @@ class MoodAgentChainV2:
             fetch_user_profile
         ]
     
-    def _build_agent(self) -> AgentExecutor:
-        """Build the agent executor with tools."""
-        
-        system_prompt = """You are MOODZ, an empathetic AI mood companion and mental wellness assistant.
+   def _build_agent(self) -> AgentExecutor:
+        system_prompt = """
+You are MOODZ, an empathetic AI mental wellness companion.
 
-Your role:
-- Understand and validate the user's emotions
-- Provide personalized support based on their history
-- Offer actionable suggestions for mood improvement
-- Track patterns and provide insights
+Your goals:
+- Understand and validate emotions
+- Use tools ONLY when helpful
+- Personalize responses using history
+- Offer gentle, actionable support
+- Never reveal internal reasoning
 
-Available Tools:
-- fetch_recent_conversation: Get recent chat history
-- fetch_semantic_context: Find similar past experiences
-- fetch_user_profile: Get mood history and user facts
+Tool usage rules:
+- Use fetch_recent_conversation for chat continuity
+- Use fetch_semantic_context to find similar past experiences
+- Use fetch_user_profile for structured history
+"""
 
-Guidelines:
-- Be warm, empathetic, and non-judgmental
-- Use tools strategically - only when they add value
-- Reference past conversations and patterns when relevant
-- Provide specific, actionable advice
-- Ask clarifying questions when needed
-- Celebrate improvements and acknowledge challenges
+        prompt = ChatPromptTemplate.from_messages([
+            ("system", system_prompt),
+            MessagesPlaceholder(variable_name="chat_history"),
+            ("human", "{input}")
+        ])
 
-You have access to the following tools:
-
-{tools}
-
-Use the following format:
-
-Question: the input question you must answer
-Thought: you should always think about what to do
-Action: the action to take, should be one of [{tool_names}]
-Action Input: the input to the action
-Observation: the result of the action
-... (this Thought/Action/Action Input/Observation can repeat N times)
-Thought: I now know the final answer
-Final Answer: the final answer to the original input question
-
-Begin!
-
-Question: {input}
-Thought: {agent_scratchpad}"""
-        
-        prompt = ChatPromptTemplate.from_template(system_prompt)
-        
-        agent = create_react_agent(
+        agent = create_tool_calling_agent(
             llm=self.llm,
             tools=self.tools,
             prompt=prompt
         )
-        
-        agent_executor = AgentExecutor(
+
+        return AgentExecutor(
             agent=agent,
             tools=self.tools,
-            verbose=True,
-            handle_parsing_errors=True,
+            verbose=settings.debug,
             max_iterations=5
         )
-        
-        return agent_executor
+
     
     async def invoke(
         self,
