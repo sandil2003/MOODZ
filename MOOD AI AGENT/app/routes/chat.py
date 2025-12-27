@@ -262,7 +262,7 @@ async def stream_chat_response(
         
         if crisis_info["score"] == 1.0:
             print("crisis detected")
-            crisis_message = "I'm really concerned about what you're sharing. Please reach out to a mental health professional or crisis helpline immediately. You can call the National Suicide Prevention Lifeline at 988 (US) or visit your local emergency services."
+            crisis_message = "I'm really concerned about what you're sharing. Please reach out to a mental health professional or crisis helpline immediately. You can visit your local emergency services."
             
             await session_manager.add_assistant_message(session_id, crisis_message)
             await save_chat_message_to_db(user_id, session_id, "assistant", crisis_message)
