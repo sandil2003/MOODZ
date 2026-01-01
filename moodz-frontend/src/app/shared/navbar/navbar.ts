@@ -15,6 +15,7 @@ export class Navbar implements OnInit {
   tooltipText = signal<string[]>(['', '', '']);
   isOnMoodDashboard = signal<boolean>(false);
   isOnHomePage = signal<boolean>(false);
+  isOnMoodAgent = signal<boolean>(false);
 
   private fullTexts = ['Mood Dashboard', 'Toggle Dark Mode', 'Home'];
   private typingIntervals: any[] = [];
@@ -37,6 +38,7 @@ export class Navbar implements OnInit {
   private checkRoute(url: string) {
     this.isOnMoodDashboard.set(url.includes('/mood-dashboard') || url.includes('/mood-history'));
     this.isOnHomePage.set(url === '/' || url === '');
+    this.isOnMoodAgent.set(url.includes('/mood-agent'));
   }
 
   showTooltip(index: number): void {
