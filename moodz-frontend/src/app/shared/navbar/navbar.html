@@ -1,5 +1,5 @@
 <header class="header"
-    [ngClass]="{'header-mood-dashboard': isOnMoodDashboard(), 'header-home-page': isOnHomePage(), 'header-mood-agent': isOnMoodAgent()}">
+    [ngClass]="{'header-mood-dashboard': isOnMoodDashboard(), 'header-home-page': isOnHomePage(), 'header-mood-agent': isOnMoodAgent(), 'header-about-us': isOnAboutUs()}">
     <div class="header-content">
         <!-- Hamburger Menu Button (Mobile Only) -->
         <button class="hamburger-menu" (click)="toggleMobileMenu()" [class.active]="mobileMenuOpen()"

@@ -16,6 +16,7 @@ export class Navbar implements OnInit {
   isOnMoodDashboard = signal<boolean>(false);
   isOnHomePage = signal<boolean>(false);
   isOnMoodAgent = signal<boolean>(false);
+  isOnAboutUs = signal<boolean>(false);
   mobileMenuOpen = signal<boolean>(false);
 
   private fullTexts = ['Mood Dashboard', 'Toggle Dark Mode', 'Home'];
@@ -40,6 +41,7 @@ export class Navbar implements OnInit {
     this.isOnMoodDashboard.set(url.includes('/mood-dashboard') || url.includes('/mood-history'));
     this.isOnHomePage.set(url === '/' || url === '');
     this.isOnMoodAgent.set(url.includes('/mood-agent'));
+    this.isOnAboutUs.set(url.includes('/about-us'));
   }
 
   showTooltip(index: number): void {
