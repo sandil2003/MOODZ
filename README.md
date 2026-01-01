@@ -36,7 +36,7 @@
 **MOODZ** is a comprehensive mental wellness platform that combines cutting-edge AI technology with thoughtful UX design to provide personalized emotional support, journaling assistance, and study guidance. The platform features three specialized AI agents, each designed to help users in different aspects of their personal development journey.
 
 
-### 🎭 Mood Agent
+### Mood Agent
 - **Emotional Support**: Empathetic AI companion for mental health conversations
 - **Mood Tracking**: Log and monitor your emotional states
 - **Sentiment Analysis**: AI-powered analysis of your mood patterns
@@ -44,13 +44,13 @@
 - **Chat History**: Access past conversations and insights
 - **Mood Dashboard**: Visualize your emotional journey with charts and analytics
 
-### 📝 Journal Agent *(Coming Soon)*
+### Journal Agent *(Coming Soon)*
 - **Reflective Writing**: AI-assisted journaling for personal growth
 - **Thought Organization**: Structure your ideas and reflections
 - **Daily Prompts**: Guided journaling with thoughtful questions
 - **Pattern Recognition**: Identify recurring themes in your entries
 
-### 📚 Study Agent *(Coming Soon)*
+### Study Agent *(Coming Soon)*
 - **Learning Assistant**: AI-powered study companion
 - **Research Support**: Help with academic research and analysis
 - **Custom Learning Plans**: Personalized study schedules
