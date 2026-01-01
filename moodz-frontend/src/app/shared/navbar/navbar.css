@@ -23,6 +23,10 @@
     background: #f8fafc !important;
 }
 
+.header-about-us {
+    background: #f8fafc !important;
+}
+
 
 /* Ensure all navbar children stay below shape on dashboard */
 .header-mood-dashboard * {
