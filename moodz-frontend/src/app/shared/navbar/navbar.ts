@@ -1,12 +1,11 @@
-import { Component, signal, inject, OnInit } from '@angular/core';
-import { Router, RouterLink, NavigationEnd } from '@angular/router';
-import { CommonModule } from '@angular/common';
-import { ThemeService } from '../../services/theme.service';
+import { Component, OnInit, signal, inject } from '@angular/core';
+import { Router, NavigationEnd, RouterLink, RouterLinkActive } from '@angular/router';
 import { filter } from 'rxjs/operators';
+import { ThemeService } from '../../services/theme.service';
 
 @Component({
   selector: 'app-navbar',
-  imports: [RouterLink, CommonModule],
+  imports: [RouterLink, RouterLinkActive],
   templateUrl: './navbar.html',
   styleUrl: './navbar.css',
 })
@@ -42,52 +41,42 @@ export class Navbar implements OnInit {
   }
 
   showTooltip(index: number): void {
-    // Clear any existing interval
-    if (this.typingIntervals[index]) {
-      clearInterval(this.typingIntervals[index]);
-    }
+    this.clearTypingInterval(index);
+    this.tooltipVisible.set(this.tooltipVisible().map((_, i) => i === index));
 
-    // Show tooltip
-    const visible = [...this.tooltipVisible()];
-    visible[index] = true;
-    this.tooltipVisible.set(visible);
-
-    // Reset text
-    const texts = [...this.tooltipText()];
-    texts[index] = '';
-    this.tooltipText.set(texts);
-
-    // Start typing animation
+    let currentText = '';
     let charIndex = 0;
     const fullText = this.fullTexts[index];
 
     this.typingIntervals[index] = setInterval(() => {
       if (charIndex < fullText.length) {
-        const texts = [...this.tooltipText()];
-        texts[index] = fullText.substring(0, charIndex + 1);
-        this.tooltipText.set(texts);
+        currentText += fullText[charIndex];
+        const newTexts = [...this.tooltipText()];
+        newTexts[index] = currentText;
+        this.tooltipText.set(newTexts);
         charIndex++;
       } else {
-        clearInterval(this.typingIntervals[index]);
+        this.clearTypingInterval(index);
       }
-    }, 50); // 50ms per character for smooth typing effect
+    }, 30);
   }
 
   hideTooltip(index: number): void {
-    // Clear typing interval
+    this.clearTypingInterval(index);
+    const newVisible = [...this.tooltipVisible()];
+    newVisible[index] = false;
+    this.tooltipVisible.set(newVisible);
+
+    const newTexts = [...this.tooltipText()];
+    newTexts[index] = '';
+    this.tooltipText.set(newTexts);
+  }
+
+  private clearTypingInterval(index: number): void {
     if (this.typingIntervals[index]) {
       clearInterval(this.typingIntervals[index]);
+      this.typingIntervals[index] = null;
     }
-
-    // Hide tooltip
-    const visible = [...this.tooltipVisible()];
-    visible[index] = false;
-    this.tooltipVisible.set(visible);
-
-    // Reset text
-    const texts = [...this.tooltipText()];
-    texts[index] = '';
-    this.tooltipText.set(texts);
   }
 
   toggleDarkMode(): void {

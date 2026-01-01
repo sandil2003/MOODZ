@@ -16,5 +16,9 @@ export const routes: Routes = [
     {
         path: 'mood-dashboard',
         loadComponent: () => import('./pages/mood-dashboard/mood-dashboard').then(m => m.MoodDashboard)
+    },
+    {
+        path: 'about-us',
+        loadComponent: () => import('./pages/about-us/about-us').then(m => m.AboutUs)
     }
 ];

@@ -1,0 +1,339 @@
+/* About Us Page Styles */
+
+:host {
+    display: block;
+    min-height: 100vh;
+    background: #f8fafc;
+}
+
+.about-container {
+    width: 100%;
+}
+
+/* Hero Section */
+.hero-section {
+    background: linear-gradient(135deg, #7B8CBA 0%, #8FB5A8 100%);
+    padding: 6rem 2rem;
+    text-align: center;
+    color: white;
+}
+
+.hero-content {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.hero-title {
+    font-size: 3.5rem;
+    font-weight: 700;
+    margin: 0 0 1rem 0;
+    letter-spacing: -0.02em;
+}
+
+.hero-subtitle {
+    font-size: 1.5rem;
+    font-weight: 400;
+    margin: 0;
+    opacity: 0.95;
+}
+
+/* Content Wrapper */
+.content-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+}
+
+/* Section Styles */
+section {
+    padding: 5rem 0;
+}
+
+.section-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #2C2C2C;
+    text-align: center;
+    margin: 0 0 3rem 0;
+}
+
+/* Mission Section */
+.mission-section {
+    background: white;
+}
+
+.mission-text {
+    font-size: 1.25rem;
+    line-height: 1.8;
+    color: #4A5568;
+    text-align: center;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+/* What We Do Section */
+.what-we-do-section {
+    background: #f8fafc;
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-top: 3rem;
+}
+
+.feature-card {
+    background: white;
+    padding: 2.5rem;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    position: relative;
+}
+
+.feature-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.feature-icon {
+    font-size: 3rem;
+    margin-bottom: 1.5rem;
+}
+
+.feature-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #2C2C2C;
+    margin: 0 0 1rem 0;
+}
+
+.feature-description {
+    font-size: 1rem;
+    line-height: 1.7;
+    color: #64748b;
+    margin: 0;
+}
+
+.coming-soon-badge {
+    display: inline-block;
+    margin-top: 1rem;
+    padding: 0.375rem 0.875rem;
+    background: #fbbf24;
+    color: #78350f;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 9999px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Values Section */
+.values-section {
+    background: white;
+}
+
+.values-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2.5rem;
+    margin-top: 3rem;
+}
+
+.value-item {
+    text-align: center;
+}
+
+.value-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2C2C2C;
+    margin: 0 0 1rem 0;
+}
+
+.value-description {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #64748b;
+    margin: 0;
+}
+
+/* Team Section */
+.team-section {
+    background: #f8fafc;
+}
+
+.team-description {
+    font-size: 1.125rem;
+    line-height: 1.8;
+    color: #4A5568;
+    text-align: center;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+/* CTA Section */
+.cta-section {
+    background: linear-gradient(135deg, #E89BA0 0%, #7B8CBA 100%);
+    padding: 5rem 2rem;
+    text-align: center;
+    color: white;
+}
+
+.cta-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0 0 1rem 0;
+}
+
+.cta-description {
+    font-size: 1.25rem;
+    margin: 0 0 2rem 0;
+    opacity: 0.95;
+}
+
+.cta-button {
+    display: inline-block;
+    padding: 1rem 2.5rem;
+    background: white;
+    color: #7B8CBA;
+    font-size: 1.125rem;
+    font-weight: 600;
+    text-decoration: none;
+    border-radius: 12px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.cta-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Dark Mode */
+:host-context(body.dark-mode) {
+    background: #0f172a;
+}
+
+:host-context(body.dark-mode) .about-container {
+    background: #0f172a;
+}
+
+:host-context(body.dark-mode) .mission-section,
+:host-context(body.dark-mode) .values-section {
+    background: #1e293b;
+}
+
+:host-context(body.dark-mode) .what-we-do-section,
+:host-context(body.dark-mode) .team-section {
+    background: #0f172a;
+}
+
+:host-context(body.dark-mode) .section-title,
+:host-context(body.dark-mode) .feature-title,
+:host-context(body.dark-mode) .value-title {
+    color: #f1f5f9;
+}
+
+:host-context(body.dark-mode) .mission-text,
+:host-context(body.dark-mode) .feature-description,
+:host-context(body.dark-mode) .value-description,
+:host-context(body.dark-mode) .team-description {
+    color: #cbd5e1;
+}
+
+:host-context(body.dark-mode) .feature-card {
+    background: #1e293b;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+:host-context(body.dark-mode) .feature-card:hover {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+/* Responsive Design */
+
+/* Mobile: Extra Small (< 480px) */
+@media (max-width: 480px) {
+    .hero-section {
+        padding: 4rem 1rem;
+    }
+
+    .hero-title {
+        font-size: 2rem;
+    }
+
+    .hero-subtitle {
+        font-size: 1.125rem;
+    }
+
+    section {
+        padding: 3rem 0;
+    }
+
+    .section-title {
+        font-size: 1.75rem;
+    }
+
+    .mission-text,
+    .team-description {
+        font-size: 1rem;
+    }
+
+    .features-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .feature-card {
+        padding: 2rem;
+    }
+
+    .values-grid {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+
+    .cta-title {
+        font-size: 1.75rem;
+    }
+
+    .cta-description {
+        font-size: 1rem;
+    }
+}
+
+/* Mobile: Small (481px - 767px) */
+@media (min-width: 481px) and (max-width: 767px) {
+    .hero-title {
+        font-size: 2.5rem;
+    }
+
+    .hero-subtitle {
+        font-size: 1.25rem;
+    }
+
+    .section-title {
+        font-size: 2rem;
+    }
+
+    .features-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Tablet (768px - 1023px) */
+@media (min-width: 768px) and (max-width: 1023px) {
+    .hero-title {
+        font-size: 3rem;
+    }
+
+    .features-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .values-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
