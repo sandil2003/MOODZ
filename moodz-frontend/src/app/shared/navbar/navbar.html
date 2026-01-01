@@ -1,19 +1,6 @@
 <header class="header"
     [ngClass]="{'header-mood-dashboard': isOnMoodDashboard(), 'header-home-page': isOnHomePage(), 'header-mood-agent': isOnMoodAgent()}">
     <div class="header-content">
-        <div class="logo-container">
-            <h1 class="logo">
-                <a routerLink="/" class="logo-link" (mouseenter)="showTooltip(2)" (mouseleave)="hideTooltip(2)"
-                    (click)="hideTooltip(2)">
-                    MOODZ
-                    <div class="tooltip logo-tooltip" [class.visible]="tooltipVisible()[2]">
-                        {{ tooltipText()[2] }}
-                    </div>
-                </a>
-            </h1>
-            <div class="rectangle"></div>
-        </div>
-
         <!-- Header Icons -->
         <div class="header-icons">
             @if (!isOnHomePage()) {

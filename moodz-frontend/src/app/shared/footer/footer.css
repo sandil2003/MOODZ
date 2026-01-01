@@ -157,7 +157,7 @@
 
 .footer-copyright {
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
     gap: 1rem;
@@ -167,6 +167,23 @@
     font-size: 0.875rem;
     color: #94a3b8;
     margin: 0;
+}
+
+.footer-logo-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.4rem 1.2rem;
+    background: transparent;
+    border-radius: 12px;
+    border: 3px solid #2C2C2C;
+}
+
+.footer-logo-text {
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: #2C2C2C;
 }
 
 .made-with {
@@ -245,6 +262,15 @@
 :host-context(body.dark-mode) .social-link:hover {
     background: #60a5fa;
     color: #0f172a;
+}
+
+:host-context(body.dark-mode) .footer-logo-badge {
+    background: transparent;
+    border-color: #f1f5f9;
+}
+
+:host-context(body.dark-mode) .footer-logo-text {
+    color: #f1f5f9;
 }
 
 /* Dropdown Styles for Mobile */
