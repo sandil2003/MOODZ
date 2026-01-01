@@ -1,13 +1,16 @@
 <footer class="footer">
     <div class="footer-container">
-        
+
 
         <!-- Middle Section: Links -->
         <div class="footer-middle">
             <!-- AI Agents -->
             <div class="footer-column">
-                <h3 class="footer-heading">AI Agents</h3>
-                <ul class="footer-links">
+                <h3 class="footer-heading footer-dropdown-header" (click)="toggleAgentsDropdown()">
+                    AI Agents
+                    <span class="dropdown-icon" [class.open]="agentsDropdownOpen()">▼</span>
+                </h3>
+                <ul class="footer-links" [class.dropdown-open]="agentsDropdownOpen()">
                     <li><a routerLink="/mood-agent" class="footer-link">Mood Agent</a></li>
                     <li><a routerLink="/journal-agent" class="footer-link footer-link-disabled">Journal Agent <span
                                 class="coming-soon">Soon</span></a></li>
@@ -18,8 +21,11 @@
 
             <!-- Features -->
             <div class="footer-column">
-                <h3 class="footer-heading">Features</h3>
-                <ul class="footer-links">
+                <h3 class="footer-heading footer-dropdown-header" (click)="toggleFeaturesDropdown()">
+                    Features
+                    <span class="dropdown-icon" [class.open]="featuresDropdownOpen()">▼</span>
+                </h3>
+                <ul class="footer-links" [class.dropdown-open]="featuresDropdownOpen()">
                     <li><a routerLink="/mood-dashboard" class="footer-link">Mood Dashboard</a></li>
                     <li><a routerLink="/mood-history" class="footer-link">Chat History</a></li>
                     <li><a class="footer-link footer-link-disabled">Analytics <span class="coming-soon">Soon</span></a>
@@ -79,9 +85,6 @@
             <div class="footer-copyright">
                 <p class="copyright-text">
                     © {{ currentYear }} MOODZ. All rights reserved.
-                </p>
-                <p class="made-with">
-                    Made with <span class="heart">❤️</span> for your mental wellness
                 </p>
             </div>
         </div>
