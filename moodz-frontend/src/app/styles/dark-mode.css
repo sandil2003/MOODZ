@@ -48,6 +48,11 @@ body.dark-mode .header-home-page {
     background: #0f172a !important;
 }
 
+body.dark-mode .header-mood-agent {
+    background: #0f172a !important;
+}
+
+
 /* Logo and text - Dark Mode */
 body.dark-mode .logo {
     color: #F9FAFB;

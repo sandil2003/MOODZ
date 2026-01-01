@@ -19,6 +19,11 @@
     background: #f8fafc !important;
 }
 
+.header-mood-agent {
+    background: #f8fafc !important;
+}
+
+
 /* Ensure all navbar children stay below shape on dashboard */
 .header-mood-dashboard * {
     z-index: 1 !important;
