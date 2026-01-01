@@ -43,10 +43,45 @@
     align-items: center;
 }
 
+/* Hamburger Menu */
+.hamburger-menu {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    width: 28px;
+    height: 24px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    z-index: 10;
+    transition: transform 0.3s ease;
+}
+
+.hamburger-menu:hover {
+    transform: scale(1.1);
+}
+
+.hamburger-menu:active {
+    transform: scale(0.95);
+}
+
+.hamburger-line {
+    width: 100%;
+    height: 3px;
+    background: #2C2C2C;
+    border-radius: 2px;
+    transition: all 0.3s ease;
+}
+
+.hamburger-menu:hover .hamburger-line {
+    background: #3b82f6;
+}
+
 .logo-container {
     position: relative;
     display: inline-block;
-    margin-left: 2rem;
+    margin-left: 0.5rem;
 }
 
 .logo {
@@ -107,12 +142,12 @@
 /* Header Icons Container */
 .header-icons {
     position: relative;
-    top: 2rem;
-    right: 3rem;
     display: flex;
+    top: 2rem;
+    right: 5rem;
     align-items: center;
     gap: 0.5rem;
-    /* z-index removed to allow shape overlay on dashboard */
+    margin-left: auto;
 }
 
 /* Icon Button */
@@ -159,6 +194,15 @@
 
 :host-context(body.dark-mode) .icon-button:hover .material-icons {
     color: #E5E5E5 !important;
+}
+
+/* Dark Mode - Hamburger Menu */
+:host-context(body.dark-mode) .hamburger-line {
+    background: #f1f5f9;
+}
+
+:host-context(body.dark-mode) .hamburger-menu:hover .hamburger-line {
+    background: #60a5fa;
 }
 
 /* Tooltip */
