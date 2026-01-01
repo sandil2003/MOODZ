@@ -10,12 +10,38 @@
     width: 100%;
 }
 
+/* Mobile: Add padding to push content below navbar */
+@media (max-width: 767px) {
+    .about-container {
+        padding-top: 4rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .about-container {
+        padding-top: 3rem;
+    }
+}
+
 /* Hero Section */
 .hero-section {
     background: linear-gradient(135deg, #7B8CBA 0%, #8FB5A8 100%);
     padding: 6rem 2rem;
     text-align: center;
     color: white;
+}
+
+/* Mobile adjustments - add padding to account for navbar */
+@media (max-width: 767px) {
+    .hero-section {
+        padding: 5rem 1.5rem 4rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero-section {
+        padding: 4.5rem 1rem 3rem;
+    }
 }
 
 .hero-content {
