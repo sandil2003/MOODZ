@@ -1,1 +1,8 @@
-<p>loader works!</p>
+<div class="loader-overlay">
+    <div class="loader-container">
+        <div class="loader-spinner"></div>
+        @if (message()) {
+        <p class="loader-message">{{ message() }}</p>
+        }
+    </div>
+</div>
