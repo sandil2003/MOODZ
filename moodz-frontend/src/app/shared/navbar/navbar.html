@@ -1,6 +1,13 @@
 <header class="header"
     [ngClass]="{'header-mood-dashboard': isOnMoodDashboard(), 'header-home-page': isOnHomePage(), 'header-mood-agent': isOnMoodAgent()}">
     <div class="header-content">
+        <!-- Navigation Links -->
+        <nav class="nav-links">
+            <a routerLink="/" class="nav-link" routerLinkActive="active"
+                [routerLinkActiveOptions]="{exact: true}">Home</a>
+            <a routerLink="/about-us" class="nav-link" routerLinkActive="active">About Us</a>
+        </nav>
+
         <!-- Header Icons -->
         <div class="header-icons">
             @if (!isOnHomePage()) {
