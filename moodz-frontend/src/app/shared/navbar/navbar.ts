@@ -16,6 +16,7 @@ export class Navbar implements OnInit {
   isOnMoodDashboard = signal<boolean>(false);
   isOnHomePage = signal<boolean>(false);
   isOnMoodAgent = signal<boolean>(false);
+  mobileMenuOpen = signal<boolean>(false);
 
   private fullTexts = ['Mood Dashboard', 'Toggle Dark Mode', 'Home'];
   private typingIntervals: any[] = [];
@@ -82,5 +83,13 @@ export class Navbar implements OnInit {
 
   toggleDarkMode(): void {
     this.themeService.toggleDarkMode();
+  }
+
+  toggleMobileMenu(): void {
+    this.mobileMenuOpen.set(!this.mobileMenuOpen());
+  }
+
+  closeMobileMenu(): void {
+    this.mobileMenuOpen.set(false);
   }
 }

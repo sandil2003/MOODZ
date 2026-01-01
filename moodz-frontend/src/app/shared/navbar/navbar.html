@@ -1,8 +1,16 @@
 <header class="header"
     [ngClass]="{'header-mood-dashboard': isOnMoodDashboard(), 'header-home-page': isOnHomePage(), 'header-mood-agent': isOnMoodAgent()}">
     <div class="header-content">
-        <!-- Navigation Links -->
-        <nav class="nav-links">
+        <!-- Hamburger Menu Button (Mobile Only) -->
+        <button class="hamburger-menu" (click)="toggleMobileMenu()" [class.active]="mobileMenuOpen()"
+            aria-label="Toggle menu">
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+        </button>
+
+        <!-- Navigation Links (Desktop) -->
+        <nav class="nav-links desktop-nav">
             <a routerLink="/" class="nav-link" routerLinkActive="active"
                 [routerLinkActiveOptions]="{exact: true}">Home</a>
             <a routerLink="/about-us" class="nav-link" routerLinkActive="active">About Us</a>
@@ -28,4 +36,26 @@
             </button>
         </div>
     </div>
+
+    <!-- Mobile Menu Overlay -->
+    <div class="mobile-menu-overlay" [class.active]="mobileMenuOpen()" (click)="closeMobileMenu()"></div>
+
+    <!-- Mobile Menu -->
+    <nav class="mobile-menu" [class.active]="mobileMenuOpen()">
+        <a routerLink="/" class="mobile-nav-link" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}"
+            (click)="closeMobileMenu()">
+            <span class="material-icons">home</span>
+            Home
+        </a>
+        <a routerLink="/about-us" class="mobile-nav-link" routerLinkActive="active" (click)="closeMobileMenu()">
+            <span class="material-icons">info</span>
+            About Us
+        </a>
+        @if (!isOnHomePage()) {
+        <a routerLink="/mood-dashboard" class="mobile-nav-link" routerLinkActive="active" (click)="closeMobileMenu()">
+            <span class="material-icons">insights</span>
+            Mood Dashboard
+        </a>
+        }
+    </nav>
 </header>
