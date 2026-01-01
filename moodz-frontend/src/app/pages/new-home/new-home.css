@@ -3,12 +3,54 @@
     min-height: 100vh;
     background: #f8fafc;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    transition: background-color 0.3s ease;
+}
+
+/* Dark Mode Host */
+:host-context(.dark) {
+    background: #0f172a;
+}
+
+/* CSS Variables for Theming */
+:host {
+    --bg-primary: #f8fafc;
+    --bg-card: #ffffff;
+    --text-primary: #0f172a;
+    --text-secondary: #64748b;
+    --text-tertiary: #94a3b8;
+    --border-color: #e2e8f0;
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+    --blob-purple: rgba(216, 180, 254, 0.4);
+    --blob-blue: rgba(191, 219, 254, 0.4);
+    --blob-green: rgba(220, 252, 231, 0.4);
+}
+
+:host-context(.dark) {
+    --bg-primary: #0f172a;
+    --bg-card: #1e293b;
+    --text-primary: #f1f5f9;
+    --text-secondary: #cbd5e1;
+    --text-tertiary: #94a3b8;
+    --border-color: #334155;
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.4), 0 8px 10px -6px rgb(0 0 0 / 0.4);
+    --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.5);
+    --blob-purple: rgba(139, 92, 246, 0.15);
+    --blob-blue: rgba(59, 130, 246, 0.15);
+    --blob-green: rgba(34, 197, 94, 0.15);
 }
 
 /* Glass Effect */
 .glass-effect {
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
+}
+
+:host-context(.dark) .glass-effect {
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
 }
 
 /* Primary Color */
@@ -18,6 +60,10 @@
 
 .shadow-primary\/30 {
     box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3);
+}
+
+:host-context(.dark) .shadow-primary\/30 {
+    box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.5);
 }
 
 /* Font Display */
@@ -116,6 +162,129 @@
     font-feature-settings: 'liga';
     -webkit-font-feature-settings: 'liga';
     -webkit-font-smoothing: antialiased;
+}
+
+/* Dark Mode Animated Blobs */
+:host-context(.dark) .bg-purple-200\/40 {
+    background-color: var(--blob-purple) !important;
+}
+
+:host-context(.dark) .bg-blue-200\/40 {
+    background-color: var(--blob-blue) !important;
+}
+
+:host-context(.dark) .bg-green-100\/40 {
+    background-color: var(--blob-green) !important;
+}
+
+/* Dark Mode Text Colors */
+:host-context(.dark) .text-slate-900 {
+    color: var(--text-primary) !important;
+}
+
+:host-context(.dark) .text-slate-500 {
+    color: var(--text-secondary) !important;
+}
+
+:host-context(.dark) .text-slate-600 {
+    color: var(--text-tertiary) !important;
+}
+
+:host-context(.dark) .text-slate-700 {
+    color: var(--text-secondary) !important;
+}
+
+:host-context(.dark) .text-slate-400 {
+    color: var(--text-tertiary) !important;
+}
+
+/* Dark Mode Card Styles */
+:host-context(.dark) .bg-white {
+    background-color: var(--bg-card) !important;
+}
+
+:host-context(.dark) .border-slate-100 {
+    border-color: var(--border-color) !important;
+}
+
+:host-context(.dark) .shadow-xl {
+    box-shadow: var(--shadow-xl) !important;
+}
+
+:host-context(.dark) .hover\:shadow-2xl:hover {
+    box-shadow: var(--shadow-2xl) !important;
+}
+
+/* Dark Mode Card Gradients */
+:host-context(.dark) .bg-gradient-to-br.from-slate-100.to-slate-200 {
+    background: linear-gradient(to bottom right, #334155, #1e293b) !important;
+}
+
+:host-context(.dark) .bg-gradient-to-br.from-indigo-100.to-indigo-200 {
+    background: linear-gradient(to bottom right, #4338ca, #312e81) !important;
+}
+
+:host-context(.dark) .bg-gradient-to-br.from-emerald-100.to-emerald-200 {
+    background: linear-gradient(to bottom right, #059669, #047857) !important;
+}
+
+/* Dark Mode Button Styles */
+:host-context(.dark) .bg-slate-100 {
+    background-color: #334155 !important;
+}
+
+:host-context(.dark) .bg-slate-100:not(:disabled):hover {
+    background-color: #3b82f6 !important;
+}
+
+/* Dark Mode Glass Effects */
+:host-context(.dark) .glass-effect.bg-white\/90 {
+    background-color: rgba(30, 41, 59, 0.9) !important;
+}
+
+:host-context(.dark) .glass-effect.bg-black\/20 {
+    background-color: rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Dark Mode Icon Colors - Keep vibrant in dark mode */
+:host-context(.dark) .text-orange-500 {
+    color: #fb923c !important;
+}
+
+:host-context(.dark) .text-indigo-500 {
+    color: #818cf8 !important;
+}
+
+:host-context(.dark) .text-emerald-600 {
+    color: #34d399 !important;
+}
+
+/* Dark Mode Status Indicators */
+:host-context(.dark) .bg-green-400 {
+    background-color: #4ade80 !important;
+}
+
+:host-context(.dark) .bg-yellow-400 {
+    background-color: #facc15 !important;
+}
+
+/* Dark Mode Disabled Cards */
+:host-context(.dark) .opacity-50 {
+    opacity: 0.6 !important;
+}
+
+/* Enhanced hover effects for dark mode */
+:host-context(.dark) .group:hover .bg-gradient-to-br.from-slate-100.to-slate-200 {
+    background: linear-gradient(to bottom right, #3f4b5f, #2d3748) !important;
+}
+
+/* Dark mode shadow enhancements */
+:host-context(.dark) .shadow-lg {
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.5) !important;
+}
+
+:host-context(.dark) .shadow-sm {
+    box-shadow: var(--shadow-sm) !important;
 }
 
 /* Remove old styles that are no longer needed */
