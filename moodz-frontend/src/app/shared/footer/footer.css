@@ -47,7 +47,7 @@
 /* Middle Section: Links */
 .footer-middle {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
     gap: 2.5rem;
     margin-bottom: 3rem;
 }
@@ -169,6 +169,23 @@
     margin: 0;
 }
 
+.footer-logo-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.4rem 1.2rem;
+    background: transparent;
+    border-radius: 12px;
+    border: 3px solid #2C2C2C;
+}
+
+.footer-logo-text {
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: #2C2C2C;
+}
+
 .made-with {
     font-size: 0.875rem;
     color: #94a3b8;
@@ -247,20 +264,55 @@
     color: #0f172a;
 }
 
+:host-context(body.dark-mode) .footer-logo-badge {
+    background: transparent;
+    border-color: #f1f5f9;
+}
+
+:host-context(body.dark-mode) .footer-logo-text {
+    color: #f1f5f9;
+}
+
+/* Dropdown Styles for Mobile */
+.footer-dropdown-header {
+    display: none;
+    /* Hidden on desktop */
+}
+
+.dropdown-icon {
+    display: inline-block;
+    margin-left: 0.5rem;
+    font-size: 0.75rem;
+    transition: transform 0.3s ease;
+}
+
+.dropdown-icon.open {
+    transform: rotate(180deg);
+}
+
 /* Responsive Styles */
 
 /* Mobile: Extra Small (< 480px) */
 @media (max-width: 480px) {
     .footer {
         padding: 2rem 0 1rem;
+        width: 100%;
     }
 
     .footer-container {
         padding: 0 1rem;
+        width: 100%;
+        max-width: 100%;
     }
 
     .footer-top {
         margin-bottom: 2rem;
+        width: 100%;
+        text-align: center;
+    }
+
+    .footer-brand {
+        max-width: 100%;
     }
 
     .footer-logo {
@@ -277,7 +329,57 @@
 
     .footer-middle {
         grid-template-columns: 1fr;
-        gap: 2rem;
+        gap: 1.5rem;
+        width: 100%;
+    }
+
+    .footer-column {
+        width: 100%;
+        text-align: center;
+    }
+
+    /* Dropdown functionality for AI Agents and Features */
+    .footer-column:nth-child(1) .footer-dropdown-header,
+    .footer-column:nth-child(2) .footer-dropdown-header {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        user-select: none;
+        padding: 0.75rem 0;
+    }
+
+    .footer-column:nth-child(1) .footer-links,
+    .footer-column:nth-child(2) .footer-links {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease, opacity 0.3s ease;
+        opacity: 0;
+    }
+
+    .footer-column:nth-child(1) .footer-links.dropdown-open,
+    .footer-column:nth-child(2) .footer-links.dropdown-open {
+        max-height: 300px;
+        opacity: 1;
+    }
+
+    /* Resources and Connect sections remain always visible */
+    .footer-column:nth-child(3) .footer-heading,
+    .footer-column:nth-child(4) .footer-heading {
+        text-align: center;
+    }
+
+    .footer-column:nth-child(3) .footer-links {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .footer-column:nth-child(4) .social-links {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
     }
 
     .footer-heading {
@@ -286,16 +388,26 @@
 
     .footer-link {
         font-size: 0.85rem;
+        justify-content: center;
+    }
+
+    .footer-links {
+        align-items: center;
     }
 
     .footer-copyright {
         flex-direction: column;
         text-align: center;
         gap: 0.5rem;
+        width: 100%;
     }
 
     .social-links {
         justify-content: center;
+    }
+
+    .contact-info {
+        text-align: center;
     }
 }
 
@@ -303,20 +415,24 @@
 @media (min-width: 481px) and (max-width: 767px) {
     .footer {
         padding: 2.5rem 0 1.25rem;
+        width: 100%;
     }
 
     .footer-container {
         padding: 0 1.5rem;
+        width: 100%;
     }
 
     .footer-middle {
         grid-template-columns: repeat(2, 1fr);
         gap: 2rem;
+        width: 100%;
     }
 
     .footer-copyright {
         flex-direction: column;
         text-align: center;
+        width: 100%;
     }
 }
 
