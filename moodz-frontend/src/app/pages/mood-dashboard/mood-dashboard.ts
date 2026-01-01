@@ -2,6 +2,7 @@ import { Component, signal, inject, OnInit, computed, OnDestroy } from '@angular
 import { CommonModule } from '@angular/common';
 import { MoodDataService, type MoodHistoryEntry, type UserFact, type MoodStats } from '../../services/mood_agent/mood-data.service';
 import { ChatService } from '../../services/mood_agent/chat.service';
+import { Loader } from '../../shared/loader/loader';
 
 // Interfaces for type safety
 interface MoodEntry {
@@ -29,7 +30,7 @@ interface SentimentData {
 
 @Component({
   selector: 'app-mood-dashboard',
-  imports: [CommonModule],
+  imports: [CommonModule, Loader],
   templateUrl: './mood-dashboard.html',
   styleUrls: ['./mood-dashboard.css', './mood-dashboard-dark.css'],
 })

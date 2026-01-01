@@ -17,10 +17,7 @@
 
         <!-- Loading State -->
         @if (isLoading()) {
-        <div class="flex flex-col items-center justify-center py-20">
-            <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-primary-DEFAULT mb-4"></div>
-            <p class="text-subtext-light dark:text-subtext-dark text-lg">Loading your mood data...</p>
-        </div>
+        <app-loader message="Loading your mood data..."></app-loader>
         }
 
         <!-- Error State -->
