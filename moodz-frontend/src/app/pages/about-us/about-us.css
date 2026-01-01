@@ -35,6 +35,34 @@
     font-weight: 400;
     margin: 0;
     opacity: 0.95;
+    min-height: 2.25rem;
+}
+
+.typed-text {
+    display: inline;
+}
+
+.typing-cursor {
+    display: inline-block;
+    width: 2px;
+    height: 1.5rem;
+    background-color: currentColor;
+    margin-left: 2px;
+    animation: blink 0.7s infinite;
+    vertical-align: middle;
+}
+
+@keyframes blink {
+
+    0%,
+    50% {
+        opacity: 1;
+    }
+
+    51%,
+    100% {
+        opacity: 0;
+    }
 }
 
 /* Content Wrapper */
@@ -305,6 +333,10 @@ section {
         line-height: 1.5;
     }
 
+    .typing-cursor {
+        height: 1rem;
+    }
+
     section {
         padding: 2.5rem 0;
     }
@@ -406,6 +438,10 @@ section {
     .hero-subtitle {
         font-size: 1.125rem;
         line-height: 1.5;
+    }
+
+    .typing-cursor {
+        height: 1.125rem;
     }
 
     section {
