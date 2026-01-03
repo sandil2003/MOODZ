@@ -2,6 +2,7 @@
 .env
 .env.local
 .env.*
+!.env.example
 
 # Python
 __pycache__
@@ -24,25 +25,31 @@ moodz/
 # Git
 .git
 .gitignore
+.gitattributes
 
 # IDE
 .vscode
 .idea
 *.swp
 *.swo
+*.bak
 
 # Docker
-Dockerfile
-docker-compose.yml
+Dockerfile*
+docker-compose*.yml
 .dockerignore
 
 # Documentation
 README.md
 *.md
+docs/
 
 # Tests
+test/
 tests/
 .pytest_cache/
+.coverage
+htmlcov/
 
 # Logs
 *.log
@@ -53,3 +60,15 @@ logs/
 *.sqlite3
 postgres_data/
 redis_data/
+
+# Alembic (keep migrations but not data)
+alembic/versions/*.pyc
+
+# Examples
+examples/
+
+# Temporary files
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db

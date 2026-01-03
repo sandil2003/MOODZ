@@ -1,39 +1,66 @@
-FROM python:3.11-slim
+# ============================================
+# Dockerfile for MOODZ Backend - Hugging Face Spaces
+# ============================================
 
-# Set working directory
+# ============================================
+# Stage 1: Builder
+# ============================================
+FROM python:3.11-slim as builder
+
 WORKDIR /app
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc g++ make libpq-dev && rm -rf /var/lib/apt/lists/*
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+    PIP_NO_CACHE_DIR=1
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc \
-    postgresql-client \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy requirements first for better caching
+# Copy requirements
 COPY requirements.txt .
 
-# Install Python dependencies
-RUN pip install --upgrade pip && \
+# Install Python dependencies in virtual environment
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+RUN pip install --upgrade pip setuptools wheel && \
     pip install -r requirements.txt
 
-# Copy application code
-COPY . .
+# ============================================
+# Stage 2: Runtime (Optimized for Hugging Face)
+# ============================================
+FROM python:3.11-slim
 
-# Create non-root user
-RUN useradd -m -u 1000 appuser && \
-    chown -R appuser:appuser /app
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PATH="/opt/venv/bin:$PATH" \
+    PYTHONPATH=/app \
+    HOME=/home/user
+
+WORKDIR /app
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    postgresql-client curl && rm -rf /var/lib/apt/lists/*
+
+# Copy virtual environment from builder
+COPY --from=builder /opt/venv /opt/venv
+
+# Create user with UID 1000 (Hugging Face standard)
+RUN useradd -m -u 1000 user && \
+    mkdir -p /app/logs && \
+    chown -R user:user /app
+
+# Copy application code
+COPY --chown=user:user . .
 
 # Switch to non-root user
-USER appuser
+USER user
 
-# Expose port
-EXPOSE 8000
+# Expose port 7860 (Hugging Face Spaces default)
+EXPOSE 7860
 
-# Run the application
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Run the application on port 7860
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "7860"]
