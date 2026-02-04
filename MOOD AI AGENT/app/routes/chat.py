@@ -321,12 +321,13 @@ async def stream_chat_response(
         )
         
         # Send completion event with classification
-        yield f"data: {json.dumps({
+        completion_data = {
             'done': True,
             'session_id': str(session_id),
             'latency': round(latency, 3),
             'classification': classification
-        })}\n\n"
+        }
+        yield f"data: {json.dumps(completion_data)}\n\n"
         
     except Exception as e:
         error_msg = f"Error: {str(e)}"

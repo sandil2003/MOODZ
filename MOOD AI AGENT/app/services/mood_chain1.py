@@ -3,7 +3,7 @@ from uuid import UUID
 from langchain_core.tools import tool
 from langchain_classic.agents import create_tool_calling_agent, AgentExecutor
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_openai import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 
 from app.services.session_manager import SessionManager
 from app.services.vector_service import VectorService
@@ -12,7 +12,7 @@ from app.models import MoodHistory, UserFact
 from app.database import AsyncSessionLocal
 from sqlalchemy import select, desc
 from config import settings
-from langchain_community.callbacks import get_openai_callback
+# from langchain_community.callbacks import get_openai_callback
 from app.services.crisis_detection import CrisisDetector
 
 class MoodAgentChainV2:
@@ -43,12 +43,11 @@ class MoodAgentChainV2:
                 timeout=settings.custom_model_timeout
             )
         else:
-            print(f"Using OpenAI model: {model}")
-            self.llm = ChatOpenAI(
-                model=model,
+            print(f"Using Gemini model: {settings.gemini_model}")
+            self.llm = ChatGoogleGenerativeAI(
+                model=settings.gemini_model,
                 temperature=0.7,
-                openai_api_key=settings.openai_api_key,
-                model_kwargs={"stream_options": {"include_usage": True}}
+                google_api_key=settings.gemini_api_key
             )
         
         # Build tools and agent
@@ -225,13 +224,8 @@ Current Session ID: {session_id}
                 "chat_history": existing_history
             }
 
-            with get_openai_callback() as cb:
-                result = await self.agent_executor.ainvoke(input_data)
-
-                print(f"Total tokens: {cb.total_tokens}")
-                print(f"Prompt tokens: {cb.prompt_tokens}")
-                print(f"Completion tokens: {cb.completion_tokens}")
-                print(f"Total cost: {cb.total_cost}")
+            result = await self.agent_executor.ainvoke(input_data)
+            # Token usage tracking removed for Gemini for now
             
             response = result.get("output", "")
             
