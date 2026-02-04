@@ -11,9 +11,7 @@ router = APIRouter(prefix="/health", tags=["Health"])
 async def health_check():
     """
     Basic health check endpoint.
-    
-    Returns:
-        dict: Health status
+
     """
     return {
         "status": "healthy",
@@ -27,14 +25,6 @@ async def health_check_db(db: AsyncSession = Depends(get_db)):
     """
     Database health check endpoint.
     
-    Args:
-        db: Database session
-        
-    Returns:
-        dict: Database health status
-        
-    Raises:
-        HTTPException: If database is not accessible
     """
     try:
         # Execute a simple query to check database connectivity
@@ -54,15 +44,7 @@ async def health_check_db(db: AsyncSession = Depends(get_db)):
 async def health_check_redis(redis_client: redis.Redis = Depends(get_redis_client)):
     """
     Redis health check endpoint.
-    
-    Args:
-        redis_client: Redis client instance
-        
-    Returns:
-        dict: Redis health status
-        
-    Raises:
-        HTTPException: If Redis is not accessible
+
     """
     try:
         # Ping Redis to check connectivity

@@ -40,7 +40,7 @@ class ConnectionManager:
     async def connect(self, websocket: WebSocket, session_id: str):
         await websocket.accept()
         self.active_connections[session_id] = websocket
-        print(f"✅ WebSocket connected for session: {session_id}")
+        print(f"WebSocket connected for session: {session_id}")
     
     def disconnect(self, session_id: str):
         if session_id in self.active_connections:
@@ -48,18 +48,18 @@ class ConnectionManager:
             print(f"🔌 WebSocket disconnected for session: {session_id}")
     
     async def send_status(self, session_id: str, status: str):
-        print(f"📤 Attempting to send status to session {session_id}: {status}")
+        print(f"Attempting to send status to session {session_id}: {status}")
         if session_id in self.active_connections:
             try:
                 await self.active_connections[session_id].send_json({
                     "type": "status",
                     "content": status
                 })
-                print(f"✅ Status sent successfully: {status}")
+                print(f"Status sent successfully: {status}")
             except Exception as e:
-                print(f"❌ Error sending status: {e}")
+                print(f"Error sending status: {e}")
         else:
-            print(f"⚠️  No WebSocket connection found for session: {session_id}")
+            print(f"No WebSocket connection found for session: {session_id}")
 
 manager = ConnectionManager()
 
@@ -74,18 +74,12 @@ async def save_chat_message_to_db(
     """
     Save a chat message to the database.
     
-    Args:
-        user_id: User UUID
-        session_id: Session UUID
-        role: Either 'user' or 'assistant'
-        content: Message text (will be normalized to string)
-        deep_search: Whether deep search was used
     """
     try:
         # Normalize content to string to avoid DataError (lists/objects)
         content_str = normalize_text(content)
         
-        print(f"💾 Saving {role} message to database...")
+        print(f"Saving {role} message to database...")
         async with AsyncSessionLocal() as db:
             message = ChatHistory(
                 user_id=user_id,
@@ -96,9 +90,9 @@ async def save_chat_message_to_db(
             )
             db.add(message)
             await db.commit()
-        print(f"✅ {role.capitalize()} message saved to database")
+        print(f"{role.capitalize()} message saved to database")
     except Exception as e:
-        print(f"❌ Error saving {role} message to database: {e}")
+        print(f"Error saving {role} message to database: {e}")
         import traceback
         traceback.print_exc()
         # Don't raise - chat should continue even if DB save fails
@@ -114,12 +108,6 @@ async def save_conversation_intelligently(
     """
     Intelligently save conversation based on classifier decision.
     
-    Args:
-        user_id: User UUID
-        session_id: Session UUID
-        message: User message
-        response: AI response
-        classification: Classification result from classifier
     """
     print(f"\n{'='*60}")
     print(f"SAVE_CONVERSATION_INTELLIGENTLY CALLED")
@@ -133,16 +121,16 @@ async def save_conversation_intelligently(
     try:
         # Only save if classifier says so
         if not classification.get("save", False):
-            print(f"❌ Skipping database save - classifier said save=False")
+            print(f"Skipping database save - classifier said save=False")
             print(f"   Message: {message[:50]}...")
             return
         
-        print(f"✅ Classifier said SAVE=TRUE, proceeding with save...")
+        print(f"Classifier said SAVE=TRUE, proceeding with save...")
         
         vector_service = get_vector_service_gemini()
         
         # Save user message with mood
-        print(f"📝 Saving user message to Pinecone...")
+        print(f"Saving user message to Pinecone...")
         await vector_service.add_text(
             user_id=user_id,
             text=message,
@@ -151,7 +139,7 @@ async def save_conversation_intelligently(
             mood_label=classification.get("mood", "neutral"),
             context_id=str(session_id)
         )
-        print(f"✅ User message saved to Pinecone")
+        print(f"User message saved to Pinecone")
         
         # Save assistant response
         print(f"📝 Saving assistant response to Pinecone...")
@@ -162,7 +150,7 @@ async def save_conversation_intelligently(
             source="assistant",
             context_id=str(session_id)
         )
-        print(f"✅ Assistant response saved to Pinecone")
+        print(f"Assistant response saved to Pinecone")
         
         # Save extracted facts to database AND Pinecone
         if classification.get("extracted_facts"):
@@ -183,7 +171,7 @@ async def save_conversation_intelligently(
                     db.add(fact)
                 
                 await db.commit()
-                print(f"✅ Saved {len(classification['extracted_facts'])} facts to PostgreSQL")
+                print(f"Saved {len(classification['extracted_facts'])} facts to PostgreSQL")
             
             # Embed facts to Pinecone
             for fact_text in classification["extracted_facts"]:
@@ -195,7 +183,7 @@ async def save_conversation_intelligently(
                     context_id=str(session_id),
                     additional_info={"category": "auto_extracted"}
                 )
-            print(f"✅ Saved facts to Pinecone")
+            print(f"Saved facts to Pinecone")
         else:
             print(f"ℹ️  No facts extracted from this message")
         
@@ -260,9 +248,7 @@ async def stream_chat_response(
 ) -> AsyncGenerator[str, None]:
     """
     Stream chat response with LLM tokens.
-    
-    Yields:
-        str: Server-Sent Events formatted chunks
+
     """
     
     start_time = time()
@@ -367,14 +353,8 @@ async def chat_stream(
 ):
     """
     Stream chat response in real-time.
-    
     Supports both regular chat and deep search modes.
-    Deep search mode: NO database saves (PostgreSQL, Pinecone, Redis)
-    
-    Returns Server-Sent Events (SSE) stream with:
-    - `data: {"chunk": "text"}` - LLM token chunks
-    - `data: {"done": true, "session_id": "..."}` - Completion event
-    - `data: {"error": "message"}` - Error event
+
     """
     # Create streaming generator
     classification_result = {}
@@ -449,13 +429,8 @@ async def chat(
 ):
     """
     Non-streaming chat endpoint.
-    
     Returns complete response after LLM finishes generation.
     
-    Background tasks:
-    - Classify conversation
-    - Intelligently save to database based on classifier
-    - Log conversation to JSONL file
     """
     
     start_time = time()
