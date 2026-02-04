@@ -1,5 +1,3 @@
-"""Chat history API endpoints for retrieving and managing chat sessions."""
-
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select, func, desc
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -103,10 +101,6 @@ async def get_chat_session(
     """
     Get all messages for a specific chat session.
     
-    Returns:
-    - session_id
-    - messages (ordered chronologically)
-    - message_count
     """
     try:
         # Get all messages for this session
