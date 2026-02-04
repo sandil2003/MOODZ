@@ -9,16 +9,9 @@ from app.database import Base
 class MoodHistory(Base):
     """
     MoodHistory model for tracking user mood entries over time.
+    this will create a mood score from 1-10
+    output a text summery of the mood entry
     
-    Attributes:
-        id: Integer primary key
-        user_id: Foreign key to users table (UUID)
-        mood_score: Integer score from 1-10 for graphing
-        sentiment_label: String label like "Happy", "Anxious", "Neutral"
-        topics: JSONB array of topics like ["work", "deadline"]
-        summary: Text summary of the mood entry
-        session_id: UUID linking to specific chat session for debugging
-        created_at: Timestamp when mood was recorded
     """
     
     __tablename__ = "moodhistory"
@@ -46,7 +39,7 @@ class MoodHistory(Base):
     mood_score = Column(
         Integer,
         nullable=False,
-        comment="1-10 scale. Good for graphing on the Frontend."
+        comment="1-10 scale."
     )
     
     # Sentiment Label
@@ -75,7 +68,7 @@ class MoodHistory(Base):
         UUID(as_uuid=True),
         nullable=True,
         index=True,
-        comment="Links this mood entry to a specific chat session (in case you need to debug)."
+        comment="Links this mood entry to a specific chat session."
     )
     
     # Timestamp
@@ -94,7 +87,7 @@ class MoodHistory(Base):
         return f"<MoodHistory(id={self.id}, user_id={self.user_id}, mood_score={self.mood_score}, sentiment='{self.sentiment_label}')>"
     
     def to_dict(self):
-        """Convert mood history object to dictionary."""
+        #Convert mood history object to dictionary.
         return {
             "id": self.id,
             "user_id": str(self.user_id),
