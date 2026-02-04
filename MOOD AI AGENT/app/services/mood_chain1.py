@@ -3,16 +3,16 @@ from uuid import UUID
 from langchain_core.tools import tool
 from langchain_classic.agents import create_tool_calling_agent, AgentExecutor
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_openai import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 
 from app.services.session_manager import SessionManager
-from app.services.vector_service import VectorService
+from app.services.vector_service_gemini import VectorServiceGemini
 from app.services.custom_model import get_custom_model
 from app.models import MoodHistory, UserFact
 from app.database import AsyncSessionLocal
 from sqlalchemy import select, desc
 from config import settings
-from langchain_community.callbacks import get_openai_callback
+# from langchain_community.callbacks import get_openai_callback
 from app.services.crisis_detection import CrisisDetector
 
 class MoodAgentChainV2:
@@ -20,7 +20,7 @@ class MoodAgentChainV2:
     def __init__(
         self,
         session_manager: SessionManager,
-        vector_service: VectorService,
+        vector_service: VectorServiceGemini,
         crisis_detector: CrisisDetector,
         model: str = "gpt-4o-mini"
     ):
@@ -43,12 +43,11 @@ class MoodAgentChainV2:
                 timeout=settings.custom_model_timeout
             )
         else:
-            print(f"Using OpenAI model: {model}")
-            self.llm = ChatOpenAI(
-                model=model,
+            print(f"Using Gemini model: {settings.gemini_model}")
+            self.llm = ChatGoogleGenerativeAI(
+                model=settings.gemini_model,
                 temperature=0.7,
-                openai_api_key=settings.openai_api_key,
-                model_kwargs={"stream_options": {"include_usage": True}}
+                google_api_key=settings.gemini_api_key
             )
         
         # Build tools and agent
@@ -225,15 +224,18 @@ Current Session ID: {session_id}
                 "chat_history": existing_history
             }
 
-            with get_openai_callback() as cb:
-                result = await self.agent_executor.ainvoke(input_data)
-
-                print(f"Total tokens: {cb.total_tokens}")
-                print(f"Prompt tokens: {cb.prompt_tokens}")
-                print(f"Completion tokens: {cb.completion_tokens}")
-                print(f"Total cost: {cb.total_cost}")
+            result = await self.agent_executor.ainvoke(input_data)
+            # Token usage tracking removed for Gemini for now
             
-            response = result.get("output", "")
+            # Normalize response to string (fixes [object Object] and DB DataError)
+            raw_response = result.get("output", "")
+            if isinstance(raw_response, list):
+                response = "".join(
+                    part.get("text", "") if isinstance(part, dict) else str(part) 
+                    for part in raw_response
+                )
+            else:
+                response = str(raw_response)
             
             # Save to session history
             await self.session_manager.add_assistant_message(session_id, response)
@@ -256,10 +258,10 @@ async def get_mood_agent() -> MoodAgentChainV2:
     global _mood_agent
     
     if _mood_agent is None:
-        from app.services import get_session_manager, get_vector_service
+        from app.services import get_session_manager, get_vector_service_gemini
         
         session_manager = await get_session_manager()
-        vector_service = get_vector_service()
+        vector_service = get_vector_service_gemini()
         crisis_detector = CrisisDetector()
         
         _mood_agent = MoodAgentChainV2(

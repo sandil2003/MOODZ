@@ -213,23 +213,42 @@ MOODZ follows a modern **microservices architecture** with separate frontend and
 
 ### Running with Docker (Recommended)
 
+The entire platform can be started with a single command from the project root:
+
 ```bash
-cd "MOOD AI AGENT"
-docker-compose up -d
+docker-compose up --build -d
 ```
 
-This starts:
-- PostgreSQL on port 5432
-- Redis on port 6379
-- FastAPI backend on port 8000
+This will orchestrate:
+- **Frontend**: http://localhost:4200
+- **Backend API**: http://localhost:8001
+- **PostgreSQL**: Port 5432
+- **Redis**: Port 6379
 
-Then start the frontend:
+To see logs:
 ```bash
-cd moodz-frontend
-npm start
+docker-compose logs -f
 ```
 
-Access the application at **http://localhost:4200**
+To stop all services:
+```bash
+docker-compose down
+```
+
+### Development with Docker (Hot-Reloading)
+
+For an optimal development experience with live reloading, use the development configuration:
+
+```bash
+docker-compose -f docker-compose.dev.yml up --build
+```
+
+This will:
+- Mount your local source code into the containers.
+- **Frontend**: http://localhost:4200 (Angular dev server with polling)
+- **Backend**: http://localhost:8001 (FastAPI with `--reload`)
+
+Changes made to your local files will automatically reflect in the running containers.
 
 ### Running Locally (Without Docker)
 
@@ -458,8 +477,8 @@ http://localhost:8000
 ```
 
 ### Interactive Documentation
-- **Swagger UI**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
+- **Swagger UI**: http://localhost:8001/docs
+- **ReDoc**: http://localhost:8001/redoc
 
 ### Key Endpoints
 

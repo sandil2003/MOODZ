@@ -12,14 +12,6 @@ class ChatHistory(Base):
     Each message (user or assistant) is stored as a separate row.
     Messages are grouped by session_id to form conversations.
     
-    Attributes:
-        id: UUID primary key
-        user_id: Foreign key to users table
-        session_id: UUID to group messages into conversations
-        role: Either "user" or "assistant"
-        content: The message text
-        timestamp: When the message was created
-        deep_search: Whether deep search was used for this message
     """
     
     __tablename__ = "chat_history"
@@ -93,7 +85,7 @@ class ChatHistory(Base):
         return f"<ChatHistory(id={self.id}, role='{self.role}', content='{content_preview}')>"
     
     def to_dict(self):
-        """Convert chat message to dictionary."""
+        #Convert chat message to dictionary.
         return {
             "id": str(self.id),
             "user_id": str(self.user_id),

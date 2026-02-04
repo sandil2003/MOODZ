@@ -50,7 +50,7 @@ export interface ChatSessionDetail {
 })
 export class ChatService {
     // API Configuration
-    private readonly API_BASE_URL = 'http://localhost:8000';
+    private readonly API_BASE_URL = 'http://localhost:8001';
     private readonly STREAM_ENDPOINT = '/api/moods/chat/stream';
 
     // IMPORTANT: Using the demo user that exists in the database
@@ -86,7 +86,7 @@ export class ChatService {
                 return;
             }
 
-            const wsUrl = `ws://localhost:8000/api/moods/chat/ws/status/${this.sessionId}`;
+            const wsUrl = `ws://localhost:8001/api/moods/chat/ws/status/${this.sessionId}`;
             console.log('🔌 Connecting to WebSocket:', wsUrl);
             this.statusWebSocket = new WebSocket(wsUrl);
 

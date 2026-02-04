@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: moodz_postgres
+    env_file:
+      - "./MOOD AI AGENT/.env"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-moodz_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - moodz_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: moodz_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - moodz_network
+
+  backend:
+    build:
+      context: "./MOOD AI AGENT"
+      dockerfile: Dockerfile
+    container_name: moodz_backend
+    ports:
+      - "8001:8000"
+    environment:
+      - POSTGRES_HOST=postgres
+      - REDIS_HOST=redis
+    env_file:
+      - "./MOOD AI AGENT/.env"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - "./MOOD AI AGENT:/app"
+    networks:
+      - moodz_network
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    build:
+      context: "./moodz-frontend"
+      dockerfile: Dockerfile
+    container_name: moodz_frontend
+    ports:
+      - "4200:80"
+    depends_on:
+      - backend
+    networks:
+      - moodz_network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  moodz_network:
+    driver: bridge
