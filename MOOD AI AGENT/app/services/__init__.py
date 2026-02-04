@@ -2,6 +2,7 @@
 
 from app.services.session_manager import SessionManager, get_session_manager
 from app.services.vector_service import VectorService, get_vector_service
+from app.services.vector_service_gemini import VectorServiceGemini, get_vector_service_gemini
 # Use agent-based implementation (mood_chain1.py) with backward-compatible aliases
 from app.services.mood_chain1 import MoodAgentChainV2 as MoodAgentChain, get_mood_agent as get_mood_chain
 from app.services.classifier import ConversationClassifier, get_classifier
@@ -9,6 +10,7 @@ from app.services.classifier import ConversationClassifier, get_classifier
 __all__ = [
     "SessionManager", "get_session_manager",
     "VectorService", "get_vector_service",
+    "VectorServiceGemini", "get_vector_service_gemini",
     "MoodAgentChain", "get_mood_chain",  # Export aliases for backward compatibility
     "ConversationClassifier", "get_classifier"
 ]

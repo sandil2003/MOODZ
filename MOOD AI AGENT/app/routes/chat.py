@@ -1,7 +1,7 @@
 from fastapi import APIRouter, BackgroundTasks, WebSocket, WebSocketDisconnect
 from fastapi.responses import StreamingResponse
 from app.schemas.chat import ChatRequest, ChatResponse
-from app.services import get_mood_chain, get_session_manager, get_vector_service
+from app.services import get_mood_chain, get_session_manager, get_vector_service_gemini
 from app.models import MoodHistory, ChatHistory
 from app.database import AsyncSessionLocal
 from typing import AsyncGenerator, Dict, Any
@@ -139,7 +139,7 @@ async def save_conversation_intelligently(
         
         print(f"✅ Classifier said SAVE=TRUE, proceeding with save...")
         
-        vector_service = get_vector_service()
+        vector_service = get_vector_service_gemini()
         
         # Save user message with mood
         print(f"📝 Saving user message to Pinecone...")

@@ -1,9 +1,10 @@
 from typing import Dict, Any, List, Optional
 from pydantic import BaseModel, Field
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_openai import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.output_parsers import JsonOutputParser
 from config import settings
+from app.services.custom_model import get_custom_model
 
 
 class ClassifierOutput(BaseModel):
@@ -32,18 +33,30 @@ class ConversationClassifier:
     Saves only meaningful conversations to reduce database bloat.
     """
     
-    def __init__(self, model: str = "gpt-4o-mini"):
+    def __init__(self, model: str = None):
         """
         Initialize the classifier.
         
         Args:
-            model: OpenAI model to use for classification
+            model: Gemini model to use for classification (defaults to settings)
         """
-        self.llm = ChatOpenAI(
-            model=model,
-            temperature=0,  # Deterministic for classification
-            openai_api_key=settings.openai_api_key
-        )
+        model_name = model or settings.gemini_model
+        
+        # Choose between custom model and Gemini based on configuration
+        if settings.use_custom_model and settings.custom_model_url:
+            print(f"Classifier: Using custom model from: {settings.custom_model_url}")
+            self.llm = get_custom_model(
+                base_url=settings.custom_model_url,
+                temperature=0,
+                max_tokens=1024
+            )
+        else:
+            print(f"Classifier: Using Gemini model: {model_name}")
+            self.llm = ChatGoogleGenerativeAI(
+                model=model_name,
+                temperature=0,  # Deterministic for classification
+                google_api_key=settings.gemini_api_key
+            )
         
         # Output parser
         self.parser = JsonOutputParser(pydantic_object=ClassifierOutput)
