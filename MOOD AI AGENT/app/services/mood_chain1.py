@@ -6,7 +6,7 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 from app.services.session_manager import SessionManager
-from app.services.vector_service import VectorService
+from app.services.vector_service_gemini import VectorServiceGemini
 from app.services.custom_model import get_custom_model
 from app.models import MoodHistory, UserFact
 from app.database import AsyncSessionLocal
@@ -20,7 +20,7 @@ class MoodAgentChainV2:
     def __init__(
         self,
         session_manager: SessionManager,
-        vector_service: VectorService,
+        vector_service: VectorServiceGemini,
         crisis_detector: CrisisDetector,
         model: str = "gpt-4o-mini"
     ):
@@ -258,10 +258,10 @@ async def get_mood_agent() -> MoodAgentChainV2:
     global _mood_agent
     
     if _mood_agent is None:
-        from app.services import get_session_manager, get_vector_service
+        from app.services import get_session_manager, get_vector_service_gemini
         
         session_manager = await get_session_manager()
-        vector_service = get_vector_service()
+        vector_service = get_vector_service_gemini()
         crisis_detector = CrisisDetector()
         
         _mood_agent = MoodAgentChainV2(

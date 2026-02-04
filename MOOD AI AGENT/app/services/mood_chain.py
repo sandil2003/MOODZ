@@ -340,10 +340,10 @@ async def get_mood_chain() -> MoodAgentChain:
     global _mood_chain
     
     if _mood_chain is None:
-        from app.services import get_session_manager, get_vector_service
+        from app.services import get_session_manager, get_vector_service_gemini
         
         session_manager = await get_session_manager()
-        vector_service = get_vector_service()
+        vector_service = get_vector_service_gemini()
         
         _mood_chain = MoodAgentChain(
             session_manager=session_manager,
