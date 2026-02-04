@@ -9,6 +9,26 @@ import json
 from time import time
 from app.utils import get_chat_logger
 import asyncio
+from typing import AsyncGenerator, Dict, Any, List, Union
+
+
+def normalize_text(content: Any) -> str:
+    """
+    Normalize LLM output (which might be a string, a list of parts, or other types) 
+    into a single plain string for database storage and frontend display.
+    """
+    if content is None:
+        return ""
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        # Handle list of parts (e.g., from Gemini/LangChain)
+        return "".join(
+            part.get("text", "") if isinstance(part, dict) else str(part) 
+            for part in content
+        )
+    # Fallback for other types
+    return str(content)
 
 router = APIRouter(prefix="/moods/chat", tags=["chat"])
 
@@ -58,17 +78,20 @@ async def save_chat_message_to_db(
         user_id: User UUID
         session_id: Session UUID
         role: Either 'user' or 'assistant'
-        content: Message text
+        content: Message text (will be normalized to string)
         deep_search: Whether deep search was used
     """
     try:
+        # Normalize content to string to avoid DataError (lists/objects)
+        content_str = normalize_text(content)
+        
         print(f"💾 Saving {role} message to database...")
         async with AsyncSessionLocal() as db:
             message = ChatHistory(
                 user_id=user_id,
                 session_id=session_id,
                 role=role,
-                content=content,
+                content=content_str,
                 deep_search=deep_search
             )
             db.add(message)
@@ -285,7 +308,7 @@ async def stream_chat_response(
         async for event in chain.agent_executor.astream(input_data):
             # Extract the output from agent events
             if "output" in event:
-                chunk = event["output"]
+                chunk = normalize_text(event["output"])
                 full_response = chunk
                 # Stream the complete output
                 yield f"data: {json.dumps({'chunk': chunk})}\n\n"

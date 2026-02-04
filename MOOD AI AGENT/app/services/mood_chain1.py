@@ -227,7 +227,15 @@ Current Session ID: {session_id}
             result = await self.agent_executor.ainvoke(input_data)
             # Token usage tracking removed for Gemini for now
             
-            response = result.get("output", "")
+            # Normalize response to string (fixes [object Object] and DB DataError)
+            raw_response = result.get("output", "")
+            if isinstance(raw_response, list):
+                response = "".join(
+                    part.get("text", "") if isinstance(part, dict) else str(part) 
+                    for part in raw_response
+                )
+            else:
+                response = str(raw_response)
             
             # Save to session history
             await self.session_manager.add_assistant_message(session_id, response)
