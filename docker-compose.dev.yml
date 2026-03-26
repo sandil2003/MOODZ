@@ -40,12 +40,15 @@ services:
       dockerfile: Dockerfile.dev
     container_name: moodz_backend_dev
     ports:
-      - "8001:8000"
+      - "8000:8000"
     environment:
       - POSTGRES_HOST=postgres
       - REDIS_HOST=redis
     env_file:
       - "./MOOD AI AGENT/.env"
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
     depends_on:
       postgres:
         condition: service_healthy
