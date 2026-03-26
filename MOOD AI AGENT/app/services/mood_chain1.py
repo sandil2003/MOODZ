@@ -35,13 +35,27 @@ class MoodAgentChainV2:
         
         # Choose between custom model and OpenAI based on configuration
         if settings.use_custom_model and settings.custom_model_url:
-            print(f"Using custom model from: {settings.custom_model_url}")
-            self.llm = get_custom_model(
-                base_url=settings.custom_model_url,
-                temperature=settings.custom_model_temperature,
-                max_tokens=settings.custom_model_max_tokens,
-                timeout=settings.custom_model_timeout
-            )
+            print(f"Using custom model from: {settings.custom_model_url} (Type: {settings.custom_model_type})")
+            
+            if settings.custom_model_type == "openai":
+                # LM Studio and other OpenAI-compatible local servers
+                from langchain_openai import ChatOpenAI
+                self.llm = ChatOpenAI(
+                    base_url=settings.custom_model_url if "/v1" in settings.custom_model_url else f"{settings.custom_model_url}/v1",
+                    api_key="lm-studio",  # LM Studio doesn't require a real key
+                    model=model,
+                    temperature=settings.custom_model_temperature,
+                    max_tokens=settings.custom_model_max_tokens,
+                    timeout=settings.custom_model_timeout
+                )
+            else:
+                # Original custom /generate endpoint
+                self.llm = get_custom_model(
+                    base_url=settings.custom_model_url,
+                    temperature=settings.custom_model_temperature,
+                    max_tokens=settings.custom_model_max_tokens,
+                    timeout=settings.custom_model_timeout
+                )
         else:
             print(f"Using Gemini model: {settings.gemini_model}")
             self.llm = ChatGoogleGenerativeAI(

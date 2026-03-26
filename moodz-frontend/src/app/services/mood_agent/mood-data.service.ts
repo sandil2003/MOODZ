@@ -34,7 +34,7 @@ export interface MoodStats {
     providedIn: 'root'
 })
 export class MoodDataService {
-    private readonly API_BASE_URL = 'http://localhost:8001';
+    private readonly API_BASE_URL = 'http://localhost:8000';
 
     async getMoodHistory(
         userId: string,
