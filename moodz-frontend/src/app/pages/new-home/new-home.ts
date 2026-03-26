@@ -1,5 +1,6 @@
-import { Component, signal, inject } from '@angular/core';
+import { Component, signal, inject, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
 interface Agent {
@@ -15,9 +16,17 @@ interface Agent {
   route: string;
 }
 
+export interface LlmProvider {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  accentColor: string;
+}
+
 @Component({
   selector: 'app-new-home',
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './new-home.html',
   styleUrl: './new-home.css',
   host: {
@@ -26,6 +35,62 @@ interface Agent {
 })
 export class NewHomeComponent {
   private router = inject(Router);
+
+  // LLM Provider state
+  llmProviders: LlmProvider[] = [
+    {
+      id: 'anthropic',
+      name: 'Anthropic API',
+      description: 'Claude models — advanced reasoning & safety',
+      icon: 'psychology',
+      accentColor: '#D97757'
+    },
+    {
+      id: 'gemini',
+      name: 'Gemini API',
+      description: 'Google Gemini — multimodal intelligence',
+      icon: 'auto_awesome',
+      accentColor: '#4285F4'
+    },
+    {
+      id: 'openai',
+      name: 'OpenAI API',
+      description: 'GPT models — versatile & powerful',
+      icon: 'smart_toy',
+      accentColor: '#10A37F'
+    },
+    {
+      id: 'custom',
+      name: 'Custom API',
+      description: 'Use your own model endpoint',
+      icon: 'tune',
+      accentColor: '#8B5CF6'
+    }
+  ];
+
+  selectedProvider = signal<LlmProvider>(this.llmProviders[1]); // default Gemini
+  showProviderModal = signal(false);
+  customApiUrl = signal('');
+
+  toggleProviderModal(): void {
+    this.showProviderModal.update(v => !v);
+  }
+
+  selectProvider(provider: LlmProvider): void {
+    this.selectedProvider.set(provider);
+    if (provider.id !== 'custom') {
+      this.showProviderModal.set(false);
+    }
+  }
+
+  confirmCustomProvider(): void {
+    this.showProviderModal.set(false);
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscapeKey(): void {
+    this.showProviderModal.set(false);
+  }
 
   currentTime = signal('');
   greeting = signal('');

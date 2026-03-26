@@ -15,6 +15,7 @@ export interface ChatRequest {
     session_id: string;
     message: string;
     deep_search?: boolean;
+    provider?: string;
 }
 
 export interface StreamChunk {

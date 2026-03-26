@@ -127,4 +127,64 @@
             </div>
         </div>
     </main>
+
+    <!-- LLM Provider Selection Button (Floating) -->
+    <button class="llm-provider-fab animate-slide-up" style="animation-delay: 0.6s;" (click)="toggleProviderModal()"
+        id="llm-provider-btn">
+        <span class="material-symbols-outlined">swap_horiz</span>
+        <span class="fab-label">{{ selectedProvider().name }}</span>
+    </button>
+
+    <!-- LLM Provider Modal -->
+    @if (showProviderModal()) {
+    <div class="llm-modal-backdrop" (click)="showProviderModal.set(false)" id="llm-modal-backdrop">
+        <div class="llm-modal" (click)="$event.stopPropagation()" id="llm-modal">
+            <div class="llm-modal-header">
+                <h2 class="llm-modal-title">Choose Your LLM</h2>
+                <p class="llm-modal-subtitle">Select the AI model provider for your sessions</p>
+                <button class="llm-modal-close" (click)="showProviderModal.set(false)" id="llm-modal-close-btn">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <div class="llm-modal-body">
+                @for (provider of llmProviders; track provider.id) {
+                <button class="llm-provider-card" [class.selected]="selectedProvider().id === provider.id"
+                    [style.--accent]="provider.accentColor" (click)="selectProvider(provider)"
+                    [id]="'provider-' + provider.id">
+                    <div class="provider-icon-wrapper">
+                        <span class="material-symbols-outlined provider-icon">{{ provider.icon }}</span>
+                    </div>
+                    <div class="provider-info">
+                        <span class="provider-name">{{ provider.name }}</span>
+                        <span class="provider-desc">{{ provider.description }}</span>
+                    </div>
+                    <div class="provider-check">
+                        @if (selectedProvider().id === provider.id) {
+                        <span class="material-symbols-outlined">check_circle</span>
+                        }
+                    </div>
+                </button>
+                }
+
+                <!-- Custom API URL Input -->
+                @if (selectedProvider().id === 'custom') {
+                <div class="custom-api-section" id="custom-api-section">
+                    <label class="custom-api-label" for="custom-api-url">API Endpoint URL</label>
+                    <div class="custom-api-input-wrapper">
+                        <input type="url" id="custom-api-url" class="custom-api-input"
+                            placeholder="https://your-model-endpoint.com/v1/chat"
+                            [ngModel]="customApiUrl()" (ngModelChange)="customApiUrl.set($event)" />
+                    </div>
+                    <button class="custom-api-confirm" (click)="confirmCustomProvider()"
+                        [disabled]="!customApiUrl().trim()" id="custom-api-confirm-btn">
+                        <span class="material-symbols-outlined">check</span>
+                        Confirm
+                    </button>
+                </div>
+                }
+            </div>
+        </div>
+    </div>
+    }
 </div>
