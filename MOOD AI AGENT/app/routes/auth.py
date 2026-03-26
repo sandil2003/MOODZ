@@ -72,7 +72,14 @@ async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
     )
 
     db.add(new_user)
-    await db.flush()          # Populate the id
+    try:
+        await db.flush()          # Populate the id
+    except Exception:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="A user with this email already exists",
+        )
     await db.refresh(new_user)
 
     # Generate JWT
