@@ -24,6 +24,10 @@ pinecone
 httpx
 python-multipart
 
+# Authentication
+python-jose[cryptography]
+bcrypt
+
 
 # LangChain and Embeddings (Python 3.14 compatible)
 langchain-core
