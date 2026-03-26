@@ -1,0 +1,92 @@
+<div class="auth-page">
+    <!-- Animated Background -->
+    <div class="auth-bg">
+        <div class="bg-blob bg-blob-1"></div>
+        <div class="bg-blob bg-blob-2"></div>
+        <div class="bg-blob bg-blob-3"></div>
+    </div>
+
+    <!-- Auth Card -->
+    <div class="auth-card" id="register-card">
+        <!-- Header -->
+        <div class="auth-header">
+            <a routerLink="/" class="auth-logo">MOODZ</a>
+            <h1 class="auth-title">Create your account</h1>
+            <p class="auth-subtitle">Start your AI-powered wellness journey</p>
+        </div>
+
+        <!-- Error -->
+        @if (error()) {
+        <div class="auth-error" id="register-error">
+            <span class="material-symbols-outlined">error</span>
+            <span>{{ error() }}</span>
+        </div>
+        }
+
+        <!-- Form -->
+        <form class="auth-form" (submit)="$event.preventDefault(); onSubmit()">
+            <div class="form-group">
+                <label class="form-label" for="register-name">Full Name</label>
+                <div class="input-wrapper">
+                    <span class="input-icon material-symbols-outlined">person</span>
+                    <input type="text" id="register-name" class="form-input" placeholder="John Doe"
+                        [ngModel]="name()" (ngModelChange)="name.set($event)" (keypress)="onKeyPress($event)"
+                        name="name" autocomplete="name" />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="register-email">Email</label>
+                <div class="input-wrapper">
+                    <span class="input-icon material-symbols-outlined">mail</span>
+                    <input type="email" id="register-email" class="form-input" placeholder="you@example.com"
+                        [ngModel]="email()" (ngModelChange)="email.set($event)" (keypress)="onKeyPress($event)"
+                        name="email" autocomplete="email" />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="register-password">Password</label>
+                <div class="input-wrapper">
+                    <span class="input-icon material-symbols-outlined">lock</span>
+                    <input [type]="showPassword() ? 'text' : 'password'" id="register-password" class="form-input"
+                        placeholder="At least 8 characters" [ngModel]="password()"
+                        (ngModelChange)="password.set($event)" (keypress)="onKeyPress($event)" name="password"
+                        autocomplete="new-password" />
+                    <button type="button" class="toggle-password" (click)="togglePasswordVisibility()">
+                        <span class="material-symbols-outlined">
+                            {{ showPassword() ? 'visibility_off' : 'visibility' }}
+                        </span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="register-confirm">Confirm Password</label>
+                <div class="input-wrapper">
+                    <span class="input-icon material-symbols-outlined">lock</span>
+                    <input [type]="showPassword() ? 'text' : 'password'" id="register-confirm" class="form-input"
+                        placeholder="Repeat your password" [ngModel]="confirmPassword()"
+                        (ngModelChange)="confirmPassword.set($event)" (keypress)="onKeyPress($event)"
+                        name="confirmPassword" autocomplete="new-password" />
+                </div>
+            </div>
+
+            <button type="submit" class="auth-submit" [disabled]="isLoading()" id="register-submit-btn">
+                @if (isLoading()) {
+                <span class="spinner"></span>
+                Creating account...
+                } @else {
+                Create Account
+                <span class="material-symbols-outlined">arrow_forward</span>
+                }
+            </button>
+        </form>
+
+        <!-- Footer -->
+        <div class="auth-footer">
+            <span>Already have an account?</span>
+            <a routerLink="/login" class="auth-link">Sign in</a>
+        </div>
+    </div>
+</div>

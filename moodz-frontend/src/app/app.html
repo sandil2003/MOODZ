@@ -1,5 +1,7 @@
+@if (!isAuthPage()) {
 <app-navbar></app-navbar>
+}
 <router-outlet />
-@if (!isOnMoodAgent()) {
+@if (!isOnMoodAgent() && !isAuthPage()) {
 <app-footer></app-footer>
 }
