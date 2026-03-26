@@ -43,23 +43,24 @@ class Settings(BaseSettings):
         return f"redis://{self.redis_host}:{self.redis_port}/{self.redis_db}"
     
     # OpenAI Configuration
-    openai_api_key: str
+    openai_api_key: Optional[str] = None
     openai_model: str = "gpt-4-turbo-preview"
     
     # Gemini Configuration
-    gemini_api_key: str
+    gemini_api_key: Optional[str] = None
     gemini_model: str = "gemini-2.5-flash"
     
     # Custom Model Configuration
     use_custom_model: bool = False  # Set to True to use custom model instead of OpenAI
+    custom_model_type: str = "custom"  # "custom" for /generate endpoint, "openai" for OpenAI-compatible
     custom_model_url: str = "https://unharping-unhumidified-chara.ngrok-free.dev"  # URL of the custom model (e.g., ngrok URL)
     custom_model_temperature: float = 0.7
     custom_model_max_tokens: int = 2048
     custom_model_timeout: int = 60
     
     # Pinecone Configuration
-    pinecone_api_key: str
-    pinecone_environment: str
+    pinecone_api_key: Optional[str] = None
+    pinecone_environment: Optional[str] = None
     pinecone_index_name: str = "moodz-embeddings"
     
     # CORS Settings

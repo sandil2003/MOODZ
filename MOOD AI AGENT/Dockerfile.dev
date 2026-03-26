@@ -1,14 +1,25 @@
-FROM python:3.11-slim
+FROM python:3.11-alpine
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app
 
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc g++ make libpq-dev curl && rm -rf /var/lib/apt/lists/*
+# Install system dependencies with apk (Alpine)
+RUN apk add --no-cache \
+    gcc \
+    g++ \
+    make \
+    postgresql-dev \
+    curl \
+    postgresql-client
 
 # Install Python dependencies
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
 # Copy the application code
 COPY . .

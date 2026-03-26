@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.redis_client import get_redis_client
@@ -28,7 +29,7 @@ async def health_check_db(db: AsyncSession = Depends(get_db)):
     """
     try:
         # Execute a simple query to check database connectivity
-        await db.execute("SELECT 1")
+        await db.execute(text("SELECT 1"))
         return {
             "status": "healthy",
             "database": "connected"
