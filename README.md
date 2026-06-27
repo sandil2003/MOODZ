@@ -59,71 +59,91 @@
 
 ## Architecture
 
-MOODZ follows a modern **microservices architecture** with separate frontend and backend services:
+MOODZ follows a modern **microservices architecture** designed for high performance, modularity, and real-time AI agent interactions. The system is split into an Angular SPA frontend, an asynchronous FastAPI backend, persistent SQL storage, high-performance key-value caching, and cloud-based AI services.
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                    MOODZ Platform                       │
-├─────────────────────────────────────────────────────────┤
-│                                                         │
-│  ┌──────────────────┐         ┌──────────────────┐      │
-│  │   Angular 21     │ ◄─────► │   FastAPI        │      │
-│  │   Frontend       │  HTTP   │   Backend        │      │
-│  │  (Port 4200)     │         │  (Port 8000)     │      │
-│  └──────────────────┘         └──────────────────┘      │
-│         │                              │                │
-│         │                              ▼                │
-│         │                     ┌─────────────────┐       │
-│         │                     │   PostgreSQL    │       │
-│         │                     │   Database      │       │
-│         │                     └─────────────────┘       │
-│         │                              │                │
-│         │                              ▼                |
-│         |                     ┌─────────────────┐       |
-│         │                     │   Pinecone      │       │
-│         │                     │   Database      │       │
-│         │                     └─────────────────┘       │
-│         │                              │                │
-│         │                              ▼                │
-│         │                     ┌─────────────────┐       │
-│         │                     │     Redis       │       │
-│         │                     │     Cache       │       │
-│         │                     └─────────────────┘       │
-│         │                              │                │
-│         │                              ▼                │
-│         │                     ┌─────────────────┐       │
-│         └────────────────────►│   AI Services   │       │
-│                               │  OpenAI/Gemini  │       │
-│                               │    Pinecone     │       │
-│                               └─────────────────┘       │
-│                                                         │
-└─────────────────────────────────────────────────────────┘
+### System Architecture Diagram
+
+```mermaid
+graph TB
+    %% Client Tier
+    subgraph ClientTier ["Client Tier (Frontend)"]
+        direction TB
+        Browser["User Browser"]
+        AngularApp["Angular 21 SPA<br/>(Signals & Components)"]
+        Tailwind["TailwindCSS v4.0<br/>(Sleek UI Styling)"]
+        
+        Browser <--> AngularApp
+        AngularApp --- Tailwind
+    end
+
+    %% Application Tier
+    subgraph AppTier ["Application Tier (Backend)"]
+        direction TB
+        FastAPI["FastAPI Web Framework<br/>(Async REST API)"]
+        Router["Router Layer<br/>(Auth, Chat, Mood, History)"]
+        Services["Service Layer<br/>(Crisis Detection, Auth, Session)"]
+        LangChain["LangChain Agent Manager<br/>(AI Orchestration)"]
+        
+        FastAPI --> Router
+        Router --> Services
+        Services --> LangChain
+    end
+
+    %% Data Tier
+    subgraph DataTier ["Data & Caching Tier"]
+        direction LR
+        Postgres[("PostgreSQL DB<br/>(Chat History & Mood Data)")]
+        RedisClient[("Redis Cache<br/>(Active Sessions & Memory)")]
+    end
+
+    %% External AI Tier
+    subgraph AITier ["AI & Semantic Memory Tier"]
+        direction LR
+        Pinecone[("Pinecone Vector DB<br/>(Semantic Embeddings)")]
+        OpenAI["OpenAI GPT Models<br/>(Empathetic Conversation)"]
+        Gemini["Google Gemini Models<br/>(Advanced Reasoning)"]
+    end
+
+    %% Cross-Tier Connections
+    AngularApp == "HTTP API Requests / SSE Streaming" ==> FastAPI
+    Services == "SQLAlchemy ORM" ==> Postgres
+    Services == "Active Session/Cache" ==> RedisClient
+    LangChain == "Long-Term Memory / RAG" ==> Pinecone
+    LangChain == "LLM Chat Calls" ==> OpenAI
+    LangChain == "Fallback / Reasoning" ==> Gemini
+
+    %% Apply Styles
+    classDef client fill:#EBF3FC,stroke:#2B78E4,stroke-width:2px,color:#1A365D;
+    classDef backend fill:#E8F8F5,stroke:#117A65,stroke-width:2px,color:#0B3C33;
+    classDef data fill:#FEF9E7,stroke:#D35400,stroke-width:2px,color:#5E2F00;
+    classDef ai fill:#F5EEF8,stroke:#7D3C98,stroke-width:2px,color:#4A148C;
+
+    class Browser,AngularApp,Tailwind client;
+    class FastAPI,Router,Services,LangChain backend;
+    class Postgres,RedisClient data;
+    class Pinecone,OpenAI,Gemini ai;
 ```
 
 ### Components
 
 1. **Frontend (Angular 21)**
-   - Standalone components architecture
-   - Signal-based state management
-   - Reactive forms and routing
-   - Markdown rendering for AI responses
+   - **State Management**: Built-in Signal-based state management for optimized, granular DOM updates.
+   - **Styling**: TailwindCSS 4.0 for a highly customized and responsive glassmorphic/dark theme system.
+   - **Interactions**: Empathetic chat UI with full markdown parsing and real-time Server-Sent Events (SSE) streaming.
 
 2. **Backend (FastAPI)**
-   - Async/await for high performance
-   - RESTful API with streaming support
-   - Database ORM with SQLAlchemy
-   - Redis caching layer
+   - **High Concurrency**: Fully asynchronous Python execution utilizing ASGI (Uvicorn).
+   - **Database Access**: Async queries via SQLAlchemy ORM for handling concurrent user sessions.
+   - **API Schema**: Type-safe Pydantic models verifying request/response payload integrity.
 
 3. **AI Services**
-   - OpenAI GPT models for conversation
-   - Google Gemini for advanced reasoning
-   - Pinecone for vector embeddings
-   - LangChain for agent orchestration
+   - **OpenAI Integration**: Empathetic conversational models (GPT-4) for user interaction.
+   - **Google Gemini Integration**: Advanced logic fallback for complex reasoning and crisis evaluation.
+   - **Semantic Search**: Pinecone Vector Database using LangChain integrations for retrieve-and-generate (RAG) conversational memory.
 
-4. **Data Layer**
-   - PostgreSQL for persistent storage
-   - Redis for session management
-   - Alembic for database migrations
+4. **Storage & Caching Layer**
+   - **PostgreSQL**: Stores relational user accounts, chat sessions, structural histories, and logs.
+   - **Redis Cache**: Holds short-lived user tokens, message histories, and cache layers for fast lookups.
 
 ---
 
@@ -132,76 +152,93 @@ MOODZ follows a modern **microservices architecture** with separate frontend and
 ### Frontend
 | Technology | Version | Purpose |
 |------------|---------|---------|
-| **Angular** | 21.0 | Frontend framework |
-| **TypeScript** | 5.9 | Type-safe JavaScript |
-| **TailwindCSS** | 4.1 | Utility-first CSS |
-| **RxJS** | 7.8 | Reactive programming |
-| **ngx-markdown** | 21.0 | Markdown rendering |
-| **Signals** | Built-in | State management |
+| **Angular** | 21.0 | Modern Component Framework |
+| **TypeScript** | 5.9 | Strongly Typed Scripts |
+| **TailwindCSS** | 4.1 | Styling & Visual System |
+| **RxJS** | 7.8 | Reactive Event Streams |
+| **ngx-markdown** | 21.0 | Real-time Markdown Parsing |
+| **Signals** | Built-in | Modern Reactive State Management |
 
 ### Backend
 | Technology | Version | Purpose |
 |------------|---------|---------|
-| **FastAPI** | Latest | Web framework |
-| **Python** | 3.11+ | Programming language |
-| **SQLAlchemy** | Latest | ORM |
-| **Alembic** | Latest | Database migrations |
-| **Pydantic** | Latest | Data validation |
-| **Uvicorn** | Latest | ASGI server |
+| **FastAPI** | Latest | Async Python Web Framework |
+| **Python** | 3.11+ | Server Programming Language |
+| **SQLAlchemy** | Latest | Asynchronous Python ORM |
+| **Alembic** | Latest | SQL Schema Versioning & Migrations |
+| **Pydantic** | Latest | Type-Safe Model Validation |
+| **Uvicorn** | Latest | ASGI Production Server |
 
 ### AI & ML
 | Service | Purpose |
 |---------|---------|
-| **OpenAI** | GPT models for conversation |
-| **Google Gemini** | Advanced AI reasoning |
-| **Pinecone** | Vector database for embeddings |
-| **LangChain** | Agent orchestration framework |
+| **OpenAI** | GPT models for empathetic conversation |
+| **Google Gemini** | Gemini models for advanced reasoning and routing |
+| **Pinecone** | Semantic vector storage for conversational long-term memory |
+| **LangChain** | Orchestrator for complex AI Agent chains & memory |
 
 ### Infrastructure
 | Technology | Purpose |
 |------------|---------|
-| **PostgreSQL** | Primary database |
-| **Redis** | Caching and sessions |
-| **Docker** | Containerization |
-| **Celery** | Background task processing |
+| **PostgreSQL** | Relational primary database |
+| **Redis** | In-memory key-value cache and session tracker |
+| **Docker** | Component isolation and orchestration |
+| **Celery** | Distributed asynchronous worker framework |
 
 ---
 
 ### Prerequisites
 
-- **Node.js** 18+ and npm
+Ensure you have the following installed on your host system:
+- **Node.js** 18+ and `npm`
 - **Python** 3.11+
-- **Docker** and Docker Compose (optional)
+- **Docker** & **Docker Compose** *(Recommended for easiest setup)*
 - **Git**
 
 ### Environment Setup
 
 1. **Clone the Repository**
    ```bash
-   git clone https://github.com/yourusername/MOODZ.git
+   git clone https://github.com/sandil2003/MOODZ.git
    cd MOODZ
    ```
 
-2. **Set Up Backend**
-   ```bash
-   cd "MOOD AI AGENT"
+2. **Configure Environment Variables**
+   Create a `.env` file inside the `MOOD AI AGENT` directory. You can start by copying the template file:
    
-   # Create virtual environment
-   python -m venv venv
-   
-   # Activate virtual environment
-   # Windows:
-   venv\Scripts\activate
-   # Linux/Mac:
-   source venv/bin/activate
-   
-   # Install dependencies
-   pip install -r requirements.txt
-   
-   # Configure environment
-   copy .env.example .env
-   # Edit .env with your API keys
+   - **Windows (PowerShell)**:
+     ```powershell
+     copy "MOOD AI AGENT\.env.example" "MOOD AI AGENT\.env"
+     ```
+   - **Linux/macOS**:
+     ```bash
+     cp "MOOD AI AGENT/.env.example" "MOOD AI AGENT/.env"
+     ```
+
+   Open the newly created `MOOD AI AGENT/.env` file and input your credentials:
+   ```env
+   # API Keys (Required for AI Agents)
+   OPENAI_API_KEY=your-openai-api-key
+   GEMINI_API_KEY=your-gemini-api-key
+   PINECONE_API_KEY=your-pinecone-api-key
+   PINECONE_ENVIRONMENT=us-east-1
+   PINECONE_INDEX_NAME=moodz-embeddings
+
+   # Database Configuration
+   POSTGRES_USER=postgres
+   POSTGRES_PASSWORD=your-secure-password
+   POSTGRES_DB=moodz_db
+   POSTGRES_HOST=localhost
+   POSTGRES_PORT=5432
+
+   # Redis Configuration
+   REDIS_HOST=localhost
+   REDIS_PORT=6379
+   REDIS_DB=0
    ```
+
+   > [!IMPORTANT]
+   > Make sure to create the Pinecone index prior to startup with **1536 dimensions** (if using OpenAI embeddings) or the relevant size corresponding to your configuration, and matching metric `cosine`.
 
 3. **Set Up Frontend**
    ```bash
@@ -213,6 +250,8 @@ MOODZ follows a modern **microservices architecture** with separate frontend and
 
 ### Running with Docker (Recommended)
 
+Docker setup handles backend libraries, database migration setups, node compilation, and container linkages automatically.
+
 The entire platform can be started with a single command from the project root:
 
 ```bash
@@ -220,8 +259,8 @@ docker-compose up --build -d
 ```
 
 This will orchestrate:
-- **Frontend**: http://localhost:4200
-- **Backend API**: http://localhost:8001
+- **Frontend**: http://localhost:4200 *(Served via Nginx)*
+- **Backend API**: http://localhost:8000 *(FastAPI server)*
 - **PostgreSQL**: Port 5432
 - **Redis**: Port 6379
 
@@ -237,7 +276,7 @@ docker-compose down
 
 ### Development with Docker (Hot-Reloading)
 
-For an optimal development experience with live reloading, use the development configuration:
+For an optimal development experience with live reloading (where modifications to host files are immediately reflected inside the containers), use the development configuration:
 
 ```bash
 docker-compose -f docker-compose.dev.yml up --build
@@ -245,63 +284,48 @@ docker-compose -f docker-compose.dev.yml up --build
 
 This will:
 - Mount your local source code into the containers.
-- **Frontend**: http://localhost:4200 (Angular dev server with polling)
-- **Backend**: http://localhost:8001 (FastAPI with `--reload`)
-
-Changes made to your local files will automatically reflect in the running containers.
+- **Frontend**: http://localhost:4200 *(Angular dev server with polling enabled)*
+- **Backend**: http://localhost:8000 *(FastAPI with `--reload` enabled)*
 
 ### Running Locally (Without Docker)
 
-1. **Start Backend Services**
+1. **Start Database & Caching Services**
+   If you do not have local PostgreSQL or Redis servers installed, start them via Docker:
    ```bash
-   # Start PostgreSQL and Redis manually or via Docker
    docker-compose up -d postgres redis
-   
-   # Run FastAPI
-   cd "MOOD AI AGENT"
-   uvicorn main:app --reload
    ```
+   
+2. **Launch the Backend**
+   ```bash
+   cd "MOOD AI AGENT"
+   
+   # Create virtual environment
+   python -m venv venv
+   
+   # Activate virtual environment
+   # Windows (PowerShell):
+   .\venv\Scripts\Activate.ps1
+   # Windows (CMD):
+   venv\Scripts\activate.bat
+   # Linux/Mac:
+   source venv/bin/activate
+   
+   # Install dependencies
+   pip install -r requirements.txt
+   
+   # Run FastAPI with live reload on Port 8000
+   uvicorn main:app --reload --port 8000
+   ```
+   *Note: Database tables are automatically initialized on backend startup via `init_db()`.*
 
-2. **Start Frontend**
+3. **Launch the Frontend**
    ```bash
    cd moodz-frontend
-   ng serve
+   
+   # Run the local Angular development server
+   npm start
    ```
-
-### Environment Variables
-
-Create a `.env` file in the `MOOD AI AGENT` directory:
-
-```env
-# OpenAI Configuration
-OPENAI_API_KEY=your-openai-api-key
-OPENAI_MODEL=gpt-4
-
-# Google Gemini Configuration
-GOOGLE_API_KEY=your-google-api-key
-
-# Pinecone Configuration
-PINECONE_API_KEY=your-pinecone-api-key
-PINECONE_ENVIRONMENT=your-environment
-PINECONE_INDEX_NAME=mood-index
-
-# Database Configuration
-POSTGRES_USER=moodz_user
-POSTGRES_PASSWORD=your-secure-password
-POSTGRES_DB=moodz_db
-POSTGRES_HOST=localhost
-POSTGRES_PORT=5432
-
-# Redis Configuration
-REDIS_HOST=localhost
-REDIS_PORT=6379
-REDIS_DB=0
-
-# Security
-SECRET_KEY=your-secret-key-here
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=30
-```
+   *The Angular application is now running locally at http://localhost:4200.*
 
 ---
 
@@ -477,8 +501,8 @@ http://localhost:8000
 ```
 
 ### Interactive Documentation
-- **Swagger UI**: http://localhost:8001/docs
-- **ReDoc**: http://localhost:8001/redoc
+- **Swagger UI**: http://localhost:8000/docs
+- **ReDoc**: http://localhost:8000/redoc
 
 ### Key Endpoints
 
