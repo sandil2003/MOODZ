@@ -1,20 +1,30 @@
 """
-Test script to verify the ConversationClassifier is working correctly.
+Test script to verify the Agent classification is working correctly.
 Run this from the MOOD AI AGENT directory.
 """
 import asyncio
-from app.services.classifier import ConversationClassifier
+import sys
+import os
+from uuid import uuid4
+
+# Add project root to sys.path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from app.services import get_mood_agent
 
 
 async def test_classifier():
-    """Test the classifier with various messages."""
+    """Test the consolidated agent classification with various messages."""
     
     print("=" * 60)
-    print("Testing ConversationClassifier")
+    print("Testing Consolidated Agent Classification")
     print("=" * 60)
     
-    # Initialize classifier
-    classifier = ConversationClassifier()
+    # Initialize agent
+    agent = await get_mood_agent()
+    
+    user_id = uuid4()
+    session_id = uuid4()
     
     # Test cases
     test_messages = [
@@ -41,36 +51,45 @@ async def test_classifier():
         print(f"Test {i}: {test['expected']}")
         print(f"{'=' * 60}")
         print(f"Message: {test['message']}")
-        print(f"\nClassifying...")
+        print(f"\nInvoking agent...")
         
         try:
-            result = await classifier.classify(test['message'])
+            result_holder = {}
+            await agent.invoke(
+                user_id=user_id,
+                session_id=session_id,
+                user_message=test['message'],
+                result_holder=result_holder
+            )
+            
+            result = result_holder.get("classification", {})
             
             print(f"\n✅ Classification Result:")
-            print(f"  - Save to DB: {result['save']}")
-            print(f"  - Mood: {result['mood']}")
-            print(f"  - Extracted Facts: {len(result['extracted_facts'])} facts")
+            print(f"  - Save to DB: {result.get('save')}")
+            print(f"  - Mood: {result.get('mood')}")
+            print(f"  - Extracted Facts: {len(result.get('extracted_facts', []))} facts")
             
-            if result['extracted_facts']:
+            if result.get('extracted_facts'):
                 print(f"\n  Facts:")
                 for fact in result['extracted_facts']:
                     print(f"    • {fact}")
             
             # Verify expectations
             if i == 1:  # Generic greeting
-                assert result['save'] == False, "Generic greeting should NOT be saved"
+                assert result.get('save') == False, "Generic greeting should NOT be saved"
                 print(f"\n✅ PASS: Correctly identified as not worth saving")
             else:  # Meaningful messages
-                assert result['save'] == True, "Meaningful message should be saved"
+                assert result.get('save') == True, "Meaningful message should be saved"
                 print(f"\n✅ PASS: Correctly identified as worth saving")
                 
         except Exception as e:
             print(f"\n❌ ERROR: {e}")
             import traceback
             traceback.print_exc()
+            raise e
     
     print(f"\n{'=' * 60}")
-    print("✅ All tests completed!")
+    print("✅ All classification tests completed!")
     print(f"{'=' * 60}\n")
 
 
