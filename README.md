@@ -24,6 +24,7 @@
 - [Getting Started](#-getting-started)
 - [Project Structure](#-project-structure)
 - [AI Agents](#-ai-agents)
+- [Deployment Plan](#️-deployment-plan)
 - [Development](#-development)
 - [API Documentation](#-api-documentation)
 - [Contributing](#-contributing)
@@ -420,6 +421,14 @@ AI-powered journaling assistant for personal reflection and growth.
 ### Study Agent (Coming Soon)
 
 Intelligent study companion for academic success.
+
+---
+
+## ☁️ Deployment Plan
+
+For detailed instructions on deploying the MOODZ platform to Microsoft Azure (including Azure Container Apps, PostgreSQL, and Redis), please refer to the dedicated deployment guide:
+
+**[📄 View the Azure Deployment Plan](docs/azure_deployment_plan.md)**
 
 ---
 
