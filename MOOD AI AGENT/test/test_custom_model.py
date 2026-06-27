@@ -6,7 +6,7 @@ and verifies that it can generate responses.
 """
 
 import asyncio
-from app.services.custom_model import get_custom_model
+from app.services import get_custom_model
 from config import settings
 
 
