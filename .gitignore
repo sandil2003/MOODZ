@@ -1,0 +1,54 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.toast
+.tracker
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node / Angular
+node_modules/
+dist/
+tmp/
+out-tsc/
+bazel-out/
+.angular/
+.sass-cache/
+npm-debug.log
+yarn-error.log
+
+# Environment variables
+.env
+.env*.local
+
+# IDEs & Editors
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+*.swo
+
+# Databases & Cache
+*.db
+*.sqlite3
+postgres_data/
+postgres_dev_data/
+redis_data/
+redis_dev_data/
+/app/postgres_data/
+
+# OS-specific files
+.DS_Store
+Thumbs.db

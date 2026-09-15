@@ -13,6 +13,7 @@ import { filter } from 'rxjs/operators';
 export class App implements OnInit {
   protected readonly title = signal('moodz-frontend');
   isOnMoodAgent = signal<boolean>(false);
+  isAuthPage = signal<boolean>(false);
   private router = inject(Router);
 
   ngOnInit() {
@@ -27,5 +28,6 @@ export class App implements OnInit {
 
   private checkRoute(url: string) {
     this.isOnMoodAgent.set(url.includes('/mood-agent'));
+    this.isAuthPage.set(url.includes('/login') || url.includes('/register'));
   }
 }

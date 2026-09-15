@@ -1,3 +1,9 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
 downloads/
 eggs/
 .eggs/
@@ -16,6 +22,8 @@ venv/
 env/
 ENV/
 moodz/
+.env
+.env.example
 
 # IDE
 .vscode/
