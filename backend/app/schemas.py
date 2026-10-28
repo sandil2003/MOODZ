@@ -331,8 +331,10 @@ class UserFactBase(BaseModel):
     @field_validator('source')
     @classmethod
     def validate_source(cls, v):
-        allowed_sources = ['conversation', 'manual_input']
+        allowed_sources = ['conversation', 'manual_input', 'adk_profiler', 'background_profiler', 'profiler', 'chat', 'auto_extracted']
         if v not in allowed_sources:
+            if isinstance(v, str) and v.strip():
+                return v.strip()
             raise ValueError(f'source must be one of: {", ".join(allowed_sources)}')
         return v
 

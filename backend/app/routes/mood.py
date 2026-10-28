@@ -31,13 +31,15 @@ async def get_mood_history(
     days: Optional[int] = Query(default=None, description="Filter by last N days")
 ):
     try:
+        actual_limit = limit if isinstance(limit, int) else 50
         async with AsyncSessionLocal() as db:
             query = select(MoodHistory).where(
                 MoodHistory.user_id == user_id
-            ).order_by(desc(MoodHistory.created_at)).limit(limit)
+            ).order_by(desc(MoodHistory.created_at)).limit(actual_limit)
             
-            if days:
-                cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
+            if days and isinstance(days, int):
+                # Ensure cutoff_date is naive UTC to match TIMESTAMP WITHOUT TIME ZONE column in PostgreSQL
+                cutoff_date = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=days)
                 query = query.where(MoodHistory.created_at >= cutoff_date)
                 
             result = await db.execute(query)
@@ -66,12 +68,13 @@ async def get_user_facts(
     limit: int = Query(default=100, le=500)
 ):
     try:
+        actual_limit = limit if isinstance(limit, int) else 100
         async with AsyncSessionLocal() as db:
             query = select(UserFact).where(
                 UserFact.user_id == user_id
-            ).order_by(desc(UserFact.created_at)).limit(limit)
+            ).order_by(desc(UserFact.created_at)).limit(actual_limit)
             
-            if category:
+            if category and isinstance(category, str):
                 query = query.where(UserFact.category == category)
                 
             result = await db.execute(query)
@@ -94,8 +97,10 @@ async def get_user_facts(
 @router.get("/mood-stats/{user_id}")
 async def get_mood_stats(user_id: UUID, days: int = Query(default=30)):
     try:
+        actual_days = days if isinstance(days, int) else 30
         async with AsyncSessionLocal() as db:
-            cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
+            # Ensure cutoff_date is naive UTC to match TIMESTAMP WITHOUT TIME ZONE column in PostgreSQL
+            cutoff_date = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=actual_days)
             query = select(MoodHistory).where(
                 MoodHistory.user_id == user_id,
                 MoodHistory.created_at >= cutoff_date
@@ -111,7 +116,7 @@ async def get_mood_stats(user_id: UUID, days: int = Query(default=30)):
                     "highest_mood": None,
                     "lowest_mood": None,
                     "most_common_sentiment": None,
-                    "days_analyzed": days
+                    "days_analyzed": actual_days
                 }
                 
             mood_scores = [entry.mood_score for entry in mood_entries]
@@ -128,7 +133,7 @@ async def get_mood_stats(user_id: UUID, days: int = Query(default=30)):
                 "highest_mood": max(mood_scores),
                 "lowest_mood": min(mood_scores),
                 "most_common_sentiment": most_common_sentiment,
-                "days_analyzed": days,
+                "days_analyzed": actual_days,
                 "trend": "improving" if len(mood_scores) > 1 and mood_scores[-1] > mood_scores[0] else "declining" if len(mood_scores) > 1 and mood_scores[-1] < mood_scores[0] else "stable"
             }
     except Exception as e:
