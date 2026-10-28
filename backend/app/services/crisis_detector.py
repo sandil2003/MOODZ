@@ -7,9 +7,9 @@ class CrisisDetector:
     """
     def __init__(self):
         self.red_flag_patterns = [
-            r"\bsuicid(e|al)\b",
-            r"\bself[- ]harm\b",
-            r"\bharm\b(?!-)",
+            r"\bsuicid(e|al|es)?\b",
+            r"\bself[- ]harm\w*\b",
+            r"\bharm(ing)? myself\b",
             r"\bhurt(ing)? myself\b",
             r"\bkill(ing)? myself\b",
             r"\bend(ing)? my life\b",

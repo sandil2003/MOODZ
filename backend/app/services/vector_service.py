@@ -1,9 +1,47 @@
+import asyncio
 from pinecone import Pinecone, ServerlessSpec
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 from uuid import UUID
 import json
 from config import settings
+
+
+class GeminiEmbeddingsWrapper:
+    """Wrapper around google.generativeai supporting dimensionality control for Pinecone."""
+
+    def __init__(self, model: str = "models/gemini-embedding-001", dimension: int = 768, api_key: Optional[str] = None):
+        import google.generativeai as genai
+        self.model = model
+        self.dimension = dimension
+        if api_key:
+            genai.configure(api_key=api_key)
+        self._genai = genai
+
+    def embed_query(self, text: str) -> List[float]:
+        res = self._genai.embed_content(
+            model=self.model,
+            content=text,
+            output_dimensionality=self.dimension
+        )
+        return res["embedding"]
+
+    def embed_documents(self, texts: List[str]) -> List[List[float]]:
+        if not texts:
+            return []
+        res = self._genai.embed_content(
+            model=self.model,
+            content=texts,
+            output_dimensionality=self.dimension
+        )
+        return res["embedding"]
+
+    async def aembed_query(self, text: str) -> List[float]:
+        return await asyncio.to_thread(self.embed_query, text)
+
+    async def aembed_documents(self, texts: List[str]) -> List[List[float]]:
+        return await asyncio.to_thread(self.embed_documents, texts)
+
 
 class VectorService:
     """
@@ -34,10 +72,10 @@ class VectorService:
         self.pc = Pinecone(api_key=self.api_key)
         
         if self.provider == "gemini":
-            from langchain_google_genai import GoogleGenerativeAIEmbeddings
-            self.embeddings = GoogleGenerativeAIEmbeddings(
-                model="models/text-embedding-004",
-                google_api_key=settings.gemini_api_key
+            self.embeddings = GeminiEmbeddingsWrapper(
+                model="models/gemini-embedding-001",
+                dimension=self.embedding_dimension,
+                api_key=settings.gemini_api_key
             )
         else:
             from langchain_openai import OpenAIEmbeddings
@@ -63,9 +101,9 @@ class VectorService:
                         region="us-east-1"
                     )
                 )
-                print(f"✓ Index '{self.index_name}' created with {self.embedding_dimension} dimensions")
+                print(f"[OK] Index '{self.index_name}' created with {self.embedding_dimension} dimensions")
             else:
-                print(f"✓ Connected to existing index: {self.index_name}")
+                print(f"[OK] Connected to existing index: {self.index_name}")
             self.index = self.pc.Index(self.index_name)
         except Exception as e:
             print(f"Error initializing Pinecone index for provider {self.provider}: {e}")

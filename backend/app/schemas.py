@@ -68,6 +68,21 @@ class ChatSessionSummary(BaseModel):
     """Schema for chat session summary (for listing sessions)."""
     session_id: UUID
     title: str = Field(..., description="Generated title from first user message")
+
+
+class ChatFeedbackRequest(BaseModel):
+    """Schema for recording user feedback on an agent response."""
+    session_id: UUID = Field(..., description="Session UUID")
+    message_id: Optional[UUID] = Field(default=None, description="Optional Message UUID")
+    rating: int = Field(..., ge=-1, le=1, description="Feedback rating: 1 for thumbs up, -1 for thumbs down")
+    comment: Optional[str] = Field(default=None, max_length=1000, description="Optional text feedback")
+    corrected_mood: Optional[str] = Field(default=None, description="Optional user-corrected mood label")
+
+
+class ChatFeedbackResponse(BaseModel):
+    """Response schema for feedback submission."""
+    status: str = "recorded"
+    message: str = "Feedback logged successfully"
     last_message_time: datetime
     message_count: int
     first_message: Optional[str] = Field(None, description="Preview of first message")

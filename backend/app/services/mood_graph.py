@@ -13,6 +13,7 @@ Implements:
 import re
 import json
 import asyncio
+import time
 from typing import TypedDict, List, Dict, Any, Optional, AsyncGenerator
 from uuid import UUID
 from pydantic import BaseModel, Field
@@ -26,6 +27,7 @@ from sqlalchemy import select, desc
 from app.database import AsyncSessionLocal
 from app.models import MoodHistory, UserFact
 from config import settings
+from app.core.telemetry import trace_span
 
 from app.services.fallback_mocks import API_ERROR_WARNING, generate_mock_wellness_response, mock_classify
 from app.services.custom_model import get_custom_model
@@ -142,12 +144,22 @@ class MoodHybridGraph:
                 google_api_key=settings.gemini_api_key
             )
             
+        # Fallback companion LLM (used if custom local model is unreachable)
+        if settings.use_custom_model and settings.custom_model_url and settings.gemini_api_key:
+            self.fallback_companion_llm = ChatGoogleGenerativeAI(
+                model=settings.gemini_model,
+                temperature=0.7,
+                google_api_key=settings.gemini_api_key
+            )
+        else:
+            self.fallback_companion_llm = None
+            
         # Configure Background Profiler LLM
         self.profiler_llm = ChatGoogleGenerativeAI(
             model=settings.gemini_model,
             temperature=0.2,  # Low temperature for analytical extraction
             google_api_key=settings.gemini_api_key,
-            model_kwargs={"response_mime_type": "application/json"}
+            response_mime_type="application/json"
         )
         
         # Build LangGraph StateGraph
@@ -159,22 +171,25 @@ class MoodHybridGraph:
 
     async def safety_gate_node(self, state: MoodHybridState) -> Dict[str, Any]:
         """Node 1 (Deterministic, 0ms): Scan for immediate crisis or self-harm risk."""
-        user_message = state.get("user_message", "")
-        crisis_info = await self.crisis_detector.check_crisis(user_message)
-        
-        if crisis_info.get("score", 0.0) == 1.0:
-            crisis_msg = (
-                "I'm really concerned about what you're sharing. Please reach out to a mental health "
-                "professional or crisis helpline immediately. You can reach the 988 Suicide & Crisis Lifeline "
-                "(US/Canada by calling or texting 988), text HOME to 741741 to connect with Crisis Text Line, "
-                "or contact your local emergency services."
-            )
-            return {
-                "is_crisis": True,
-                "crisis_response": crisis_msg,
-                "response_text": crisis_msg
-            }
-        return {"is_crisis": False}
+        with trace_span("langgraph.safety_gate_node", span_type="safety.gate", attributes={"user_id": str(state.get("user_id", ""))}) as span:
+            user_message = state.get("user_message", "")
+            crisis_info = await self.crisis_detector.check_crisis(user_message)
+            
+            if crisis_info.get("score", 0.0) == 1.0:
+                span.set_attribute("moodz.is_crisis", True)
+                crisis_msg = (
+                    "I'm really concerned about what you're sharing. Please reach out to a mental health "
+                    "professional or crisis helpline immediately. You can reach the 988 Suicide & Crisis Lifeline "
+                    "(US/Canada by calling or texting 988), text HOME to 741741 to connect with Crisis Text Line, "
+                    "or contact your local emergency services."
+                )
+                return {
+                    "is_crisis": True,
+                    "crisis_response": crisis_msg,
+                    "response_text": crisis_msg
+                }
+            span.set_attribute("moodz.is_crisis", False)
+            return {"is_crisis": False}
 
     async def crisis_intervention_node(self, state: MoodHybridState) -> Dict[str, Any]:
         """Node 2: Crisis short-circuit output."""
@@ -188,27 +203,37 @@ class MoodHybridGraph:
         session_id = state["session_id"]
         user_message = state["user_message"]
         
-        # Concurrent Context Fetch via asyncio.gather
-        history_task = self.session_manager.get_recent_history(session_id, limit=5)
-        semantic_task = self.vector_service.similarity_search(query=user_message, user_id=user_id, k=2)
-        profile_task = self._fetch_db_profile(user_id)
-        
-        try:
-            recent_history, semantic_memories, (moods, facts) = await asyncio.gather(
-                history_task, semantic_task, profile_task, return_exceptions=True
-            )
-        except Exception as e:
-            print(f"[MoodGraph] Error in concurrent retrieval: {e}")
-            recent_history, semantic_memories, moods, facts = [], [], [], []
+        with trace_span(
+            "langgraph.context_ingestion_node",
+            span_type="context.ingestion",
+            attributes={"user_id": str(user_id), "session_id": str(session_id)}
+        ) as span:
+            # Concurrent Context Fetch via asyncio.gather
+            history_task = self.session_manager.get_recent_history(session_id, limit=5)
+            semantic_task = self.vector_service.similarity_search(query=user_message, user_id=user_id, k=2)
+            profile_task = self._fetch_db_profile(user_id)
             
-        if isinstance(recent_history, Exception):
-            recent_history = []
-        if isinstance(semantic_memories, Exception):
-            semantic_memories = []
-        if isinstance(moods, Exception):
-            moods = []
-        if isinstance(facts, Exception):
-            facts = []
+            try:
+                recent_history, semantic_memories, (moods, facts) = await asyncio.gather(
+                    history_task, semantic_task, profile_task, return_exceptions=True
+                )
+            except Exception as e:
+                print(f"[MoodGraph] Error in concurrent retrieval: {e}")
+                recent_history, semantic_memories, moods, facts = [], [], [], []
+                
+            if isinstance(recent_history, Exception):
+                recent_history = []
+            if isinstance(semantic_memories, Exception):
+                semantic_memories = []
+            if isinstance(moods, Exception):
+                moods = []
+            if isinstance(facts, Exception):
+                facts = []
+
+            span.set_attribute("moodz.recent_history_len", len(recent_history))
+            span.set_attribute("moodz.semantic_memories_len", len(semantic_memories))
+            span.set_attribute("moodz.facts_len", len(facts))
+            span.set_attribute("moodz.moods_len", len(moods))
 
         # Format Profile String
         profile_parts = []
@@ -281,6 +306,14 @@ Your Core Guidelines:
             return {"response_text": text}
         except Exception as e:
             print(f"[MoodGraph] Error in companion invocation: {e}")
+            if self.fallback_companion_llm:
+                try:
+                    print("[MoodGraph] Attempting fallback to Gemini companion model...")
+                    response = await self.fallback_companion_llm.ainvoke(messages)
+                    text = response.content if hasattr(response, "content") else str(response)
+                    return {"response_text": text}
+                except Exception as fb_err:
+                    print(f"[MoodGraph] Fallback companion also failed: {fb_err}")
             mock_text = generate_mock_wellness_response(state.get("user_message", ""))
             return {"response_text": API_ERROR_WARNING + mock_text}
 
@@ -356,10 +389,15 @@ Your Core Guidelines:
         Extracts personal facts, detects emotion, computes mood score (1-10),
         and writes records to PostgreSQL and Pinecone without delaying the user.
         """
-        print(f"\n[BackgroundProfiler] Analyzing turn for user {user_id}...")
-        
-        # Profiler prompt requesting strict structured JSON
-        profiler_prompt = f"""You are a clinical wellness profiling sub-agent.
+        with trace_span(
+            "langgraph.profile_conversation_async",
+            span_type="profiler.async",
+            attributes={"user_id": str(user_id), "session_id": str(session_id)}
+        ) as profiler_span:
+            print(f"\n[BackgroundProfiler] Analyzing turn for user {user_id}...")
+            
+            # Profiler prompt requesting strict structured JSON
+            profiler_prompt = f"""You are a clinical wellness profiling sub-agent.
 Analyze the following conversation turn between a user and an empathetic companion:
 
 USER: "{user_message}"
@@ -373,98 +411,103 @@ Extract the following in strict JSON:
   "extracted_facts": ["Fact 1", "Fact 2"] // New personal facts about the user (e.g. jobs, family, pets, hobbies). Empty list if none.
 }}
 """
-        try:
-            llm_response = await self.profiler_llm.ainvoke([
-                {"role": "system", "content": "You are a clinical data extraction sub-agent. Respond only in JSON."},
-                {"role": "user", "content": profiler_prompt}
-            ])
-            content = llm_response.content if hasattr(llm_response, "content") else str(llm_response)
-            
-            # Clean possible markdown fence
-            cleaned = content.strip().removeprefix("```json").removeprefix("```").removesuffix("```").strip()
-            data = json.loads(cleaned)
-            
-            save = bool(data.get("save", False))
-            mood = str(data.get("mood", "neutral")).lower()
-            mood_score = int(data.get("mood_score", MOOD_SCORE_MAP.get(mood, 5)))
-            mood_score = max(1, min(10, mood_score))
-            extracted_facts = list(data.get("extracted_facts", []))
-            
-            classification = {
-                "save": save,
-                "mood": mood,
-                "mood_score": mood_score,
-                "extracted_facts": extracted_facts
-            }
-        except Exception as e:
-            print(f"[BackgroundProfiler] Error with LLM profiler: {e}. Falling back to rule-based classifier.")
-            fb = mock_classify(user_message)
-            fb_mood = fb.get("mood", "neutral").lower()
-            classification = {
-                "save": fb.get("save", False),
-                "mood": fb_mood,
-                "mood_score": MOOD_SCORE_MAP.get(fb_mood, 5),
-                "extracted_facts": fb.get("extracted_facts", [])
-            }
-
-        print(f"[BackgroundProfiler] Extracted classification: {classification}")
-
-        # Async Persistence
-        if classification.get("save", False):
             try:
-                # 1. Save to Pinecone
-                print("[BackgroundProfiler] Writing turn to Pinecone...")
-                await self.vector_service.add_text(
-                    user_id=user_id,
-                    text=user_message,
-                    data_type="mood_checkin",
-                    source="typing",
-                    mood_label=classification["mood"],
-                    context_id=str(session_id)
-                )
-                await self.vector_service.add_text(
-                    user_id=user_id,
-                    text=assistant_response,
-                    data_type="text",
-                    source="assistant",
-                    context_id=str(session_id)
-                )
-                for fact in classification["extracted_facts"]:
+                llm_response = await self.profiler_llm.ainvoke([
+                    {"role": "system", "content": "You are a clinical data extraction sub-agent. Respond only in JSON."},
+                    {"role": "user", "content": profiler_prompt}
+                ])
+                content = llm_response.content if hasattr(llm_response, "content") else str(llm_response)
+                
+                # Clean possible markdown fence
+                cleaned = content.strip().removeprefix("```json").removeprefix("```").removesuffix("```").strip()
+                data = json.loads(cleaned)
+                
+                save = bool(data.get("save", False))
+                mood = str(data.get("mood", "neutral")).lower()
+                mood_score = int(data.get("mood_score", MOOD_SCORE_MAP.get(mood, 5)))
+                mood_score = max(1, min(10, mood_score))
+                extracted_facts = list(data.get("extracted_facts", []))
+                
+                classification = {
+                    "save": save,
+                    "mood": mood,
+                    "mood_score": mood_score,
+                    "extracted_facts": extracted_facts
+                }
+            except Exception as e:
+                print(f"[BackgroundProfiler] Error with LLM profiler: {e}. Falling back to rule-based classifier.")
+                fb = mock_classify(user_message)
+                fb_mood = fb.get("mood", "neutral").lower()
+                classification = {
+                    "save": fb.get("save", False),
+                    "mood": fb_mood,
+                    "mood_score": MOOD_SCORE_MAP.get(fb_mood, 5),
+                    "extracted_facts": fb.get("extracted_facts", [])
+                }
+
+            profiler_span.set_attribute("moodz.classified_mood", classification.get("mood", ""))
+            profiler_span.set_attribute("moodz.mood_score", classification.get("mood_score", 0))
+            profiler_span.set_attribute("moodz.facts_count", len(classification.get("extracted_facts", [])))
+            profiler_span.set_attribute("moodz.save_flag", classification.get("save", False))
+
+            print(f"[BackgroundProfiler] Extracted classification: {classification}")
+
+            # Async Persistence
+            if classification.get("save", False):
+                try:
+                    # 1. Save to Pinecone
+                    print("[BackgroundProfiler] Writing turn to Pinecone...")
                     await self.vector_service.add_text(
                         user_id=user_id,
-                        text=fact,
-                        data_type="user_fact",
-                        source="adk_profiler",
-                        context_id=str(session_id),
-                        additional_info={"category": "auto_extracted"}
+                        text=user_message,
+                        data_type="mood_checkin",
+                        source="typing",
+                        mood_label=classification["mood"],
+                        context_id=str(session_id)
                     )
-            except Exception as pe:
-                print(f"[BackgroundProfiler] Warning writing to Pinecone: {pe}")
-
-            # 2. Save to PostgreSQL
-            try:
-                print("[BackgroundProfiler] Writing UserFact & MoodHistory to PostgreSQL...")
-                async with AsyncSessionLocal() as db:
+                    await self.vector_service.add_text(
+                        user_id=user_id,
+                        text=assistant_response,
+                        data_type="text",
+                        source="assistant",
+                        context_id=str(session_id)
+                    )
                     for fact in classification["extracted_facts"]:
-                        db.add(UserFact(
+                        await self.vector_service.add_text(
                             user_id=user_id,
-                            fact_text=fact,
-                            category="auto_extracted",
-                            source="adk_profiler"
-                        ))
-                    if classification["mood"] != "neutral":
-                        db.add(MoodHistory(
-                            user_id=user_id,
-                            session_id=session_id,
-                            sentiment_label=classification["mood"],
-                            mood_score=classification["mood_score"],
-                            summary=user_message[:255]
-                        ))
-                    await db.commit()
-            except Exception as dbe:
-                print(f"[BackgroundProfiler] Error writing to PostgreSQL: {dbe}")
+                            text=fact,
+                            data_type="user_fact",
+                            source="adk_profiler",
+                            context_id=str(session_id),
+                            additional_info={"category": "auto_extracted"}
+                        )
+                except Exception as pe:
+                    print(f"[BackgroundProfiler] Warning writing to Pinecone: {pe}")
 
-        return classification
+                # 2. Save to PostgreSQL
+                try:
+                    print("[BackgroundProfiler] Writing UserFact & MoodHistory to PostgreSQL...")
+                    async with AsyncSessionLocal() as db:
+                        for fact in classification["extracted_facts"]:
+                            db.add(UserFact(
+                                user_id=user_id,
+                                fact_text=fact,
+                                category="auto_extracted",
+                                source="adk_profiler"
+                            ))
+                        if classification["mood"] != "neutral":
+                            db.add(MoodHistory(
+                                user_id=user_id,
+                                session_id=session_id,
+                                sentiment_label=classification["mood"],
+                                mood_score=classification["mood_score"],
+                                summary=user_message[:255]
+                            ))
+                        await db.commit()
+                except Exception as dbe:
+                    print(f"[BackgroundProfiler] Error writing to PostgreSQL: {dbe}")
+
+            return classification
 
     # ------------------------------------------
     # Public Unified Interfaces
@@ -502,19 +545,41 @@ Extract the following in strict JSON:
         
         # Step 3: Pure Markdown Streaming
         full_response = ""
-        try:
-            async for chunk in self.companion_llm.astream(messages):
-                token = chunk.content if hasattr(chunk, "content") else str(chunk)
-                full_response += token
-                yield token
-        except Exception as e:
-            print(f"[MoodGraph] Error streaming companion: {e}")
-            yield API_ERROR_WARNING
-            mock_text = generate_mock_wellness_response(user_message)
-            full_response = mock_text
-            for word in mock_text.split():
-                yield " " + word
-                await asyncio.sleep(0.04)
+        ttft_recorded = False
+        stream_start = time.perf_counter()
+        
+        with trace_span("langgraph.astream_companion", span_type="llm.stream", attributes={"user_id": str(user_id)}) as stream_span:
+            try:
+                async for chunk in self.companion_llm.astream(messages):
+                    if not ttft_recorded:
+                        ttft_ms = (time.perf_counter() - stream_start) * 1000
+                        stream_span.set_attribute("moodz.ttft_ms", ttft_ms)
+                        ttft_recorded = True
+                    token = chunk.content if hasattr(chunk, "content") else str(chunk)
+                    full_response += token
+                    yield token
+            except Exception as e:
+                print(f"[MoodGraph] Error streaming companion: {e}")
+                fallback_success = False
+                if self.fallback_companion_llm:
+                    try:
+                        print("[MoodGraph] Attempting fallback stream to Gemini companion...")
+                        async for chunk in self.fallback_companion_llm.astream(messages):
+                            token = chunk.content if hasattr(chunk, "content") else str(chunk)
+                            full_response += token
+                            yield token
+                        fallback_success = True
+                    except Exception as fb_err:
+                        print(f"[MoodGraph] Fallback stream also failed: {fb_err}")
+                if not fallback_success:
+                    yield API_ERROR_WARNING
+                    mock_text = generate_mock_wellness_response(user_message)
+                    full_response = mock_text
+                    for word in mock_text.split():
+                        yield " " + word
+                        await asyncio.sleep(0.04)
+            finally:
+                stream_span.set_attribute("moodz.response_len", len(full_response))
                 
         result_holder["response"] = full_response
         result_holder["user_id"] = user_id

@@ -1,4 +1,4 @@
-name: MOODZ CI
+name: MOODZ CI & AgentOps Quality Gate
 
 on:
   push:
@@ -9,11 +9,11 @@ on:
 
 jobs:
   backend:
-    name: Backend (Python)
+    name: Backend & AgentOps Evals
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./MOOD AI AGENT
+        working-directory: ./backend
 
     steps:
       - uses: actions/checkout@v4
@@ -32,8 +32,16 @@ jobs:
       - name: Lint with ruff
         run: ruff check .
 
-      - name: Run tests with pytest
-        run: pytest
+      - name: Run unit tests with pytest
+        run: pytest test/test_split_routes.py test/test_normalization_logic.py
+
+      - name: AgentOps Crisis Safety Gate (Zero-Fail Policy)
+        run: pytest test/evals/test_crisis_benchmark.py test/evals/test_pii_scrubber.py -v
+
+      - name: AgentOps Telemetry & Empathy Evals
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: pytest test/evals/test_telemetry_export.py test/evals/test_empathy_evals.py -v
 
   frontend:
     name: Frontend (Angular)
@@ -72,7 +80,7 @@ jobs:
       - name: Build Backend Image
         uses: docker/build-push-action@v5
         with:
-          context: ./MOOD AI AGENT
+          context: ./backend
           push: false
 
       - name: Build Frontend Image

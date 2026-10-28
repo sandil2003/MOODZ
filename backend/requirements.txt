@@ -54,3 +54,10 @@ Celery
 pytest
 pytest-asyncio
 ruff
+
+# AgentOps & Observability
+arize-phoenix>=4.0.0
+openinference-instrumentation-langchain>=0.1.20
+openinference-instrumentation-fastapi>=0.1.10
+opentelemetry-sdk>=1.25.0
+opentelemetry-exporter-otlp>=1.25.0

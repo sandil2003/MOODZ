@@ -1,4 +1,4 @@
-"""Google ADK agent definition and tools for the Mood Agent."""
+"""Google ADK agent definition and tools for the Mood Agent with AgentOps tracing."""
 
 from typing import Dict, Any, List, Optional
 from google.adk.agents import Agent
@@ -8,13 +8,15 @@ from app.services.session_manager import get_session_manager
 from app.services.vector_service import get_vector_service_gemini
 from app.database import AsyncSessionLocal
 from app.models import UserFact, MoodHistory
+from app.core.telemetry import trace_tool
 from uuid import UUID
 
 
 # ==========================================
-# Google ADK Tool Definitions
+# Google ADK Tool Definitions (with AgentOps Tracing)
 # ==========================================
 
+@trace_tool("check_crisis_tool")
 async def check_crisis_tool(message: str) -> Dict[str, Any]:
     """Check user message for immediate self-harm, suicidal ideation, or mental health emergency.
     
@@ -28,6 +30,7 @@ async def check_crisis_tool(message: str) -> Dict[str, Any]:
     return await detector.check_crisis(message)
 
 
+@trace_tool("retrieve_user_context_tool")
 async def retrieve_user_context_tool(user_id: str, session_id: str, query: str) -> Dict[str, Any]:
     """Retrieve multi-tier context for the user: short-term chat, semantic memory, and facts.
     
@@ -54,6 +57,7 @@ async def retrieve_user_context_tool(user_id: str, session_id: str, query: str) 
     }
 
 
+@trace_tool("persist_user_facts_tool")
 async def persist_user_facts_tool(user_id: str, facts: List[str]) -> bool:
     """Persist newly extracted personal facts about the user into PostgreSQL and Pinecone.
     
@@ -95,6 +99,7 @@ async def persist_user_facts_tool(user_id: str, facts: List[str]) -> bool:
         return False
 
 
+@trace_tool("persist_mood_entry_tool")
 async def persist_mood_entry_tool(
     user_id: str,
     session_id: str,

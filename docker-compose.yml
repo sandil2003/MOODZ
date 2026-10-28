@@ -44,6 +44,7 @@ services:
     environment:
       - POSTGRES_HOST=postgres
       - REDIS_HOST=redis
+      - PHOENIX_COLLECTOR_ENDPOINT=http://phoenix:4317
     env_file:
       - "./backend/.env"
     depends_on:
@@ -56,6 +57,17 @@ services:
     networks:
       - moodz_network
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  phoenix:
+    image: arizephoenix/phoenix:latest
+    container_name: moodz_phoenix
+    ports:
+      - "6006:6006"   # Arize Phoenix UI
+      - "4317:4317"   # OTLP gRPC collector
+    volumes:
+      - phoenix_data:/data
+    networks:
+      - moodz_network
 
   frontend:
     build:
@@ -73,6 +85,8 @@ volumes:
   postgres_data:
     driver: local
   redis_data:
+    driver: local
+  phoenix_data:
     driver: local
 
 networks:

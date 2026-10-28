@@ -10,8 +10,14 @@ from uuid import UUID
 
 from app.database import AsyncSessionLocal
 from app.models import ChatHistory, MoodHistory, UserFact
-from app.schemas import ChatRequest, ChatResponse
-from app.services import get_mood_agent, get_session_manager, get_vector_service_gemini, API_ERROR_WARNING
+from app.schemas import ChatRequest, ChatResponse, ChatFeedbackRequest, ChatFeedbackResponse
+from app.services import (
+    get_mood_agent,
+    get_session_manager,
+    get_vector_service_gemini,
+    API_ERROR_WARNING,
+    mock_classify
+)
 from app.utils import get_chat_logger
 
 
@@ -376,6 +382,28 @@ async def chat(
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/feedback", response_model=ChatFeedbackResponse)
+async def submit_chat_feedback(feedback: ChatFeedbackRequest):
+    """
+    AgentOps endpoint to record user feedback (thumbs up/down, mood correction)
+    and tag traces in Phoenix / Prometheus.
+    """
+    from app.core.telemetry import trace_span
+    with trace_span(
+        "agentops.user_feedback",
+        span_type="feedback.user",
+        attributes={
+            "session_id": str(feedback.session_id),
+            "rating": feedback.rating,
+            "comment": feedback.comment or "",
+            "corrected_mood": feedback.corrected_mood or ""
+        }
+    ) as span:
+        span.set_attribute("feedback.rating", feedback.rating)
+        print(f"[AgentOps] Recorded user feedback for session {feedback.session_id}: rating={feedback.rating}")
+        return ChatFeedbackResponse(status="recorded", message="Feedback logged successfully")
 
 
 @router.websocket("/ws/status/{session_id}")

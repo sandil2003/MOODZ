@@ -45,7 +45,7 @@ async def run_tests():
         assert res["type"] == "none"
         assert res["score"] == 0.0
 
-    print("\n✅ All CrisisDetector tests passed successfully!")
+    print("\n[SUCCESS] All CrisisDetector tests passed successfully!")
 
 
 if __name__ == "__main__":

@@ -5,6 +5,8 @@ from config import settings
 from app.database import init_db, close_db
 from app.redis_client import close_redis
 from app.routes import health, chat, history, mood, auth
+from app.core.telemetry import setup_telemetry
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -18,6 +20,13 @@ async def lifespan(app: FastAPI):
     print("✅ Database initialized")
     print("✅ Redis client ready")
     
+    # Initialize AgentOps Telemetry
+    try:
+        setup_telemetry()
+        print("✅ AgentOps Telemetry initialized")
+    except Exception as e:
+        print(f"⚠️ [AgentOps] Telemetry init warning: {e}")
+        
     yield
     
     # Shutdown
@@ -95,16 +104,23 @@ async def api_info():
         },
         "integrations": {
             "openai": "configured" if settings.openai_api_key else "not configured",
-            "pinecone": "configured" if settings.pinecone_api_key else "not configured"
+            "pinecone": "configured" if settings.pinecone_api_key else "not configured",
+            "agentops": "enabled"
         }
     }
 
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(
-        "main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=settings.debug
-    )
+@app.get("/v1/models")
+async def list_v1_models():
+    """Compatibility endpoint for external OpenAI-compatible clients and dev tools."""
+    return {
+        "object": "list",
+        "data": [
+            {
+                "id": "moodz-ai-agent",
+                "object": "model",
+                "created": 1700000000,
+                "owned_by": "moodz"
+            }
+        ]
+    }
