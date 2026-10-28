@@ -30,6 +30,82 @@ async def check_crisis_tool(message: str) -> Dict[str, Any]:
     return await detector.check_crisis(message)
 
 
+@trace_tool("get_user_profile_tool")
+async def get_user_profile_tool(user_id: str) -> Dict[str, Any]:
+    """Retrieve known personal facts and past mood trends about the user from the database.
+    
+    Args:
+        user_id: The UUID string of the user.
+        
+    Returns:
+        dict: User facts and recent mood history.
+    """
+    from sqlalchemy import select, desc
+    uid = UUID(user_id) if isinstance(user_id, str) else user_id
+    facts_list = []
+    moods_list = []
+    try:
+        async with AsyncSessionLocal() as db:
+            fact_res = await db.execute(
+                select(UserFact).where(UserFact.user_id == uid).order_by(desc(UserFact.created_at)).limit(10)
+            )
+            facts = fact_res.scalars().all()
+            facts_list = [f"[{f.category}] {f.fact_text}" for f in facts]
+            
+            mood_res = await db.execute(
+                select(MoodHistory).where(MoodHistory.user_id == uid).order_by(desc(MoodHistory.created_at)).limit(5)
+            )
+            moods = mood_res.scalars().all()
+            moods_list = [f"{m.sentiment_label} (score: {m.mood_score}/10): {m.summary[:80]}" for m in moods]
+    except Exception as e:
+        print(f"Error in get_user_profile_tool: {e}")
+        
+    return {
+        "facts": facts_list,
+        "recent_moods": moods_list
+    }
+
+
+@trace_tool("search_past_memories_tool")
+async def search_past_memories_tool(user_id: str, query: str) -> List[Dict[str, Any]]:
+    """Search the user's past experiences, past conversations, and episodic memories using semantic search.
+    
+    Args:
+        user_id: The UUID string of the user.
+        query: Search query describing past topic, event, or emotion.
+        
+    Returns:
+        list: Relevant past memory snippets with metadata.
+    """
+    vs = get_vector_service_gemini()
+    uid = UUID(user_id) if isinstance(user_id, str) else user_id
+    try:
+        return await vs.similarity_search(query=query, user_id=uid, k=3)
+    except Exception as e:
+        print(f"Error in search_past_memories_tool: {e}")
+        return []
+
+
+@trace_tool("get_recent_history_tool")
+async def get_recent_history_tool(session_id: str, limit: int = 5) -> List[Dict[str, Any]]:
+    """Retrieve recent back-and-forth messages from the current conversation session.
+    
+    Args:
+        session_id: The UUID string of the active chat session.
+        limit: Number of recent messages to fetch (default: 5).
+        
+    Returns:
+        list: Recent chat messages.
+    """
+    sm = await get_session_manager()
+    sid = UUID(session_id) if isinstance(session_id, str) else session_id
+    try:
+        return await sm.get_recent_history(sid, limit=limit)
+    except Exception as e:
+        print(f"Error in get_recent_history_tool: {e}")
+        return []
+
+
 @trace_tool("retrieve_user_context_tool")
 async def retrieve_user_context_tool(user_id: str, session_id: str, query: str) -> Dict[str, Any]:
     """Retrieve multi-tier context for the user: short-term chat, semantic memory, and facts.
@@ -161,9 +237,12 @@ mood_adk_agent = Agent(
     instruction=MOOD_AGENT_INSTRUCTION,
     tools=[
         check_crisis_tool,
-        retrieve_user_context_tool,
+        get_user_profile_tool,
+        search_past_memories_tool,
+        get_recent_history_tool,
         persist_user_facts_tool,
-        persist_mood_entry_tool
+        persist_mood_entry_tool,
+        retrieve_user_context_tool
     ]
 )
 

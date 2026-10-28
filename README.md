@@ -394,18 +394,19 @@ MOODZ/
 The Mood Agent acts as an empathetic emotional companion. Rather than relying on a monolithic prompt, it operates as a multi-step hybrid graph:
 
 1. **Google ADK Agent Definition**:
-   Declarative agent declaration in `backend/app/agents/mood_agent/agent.py` exposing four core tools:
-   - `check_crisis_tool`: Fast safety classifier.
-   - `retrieve_user_context_tool`: Multi-tier context aggregator (Redis + Pinecone + PostgreSQL).
-   - `save_mood_entry_tool`: Persists detected mood score and sentiment.
-   - `search_wellness_tips_tool`: DuckDuckGo free search for non-clinical wellness tips.
+   Declarative agent declaration in `backend/app/agents/mood_adk.py` exposing on-demand context tools and safety checks:
+   - `check_crisis_tool`: Fast deterministic safety classifier.
+   - `get_user_profile_tool`: Fetches user background facts and historical mood trends on demand.
+   - `search_past_memories_tool`: Performs semantic similarity search over past episodic memories in Pinecone.
+   - `get_recent_history_tool`: Retrieves recent back-and-forth turns from Redis cache.
+   - `persist_user_facts_tool` & `persist_mood_entry_tool`: Asynchronously stores newly extracted facts and mood entries.
 
 2. **LangGraph StateGraph Engine**:
    Implemented in `backend/app/services/mood_graph.py`, managing the state transition pipeline:
-   - **Deterministic Crisis Node**: Evaluates input before invoking external LLMs. If self-harm or severe distress is detected, execution short-circuits with verified crisis helpline info.
-   - **Context Retrieval Node**: Concurrent querying of active session messages from Redis, semantic embeddings from Pinecone, and user facts from PostgreSQL.
-   - **Empathetic Generation Node**: Streams tokens via OpenAI, Gemini, or custom LLM with fallback capabilities.
-   - **Post-Processing & Logging Node**: Asynchronously extracts user facts, computes mood sentiment (1-10 scale), and updates databases.
+   - **Deterministic Safety Gate Node (0ms, 0 tokens)**: Evaluates input before invoking external LLMs. If self-harm or crisis is detected, execution short-circuits immediately with verified 988 crisis helpline info.
+   - **Context Ingestion Node (Token-Efficient & Lean)**: Replaces bulky upfront context string dumps (`{profile_str}`, `{semantic_str}`, `{history_str}`) with a lean empathetic system prompt and dynamically bound on-demand tools (`get_user_profile`, `search_past_memories`, `get_recent_conversation_history`).
+   - **Empathetic Generation Node**: Streams pure Markdown tokens directly. If the model determines it needs user facts or past memory to answer, it invokes the specific tool on demand; otherwise, it answers directly with minimal token overhead and fast TTFT.
+   - **Asynchronous Background Profiler**: Non-blocking sub-agent extracting facts and mood scores after generation completes.
 
 3. **Fine-Tuned & Local Model Support**:
    - Supports self-hosted open-source models (e.g., Qwen-2.5, Llama-3) via LM Studio or Google Colab endpoints.
