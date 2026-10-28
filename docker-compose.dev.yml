@@ -5,7 +5,7 @@ services:
     image: postgres:15-alpine
     container_name: moodz_postgres_dev
     env_file:
-      - "./MOOD AI AGENT/.env"
+      - "./backend/.env"
     ports:
       - "5432:5432"
     volumes:
@@ -36,7 +36,7 @@ services:
 
   backend:
     build:
-      context: "./MOOD AI AGENT"
+      context: "./backend"
       dockerfile: Dockerfile.dev
     container_name: moodz_backend_dev
     ports:
@@ -45,7 +45,7 @@ services:
       - POSTGRES_HOST=postgres
       - REDIS_HOST=redis
     env_file:
-      - "./MOOD AI AGENT/.env"
+      - "./backend/.env"
     dns:
       - 8.8.8.8
       - 8.8.4.4
@@ -55,7 +55,7 @@ services:
       redis:
         condition: service_healthy
     volumes:
-      - "./MOOD AI AGENT:/app"
+      - "./backend:/app"
       # Prevent the container's node_modules or venv from being overwritten by host
     networks:
       - moodz_dev_network

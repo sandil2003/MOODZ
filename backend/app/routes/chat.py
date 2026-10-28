@@ -219,8 +219,12 @@ async def stream_chat_response(
         result_holder = {}
         async for chunk in chain.astream(user_id, session_id, message, result_holder):
             if chunk == "CRISIS":
-                print("Crisis detected")
-                crisis_message = "I'm really concerned about what you're sharing. Please reach out to a mental health professional or crisis helpline immediately. You can visit your local emergency services."
+                print("[ChatRoute] Crisis detected by safety gate")
+                crisis_message = (
+                    "I'm really concerned about what you're sharing. Please reach out to a mental health "
+                    "professional or crisis helpline immediately. You can reach the 988 Suicide & Crisis Lifeline "
+                    "(call or text 988), text HOME to 741741, or contact your local emergency services."
+                )
                 await session_manager.add_assistant_message(session_id, crisis_message)
                 await save_chat_message_to_db(user_id, session_id, "assistant", crisis_message)
                 yield f"data: {json.dumps({'chunk': crisis_message})}\n\n"
@@ -240,25 +244,9 @@ async def stream_chat_response(
         await session_manager.add_assistant_message(session_id, clean_response)
         await save_chat_message_to_db(user_id, session_id, "assistant", clean_response)
         
-        classification = None
-        if "classification" in result_holder:
-            classification = result_holder["classification"]
-        elif "raw_json" in result_holder:
-            try:
-                data = json.loads(result_holder["raw_json"])
-                classification = {
-                    "save": data.get("save", False),
-                    "extracted_facts": data.get("extracted_facts", []),
-                    "mood": data.get("mood", "neutral")
-                }
-            except Exception as parse_err:
-                print(f"Error parsing raw JSON in route: {parse_err}")
-                from app.services import mock_classify
-                classification = mock_classify(message)
-                
-        if not classification:
-            classification = {"save": False, "extracted_facts": [], "mood": "neutral"}
-            
+        # Immediate classification summary for SSE done event
+        classification = mock_classify(message)
+        
         logger = get_chat_logger()
         await logger.log_chat(
             user_id=user_id,
@@ -268,9 +256,9 @@ async def stream_chat_response(
             latency=latency,
             metadata={
                 "streaming": True,
-                "save_to_db": classification["save"],
-                "mood": classification["mood"],
-                "extracted_facts": classification["extracted_facts"]
+                "save_to_db": classification.get("save", False),
+                "mood": classification.get("mood", "neutral"),
+                "extracted_facts": classification.get("extracted_facts", [])
             }
         )
         
@@ -292,10 +280,7 @@ async def chat_stream(
     request: ChatRequest,
     background_tasks: BackgroundTasks
 ):
-    classification_result = {}
-    
     async def generate():
-        nonlocal classification_result
         full_response = ""
         
         async for event in stream_chat_response(
@@ -311,23 +296,18 @@ async def chat_stream(
                             full_response += data["chunk"]
                 except:
                     pass
-            if '"classification"' in event:
-                try:
-                    data = json.loads(event.replace("data: ", "").strip())
-                    if "classification" in data:
-                        classification_result = data["classification"]
-                except:
-                    pass
             yield event
             
-        if full_response and classification_result:
+        # Trigger Asynchronous Background Profiler Sub-Agent
+        if full_response:
+            from app.services.mood_graph import get_mood_graph
+            graph = await get_mood_graph()
             background_tasks.add_task(
-                save_conversation_intelligently,
+                graph.profile_conversation_async,
                 request.user_id,
                 request.session_id,
                 request.message,
-                full_response,
-                classification_result
+                full_response
             )
             
     return StreamingResponse(
@@ -366,32 +346,15 @@ async def chat(
             
         await save_chat_message_to_db(request.user_id, request.session_id, "assistant", clean_response)
         
-        classification = None
-        if "classification" in result_holder:
-            classification = result_holder["classification"]
-        elif "raw_json" in result_holder:
-            try:
-                data = json.loads(result_holder["raw_json"])
-                classification = {
-                    "save": data.get("save", False),
-                    "extracted_facts": data.get("extracted_facts", []),
-                    "mood": data.get("mood", "neutral")
-                }
-            except Exception as parse_err:
-                print(f"Error parsing raw JSON in route: {parse_err}")
-                from app.services import mock_classify
-                classification = mock_classify(request.message)
-                
-        if not classification:
-            classification = {"save": False, "extracted_facts": [], "mood": "neutral"}
-            
+        # Schedule Asynchronous Background Profiler Sub-Agent
+        from app.services.mood_graph import get_mood_graph
+        graph = await get_mood_graph()
         background_tasks.add_task(
-            save_conversation_intelligently,
+            graph.profile_conversation_async,
             request.user_id,
             request.session_id,
             request.message,
-            clean_response,
-            classification
+            clean_response
         )
         
         logger = get_chat_logger()
@@ -404,9 +367,7 @@ async def chat(
             latency,
             {
                 "streaming": False,
-                "save_to_db": classification["save"],
-                "mood": classification["mood"],
-                "extracted_facts": classification["extracted_facts"]
+                "save_to_db": True
             }
         )
         return ChatResponse(

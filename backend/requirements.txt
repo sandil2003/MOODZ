@@ -39,6 +39,11 @@ langchain-openai
 # Async file operations
 aiofiles
 
+# Multi-Agent and Orchestration
+google-adk>=2.13.0
+langgraph>=0.2.0
+langgraph-checkpoint>=2.0.0
+
 # Search (free, no API key required)
 duckduckgo-search
 langchain-google-genai

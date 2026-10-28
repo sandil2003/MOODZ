@@ -48,7 +48,7 @@ class Settings(BaseSettings):
     
     # Gemini Configuration
     gemini_api_key: Optional[str] = None
-    gemini_model: str = "gemini-2.5-flash-lite"
+    gemini_model: str = "gemini-2.5-flash"
     
     # Custom Model Configuration
     use_custom_model: bool = False  # Set to True to use custom model instead of OpenAI
