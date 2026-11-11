@@ -2,8 +2,11 @@
 Quick test script to verify SerpAPI is working correctly
 """
 import os
+import pytest
 from dotenv import load_dotenv
 from langchain_community.utilities import SerpAPIWrapper
+
+pytestmark = pytest.mark.skip(reason="Manual ad-hoc script for testing live SerpAPI connection")
 
 load_dotenv()
 

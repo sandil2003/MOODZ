@@ -27,7 +27,8 @@ from sqlalchemy import select, desc
 from app.database import AsyncSessionLocal
 from app.models import MoodHistory, UserFact
 from config import settings
-from app.core.telemetry import trace_span
+from app.core.telemetry import trace_span, record_llm_metrics
+from app.core.pii_scrubber import PIIScrubber
 
 from app.services.fallback_mocks import API_ERROR_WARNING, generate_mock_wellness_response, mock_classify
 from app.services.custom_model import get_custom_model
@@ -157,7 +158,8 @@ class MoodHybridGraph:
             self.companion_llm = ChatGoogleGenerativeAI(
                 model=settings.gemini_model,
                 temperature=0.7,
-                google_api_key=settings.gemini_api_key
+                google_api_key=settings.gemini_api_key,
+                max_retries=1
             )
             
         # Fallback companion LLM (used if custom local model is unreachable)
@@ -165,7 +167,8 @@ class MoodHybridGraph:
             self.fallback_companion_llm = ChatGoogleGenerativeAI(
                 model=settings.gemini_model,
                 temperature=0.7,
-                google_api_key=settings.gemini_api_key
+                google_api_key=settings.gemini_api_key,
+                max_retries=1
             )
         else:
             self.fallback_companion_llm = None
@@ -175,7 +178,8 @@ class MoodHybridGraph:
             model=settings.gemini_model,
             temperature=0.2,  # Low temperature for analytical extraction
             google_api_key=settings.gemini_api_key,
-            response_mime_type="application/json"
+            response_mime_type="application/json",
+            max_retries=1
         )
         
         # Build LangGraph StateGraph
@@ -538,7 +542,7 @@ Extract the following in strict JSON:
                         for fact in classification["extracted_facts"]:
                             db.add(UserFact(
                                 user_id=user_id,
-                                fact_text=fact,
+                                fact_text=PIIScrubber.scrub_text(fact),
                                 category="auto_extracted",
                                 source="adk_profiler"
                             ))
@@ -548,7 +552,7 @@ Extract the following in strict JSON:
                                 session_id=session_id,
                                 sentiment_label=classification["mood"],
                                 mood_score=classification["mood_score"],
-                                summary=user_message[:255]
+                                summary=PIIScrubber.scrub_text(user_message[:255])
                             ))
                         await db.commit()
                 except Exception as dbe:
@@ -608,33 +612,34 @@ Extract the following in strict JSON:
                     print(f"[MoodGraph] Tools binding not supported: {bind_err}")
                     llm_with_tools = None
                     
-                has_tool_calls = False
-                if llm_with_tools:
-                    # Probe if the LLM requests an on-demand tool call or answers directly
-                    first_resp = await llm_with_tools.ainvoke(messages)
-                    if hasattr(first_resp, "tool_calls") and first_resp.tool_calls:
-                        has_tool_calls = True
-                        messages.append(first_resp)
-                        for tc in first_resp.tool_calls:
-                            tool_result = await self._execute_tool_call(tc, tools_map)
-                            messages.append(ToolMessage(content=tool_result, tool_call_id=tc.get("id", "")))
-                    else:
-                        # Direct response without tool call - stream smoothly
-                        content = normalize_text(first_resp.content if hasattr(first_resp, "content") else str(first_resp))
-                        full_response = content
+                # Native true streaming with on-demand tool support
+                target_streamer = llm_with_tools or llm_to_use
+                detected_tool_calls = []
+
+                async for chunk in target_streamer.astream(messages):
+                    if getattr(chunk, "tool_calls", None):
+                        detected_tool_calls.extend(chunk.tool_calls)
+                    elif getattr(chunk, "tool_call_chunks", None) and any(tc.get("name") for tc in chunk.tool_call_chunks):
+                        for tc in chunk.tool_call_chunks:
+                            if tc.get("name"):
+                                detected_tool_calls.append(tc)
+
+                    token = normalize_text(chunk.content if hasattr(chunk, "content") else str(chunk))
+                    if token and not detected_tool_calls:
                         if not ttft_recorded:
                             stream_span.set_attribute("moodz.ttft_ms", (time.perf_counter() - stream_start) * 1000)
                             ttft_recorded = True
-                        words = content.split(" ")
-                        for i, w in enumerate(words):
-                            token = w + (" " if i < len(words) - 1 else "")
-                            yield token
-                            await asyncio.sleep(0.01)
+                        full_response += token
+                        yield token
 
-                if has_tool_calls or not llm_with_tools:
-                    # Stream tokens for final generation
-                    target_llm = llm_to_use
-                    async for chunk in target_llm.astream(messages):
+                # If the agent decided to invoke on-demand context tools
+                if detected_tool_calls:
+                    for tc in detected_tool_calls:
+                        tool_result = await self._execute_tool_call(tc, tools_map)
+                        messages.append(ToolMessage(content=tool_result, tool_call_id=tc.get("id", "")))
+
+                    # Stream the final response using the newly retrieved context
+                    async for chunk in llm_to_use.astream(messages):
                         if not ttft_recorded:
                             stream_span.set_attribute("moodz.ttft_ms", (time.perf_counter() - stream_start) * 1000)
                             ttft_recorded = True
@@ -665,6 +670,12 @@ Extract the following in strict JSON:
                         await asyncio.sleep(0.04)
             finally:
                 stream_span.set_attribute("moodz.response_len", len(full_response))
+                # AgentOps Token Accounting & Financial Cost Tracking
+                input_chars = sum(len(m.get("content", "")) for m in messages if isinstance(m, dict))
+                est_in = max(1, input_chars // 4)
+                est_out = max(1, len(full_response) // 4)
+                model_name = getattr(self.companion_llm, "model_name", None) or getattr(self.companion_llm, "model", "gemini-2.5-flash")
+                record_llm_metrics(stream_span, model=model_name, input_tokens=est_in, output_tokens=est_out)
                 
         result_holder["response"] = full_response
         result_holder["user_id"] = user_id

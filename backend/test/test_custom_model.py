@@ -6,8 +6,11 @@ and verifies that it can generate responses.
 """
 
 import asyncio
+import pytest
 from app.services import get_custom_model
 from config import settings
+
+pytestmark = pytest.mark.skip(reason="Manual integration test requiring external ngrok custom model endpoint")
 
 
 async def test_custom_model():

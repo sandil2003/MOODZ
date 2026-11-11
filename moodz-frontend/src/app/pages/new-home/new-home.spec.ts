@@ -1,20 +1,26 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 
-import { NewHome } from './new-home';
+import { NewHomeComponent } from './new-home';
 
-describe('NewHome', () => {
-  let component: NewHome;
-  let fixture: ComponentFixture<NewHome>;
+describe('NewHomeComponent', () => {
+  let component: NewHomeComponent;
+  let fixture: ComponentFixture<NewHomeComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [NewHome]
+      imports: [NewHomeComponent],
+      providers: [provideRouter([])]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(NewHome);
+    fixture = TestBed.createComponent(NewHomeComponent);
     component = fixture.componentInstance;
     await fixture.whenStable();
+  });
+
+  afterEach(() => {
+    fixture?.destroy();
   });
 
   it('should create', () => {

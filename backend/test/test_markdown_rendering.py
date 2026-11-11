@@ -5,6 +5,9 @@ This creates a mock deep search response with rich markdown formatting.
 
 import asyncio
 import json
+import pytest
+
+pytestmark = pytest.mark.skip(reason="Manual test script for generating sample markdown artifacts")
 
 # Sample markdown-rich response for testing
 TEST_MARKDOWN_RESPONSE = """# Latest AI Developments in 2024

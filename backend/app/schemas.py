@@ -68,6 +68,12 @@ class ChatSessionSummary(BaseModel):
     """Schema for chat session summary (for listing sessions)."""
     session_id: UUID
     title: str = Field(..., description="Generated title from first user message")
+    last_message_time: Optional[datetime] = Field(None, description="Timestamp of the latest message")
+    message_count: int = Field(0, description="Total messages in the session")
+    first_message: Optional[str] = Field(None, description="Preview of first message")
+
+    class Config:
+        from_attributes = True
 
 
 class ChatFeedbackRequest(BaseModel):
@@ -83,9 +89,7 @@ class ChatFeedbackResponse(BaseModel):
     """Response schema for feedback submission."""
     status: str = "recorded"
     message: str = "Feedback logged successfully"
-    last_message_time: datetime
-    message_count: int
-    first_message: Optional[str] = Field(None, description="Preview of first message")
+    feedback_id: Optional[UUID] = Field(default=None, description="UUID of persisted feedback record")
 
     class Config:
         from_attributes = True

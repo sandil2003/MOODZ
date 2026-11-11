@@ -8,6 +8,7 @@ export interface ChatMessage {
     timestamp: Date;
     isStreaming?: boolean;
     isCrisis?: boolean;
+    feedback?: number;
 }
 
 export interface ChatRequest {
@@ -404,5 +405,37 @@ export class ChatService {
         this.error.set(null);
         this.currentStreamingMessage.set('');
         console.log('✨ Started new chat session:', this.sessionId);
+    }
+
+    /**
+     * Submit user feedback (1 for thumbs up, -1 for thumbs down) for AgentOps
+     */
+    async submitFeedback(messageId: string, rating: number, comment?: string): Promise<boolean> {
+        try {
+            const response = await fetch(`${this.API_BASE_URL}/api/moods/chat/feedback`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    session_id: this.sessionId,
+                    message_id: messageId.includes('-') && messageId.length === 36 ? messageId : null,
+                    rating,
+                    comment: comment || null
+                })
+            });
+
+            if (!response.ok) {
+                console.warn('Feedback API response not OK:', response.status);
+                return false;
+            }
+
+            // Update local feedback flag for this message
+            this.messages.update(msgs =>
+                msgs.map(m => m.id === messageId ? { ...m, feedback: rating } : m)
+            );
+            return true;
+        } catch (error) {
+            console.error('Error submitting feedback:', error);
+            return false;
+        }
     }
 }

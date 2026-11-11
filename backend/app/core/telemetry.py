@@ -10,10 +10,64 @@ Provides:
 
 import os
 import time
+import socket
 from typing import Optional, Dict, Any, Callable
+from urllib.parse import urlparse
 from functools import wraps
 from contextlib import contextmanager
 from app.core.pii_scrubber import PIIScrubber
+
+# Standard pricing benchmarks ($ per 1 Million Tokens)
+MODEL_PRICING: Dict[str, tuple[float, float]] = {
+    "gemini-2.5-flash": (0.075, 0.30),
+    "gemini-1.5-flash": (0.075, 0.30),
+    "gemini-2.0-flash": (0.10, 0.40),
+    "gemini-1.5-pro": (1.25, 5.00),
+    "gpt-4o-mini": (0.15, 0.60),
+    "gpt-4o": (2.50, 10.00),
+}
+
+
+def record_llm_metrics(
+    span: Any,
+    model: str,
+    input_tokens: int = 0,
+    output_tokens: int = 0
+) -> Dict[str, Any]:
+    """Calculate and record token consumption and estimated dollar costs on a trace span."""
+    in_rate, out_rate = MODEL_PRICING.get(model, (0.10, 0.40))
+    cost_usd = ((input_tokens / 1_000_000.0) * in_rate) + ((output_tokens / 1_000_000.0) * out_rate)
+
+    metrics = {
+        "llm.model": model,
+        "llm.input_tokens": input_tokens,
+        "llm.output_tokens": output_tokens,
+        "llm.total_tokens": input_tokens + output_tokens,
+        "llm.estimated_cost_usd": round(cost_usd, 7)
+    }
+
+    if span is not None and hasattr(span, "set_attribute"):
+        for k, v in metrics.items():
+            span.set_attribute(k, v)
+
+    return metrics
+
+
+def _is_collector_reachable(endpoint: str) -> bool:
+    """Check if the OTLP collector gRPC port is reachable before registering BatchSpanProcessor."""
+    try:
+        if "://" in endpoint:
+            parsed = urlparse(endpoint)
+            host = parsed.hostname or "localhost"
+            port = parsed.port or 4317
+        else:
+            parts = endpoint.split(":")
+            host = parts[0]
+            port = int(parts[1]) if len(parts) > 1 else 4317
+        with socket.create_connection((host, port), timeout=0.25):
+            return True
+    except Exception:
+        return False
 
 # Attempt to import OpenTelemetry components safely
 _HAS_OTEL = False
@@ -63,12 +117,20 @@ _TRACER: Any = None
 
 def setup_telemetry(
     service_name: str = "moodz-ai-agent",
-    endpoint: Optional[str] = None
+    endpoint: Optional[str] = None,
+    app: Optional[Any] = None
 ) -> None:
     """Initialize OpenTelemetry tracer provider with OTLP exporter and auto-instrumentations."""
     global _IS_INITIALIZED, _TRACER
 
     if _IS_INITIALIZED:
+        if app is not None:
+            try:
+                from openinference.instrumentation.fastapi import FastAPIInstrumentor
+                FastAPIInstrumentor().instrument_app(app)
+                print("[AgentOps] OpenInference FastAPI instrumentor registered on app")
+            except Exception as e:
+                pass
         return
 
     collector_endpoint = endpoint or os.getenv("PHOENIX_COLLECTOR_ENDPOINT", "http://localhost:4317")
@@ -83,14 +145,17 @@ def setup_telemetry(
 
             provider = TracerProvider(resource=resource)
 
-            try:
-                from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
-                exporter = OTLPSpanExporter(endpoint=collector_endpoint, insecure=True)
-                processor = BatchSpanProcessor(exporter)
-                provider.add_span_processor(processor)
-                print(f"[AgentOps] OTLP exporter configured for endpoint: {collector_endpoint}")
-            except Exception as e:
-                print(f"[AgentOps] Info: OTLP exporter unavailable ({e}). Using local tracer.")
+            if _is_collector_reachable(collector_endpoint):
+                try:
+                    from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+                    exporter = OTLPSpanExporter(endpoint=collector_endpoint, insecure=True)
+                    processor = BatchSpanProcessor(exporter)
+                    provider.add_span_processor(processor)
+                    print(f"[AgentOps] OTLP exporter configured for endpoint: {collector_endpoint}")
+                except Exception as e:
+                    print(f"[AgentOps] Info: OTLP exporter setup note ({e}). Using local tracer.")
+            else:
+                print(f"[AgentOps] Info: OTLP collector not active at {collector_endpoint}. Operating with local in-memory tracer.")
 
             trace.set_tracer_provider(provider)
             _TRACER = trace.get_tracer(service_name)
@@ -101,6 +166,14 @@ def setup_telemetry(
                 print("[AgentOps] OpenInference LangChain instrumentor initialized successfully")
             except Exception as e:
                 print(f"[AgentOps] OpenInference LangChain instrumentor note: {e}")
+
+            if app is not None:
+                try:
+                    from openinference.instrumentation.fastapi import FastAPIInstrumentor
+                    FastAPIInstrumentor().instrument_app(app)
+                    print("[AgentOps] OpenInference FastAPI instrumentor registered on app")
+                except Exception as e:
+                    print(f"[AgentOps] OpenInference FastAPI instrumentor note: {e}")
 
             _IS_INITIALIZED = True
             print(f"[AgentOps] Telemetry active for service '{service_name}'")

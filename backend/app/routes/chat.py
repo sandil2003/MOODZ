@@ -9,7 +9,8 @@ import asyncio
 from uuid import UUID
 
 from app.database import AsyncSessionLocal
-from app.models import ChatHistory, MoodHistory, UserFact
+from app.models import ChatHistory, MoodHistory, UserFact, ChatFeedback
+from app.core.pii_scrubber import PIIScrubber
 from app.schemas import ChatRequest, ChatResponse, ChatFeedbackRequest, ChatFeedbackResponse
 from app.services import (
     get_mood_agent,
@@ -87,7 +88,8 @@ async def save_chat_message_to_db(
     deep_search: bool = False
 ):
     try:
-        content_str = normalize_text(content)
+        # Privacy Protection: Scrub PII before storing in ChatHistory
+        content_str = PIIScrubber.scrub_text(normalize_text(content))
         print(f"Saving {role} message to database...")
         async with AsyncSessionLocal() as db:
             message = ChatHistory(
@@ -403,7 +405,25 @@ async def submit_chat_feedback(feedback: ChatFeedbackRequest):
     ) as span:
         span.set_attribute("feedback.rating", feedback.rating)
         print(f"[AgentOps] Recorded user feedback for session {feedback.session_id}: rating={feedback.rating}")
-        return ChatFeedbackResponse(status="recorded", message="Feedback logged successfully")
+        
+        # Persist feedback in PostgreSQL for the AgentOps flywheel
+        feedback_record = ChatFeedback(
+            session_id=feedback.session_id,
+            message_id=feedback.message_id,
+            rating=feedback.rating,
+            comment=feedback.comment,
+            corrected_mood=feedback.corrected_mood
+        )
+        async with AsyncSessionLocal() as db:
+            db.add(feedback_record)
+            await db.commit()
+            await db.refresh(feedback_record)
+
+        return ChatFeedbackResponse(
+            status="recorded",
+            message="Feedback logged successfully",
+            feedback_id=feedback_record.id
+        )
 
 
 @router.websocket("/ws/status/{session_id}")

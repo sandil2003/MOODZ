@@ -5,6 +5,7 @@ from typing import List, Dict, Any, Optional
 from uuid import UUID
 import json
 from config import settings
+from app.core.pii_scrubber import PIIScrubber
 
 
 class GeminiEmbeddingsWrapper:
@@ -119,14 +120,16 @@ class VectorService:
         additional_info: Optional[Dict[str, Any]] = None
     ) -> str:
         try:
-            embedding = await self.embeddings.aembed_query(text)
+            # Privacy Protection: Scrub PII prior to vector embedding and storage
+            clean_text = PIIScrubber.scrub_text(text)
+            embedding = await self.embeddings.aembed_query(clean_text)
             doc_id = f"{user_id}_{datetime.utcnow().timestamp()}"
             metadata = {
                 "user_id": str(user_id),
                 "timestamp": datetime.utcnow().isoformat(),
                 "data_type": data_type,
                 "source": source,
-                "text": text
+                "text": clean_text
             }
             if mood_label:
                 metadata["mood_label"] = mood_label

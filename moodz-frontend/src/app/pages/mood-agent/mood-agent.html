@@ -102,6 +102,21 @@
                 <div class="ai-content">
                     <div class="markdown-content" [innerHTML]="message.content | markdown"></div>
                 </div>
+                <div class="message-feedback-bar">
+                    <button class="feedback-btn" [class.active]="message.feedback === 1" (click)="submitFeedback(message, 1)" title="Helpful response" aria-label="Thumbs up">
+                        <svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="currentColor">
+                            <path d="M720-120H280v-520l280-280 50 50q7 7 11.5 19t4.5 23v14l-44 174h258q32 0 56 24t24 56v80q0 7-2 15t-4 15L794-168q-9 20-30 34t-44 14Zm-360-80h360l140-324v-76H520l48-190-188 188v402Zm0 0v-402 402Zm-80-440v520H160v-520h120Z"/>
+                        </svg>
+                    </button>
+                    <button class="feedback-btn" [class.active]="message.feedback === -1" (click)="submitFeedback(message, -1)" title="Needs improvement" aria-label="Thumbs down">
+                        <svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="currentColor">
+                            <path d="M240-840h440v520L400-40l-50-50q-7-7-11.5-19t-4.5-23v-14l44-174H120q-32 0-56-24t-24-56v-80q0-7 2-15t4-15l140-326q9-20 30-34t44-14Zm360 80H240L100-436v76h340l-48 190 188-188v-402Zm0 0v402-402Zm80 440v-520h120v520H680Z"/>
+                        </svg>
+                    </button>
+                    @if (message.feedback) {
+                    <span class="feedback-ack">Feedback logged</span>
+                    }
+                </div>
             </div>
             }
             }

@@ -1,7 +1,10 @@
 import os
 import asyncio
+import pytest
 from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
+
+pytestmark = pytest.mark.skip(reason="Manual ad-hoc testing script for live Gemini API")
 
 # Load environment variables
 load_dotenv()

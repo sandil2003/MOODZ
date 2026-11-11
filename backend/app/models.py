@@ -293,3 +293,69 @@ class UserFact(Base):
             "source": self.source,
             "created_at": self.created_at.isoformat() if self.created_at else None
         }
+
+
+class ChatFeedback(Base):
+    """
+    ChatFeedback model for storing user ratings (thumbs up/down) and qualitative feedback.
+    Enables the AgentOps continuous improvement flywheel.
+    """
+    __tablename__ = "chat_feedback"
+
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+        unique=True,
+        nullable=False,
+        index=True,
+        comment="Primary Key - UUID"
+    )
+    session_id = Column(
+        UUID(as_uuid=True),
+        nullable=False,
+        index=True,
+        comment="Session UUID associated with the feedback"
+    )
+    message_id = Column(
+        UUID(as_uuid=True),
+        nullable=True,
+        index=True,
+        comment="Optional UUID of the specific message being evaluated"
+    )
+    rating = Column(
+        Integer,
+        nullable=False,
+        comment="1 for positive feedback (thumbs up), -1 for negative feedback (thumbs down)"
+    )
+    comment = Column(
+        Text,
+        nullable=True,
+        comment="Optional user comment or critique"
+    )
+    corrected_mood = Column(
+        String(50),
+        nullable=True,
+        comment="User-corrected emotional tone label if the model misclassified"
+    )
+    created_at = Column(
+        DateTime,
+        nullable=False,
+        default=datetime.utcnow,
+        index=True,
+        comment="Timestamp when feedback was submitted"
+    )
+
+    def __repr__(self):
+        return f"<ChatFeedback(id={self.id}, session_id={self.session_id}, rating={self.rating})>"
+
+    def to_dict(self):
+        return {
+            "id": str(self.id),
+            "session_id": str(self.session_id),
+            "message_id": str(self.message_id) if self.message_id else None,
+            "rating": self.rating,
+            "comment": self.comment,
+            "corrected_mood": self.corrected_mood,
+            "created_at": self.created_at.isoformat() if self.created_at else None
+        }

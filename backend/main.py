@@ -22,7 +22,7 @@ async def lifespan(app: FastAPI):
     
     # Initialize AgentOps Telemetry
     try:
-        setup_telemetry()
+        setup_telemetry(app=app)
         print("✅ AgentOps Telemetry initialized")
     except Exception as e:
         print(f"⚠️ [AgentOps] Telemetry init warning: {e}")

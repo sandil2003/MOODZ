@@ -1,7 +1,7 @@
 """Integration test verifying OpenTelemetry and AgentOps tracing functionality."""
 
 import pytest
-from app.core.telemetry import setup_telemetry, trace_span, trace_tool, get_tracer
+from app.core.telemetry import setup_telemetry, trace_span, trace_tool, get_tracer, record_llm_metrics
 from app.core.pii_scrubber import PIIScrubber
 
 
@@ -17,6 +17,17 @@ def test_trace_span_recording():
     with trace_span("test.operation", span_type="unit.test", attributes={"key": "value", "email": "test@test.com"}) as span:
         assert span is not None
         # Span execution completes successfully
+
+
+def test_token_and_cost_accounting():
+    """Verify that record_llm_metrics calculates token totals and estimated USD cost."""
+    with trace_span("test.llm.step", span_type="llm.test") as span:
+        metrics = record_llm_metrics(span, model="gemini-2.5-flash", input_tokens=1000, output_tokens=500)
+        assert metrics["llm.model"] == "gemini-2.5-flash"
+        assert metrics["llm.input_tokens"] == 1000
+        assert metrics["llm.output_tokens"] == 500
+        assert metrics["llm.total_tokens"] == 1500
+        assert metrics["llm.estimated_cost_usd"] > 0.0
 
 
 @pytest.mark.asyncio

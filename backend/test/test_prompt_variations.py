@@ -4,6 +4,9 @@ Test different variations of the anxiety prompt to find the issue.
 
 import httpx
 import json
+import pytest
+
+pytestmark = pytest.mark.skip(reason="Legacy manual testing script pointing to expired ngrok tunnel")
 
 
 def test_prompt_variations():

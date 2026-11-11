@@ -7,6 +7,9 @@ requiring the full application dependencies.
 
 import httpx
 import json
+import pytest
+
+pytestmark = pytest.mark.skip(reason="Legacy manual testing script pointing to expired ngrok tunnel")
 
 
 def test_custom_model_api():

@@ -6,6 +6,9 @@ This tests with the ACTUAL prompt that will be sent from MOODZ backend.
 
 import httpx
 import json
+import pytest
+
+pytestmark = pytest.mark.skip(reason="Legacy manual testing script pointing to expired ngrok tunnel")
 
 
 def test_with_real_prompt():

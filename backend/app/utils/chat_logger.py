@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 from uuid import UUID
 import aiofiles
+from app.core.pii_scrubber import PIIScrubber
 
 
 class ChatLogger:
@@ -56,19 +57,24 @@ class ChatLogger:
             metadata: Additional context (optional)
         """
         try:
+            # Privacy Protection: Scrub PII from messages before logging to disk
+            clean_prompt = PIIScrubber.scrub_text(prompt)
+            clean_response = PIIScrubber.scrub_text(response)
+            clean_meta = PIIScrubber.scrub_dict(metadata) if metadata else None
+
             # Prepare log entry
             log_entry = {
                 "timestamp": datetime.utcnow().isoformat(),
                 "user_id": str(user_id),
                 "session_id": str(session_id),
-                "prompt": prompt,
-                "response": response,
+                "prompt": clean_prompt,
+                "response": clean_response,
                 "latency": round(latency, 3),
             }
             
             # Add metadata if provided
-            if metadata:
-                log_entry["metadata"] = metadata
+            if clean_meta:
+                log_entry["metadata"] = clean_meta
             
             # Append to JSONL file
             async with aiofiles.open(self.log_file, mode='a', encoding='utf-8') as f:
