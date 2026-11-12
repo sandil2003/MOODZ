@@ -1,8 +1,16 @@
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
+"""Async SQLAlchemy database configuration, session management, and Base model."""
+
+from typing import AsyncGenerator
+from sqlalchemy.ext.asyncio import (
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine
+)
 from sqlalchemy.orm import declarative_base
+
 from config import settings
 
-# Create async engine
+# Create async engine with robust connection pooling
 engine = create_async_engine(
     settings.database_url,
     echo=settings.debug,
@@ -12,7 +20,7 @@ engine = create_async_engine(
     max_overflow=20,
 )
 
-# Create async session factory
+# Async session factory
 AsyncSessionLocal = async_sessionmaker(
     engine,
     class_=AsyncSession,
@@ -21,17 +29,12 @@ AsyncSessionLocal = async_sessionmaker(
     autoflush=False,
 )
 
-# Base class for ORM models
+# Declarative base class for ORM models
 Base = declarative_base()
 
 
-async def get_db() -> AsyncSession:
-    """
-    Dependency function to get database session.
-    
-    Yields:
-        AsyncSession: Database session
-    """
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
+    """FastAPI dependency yielding an async database session with auto-rollback on error."""
     async with AsyncSessionLocal() as session:
         try:
             yield session
@@ -39,16 +42,14 @@ async def get_db() -> AsyncSession:
         except Exception:
             await session.rollback()
             raise
-        finally:
-            await session.close()
 
 
-async def init_db():
-    """Initialize database tables."""
+async def init_db() -> None:
+    """Initialize database tables using the ORM metadata."""
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
 
-async def close_db():
-    """Close database connections."""
+async def close_db() -> None:
+    """Dispose of all database connection pool resources."""
     await engine.dispose()

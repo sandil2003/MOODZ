@@ -1,5 +1,7 @@
-import redis.asyncio as redis
+"""Async Redis client management and caching utility functions."""
+
 from typing import Optional
+import redis.asyncio as redis
 from config import settings
 
 # Global Redis client instance
@@ -7,12 +9,7 @@ redis_client: Optional[redis.Redis] = None
 
 
 async def get_redis_client() -> redis.Redis:
-    """
-    Get Redis client instance.
-    
-    Returns:
-        redis.Redis: Redis client
-    """
+    """Retrieve or create the global async Redis client."""
     global redis_client
     if redis_client is None:
         redis_client = await redis.from_url(
@@ -24,52 +21,27 @@ async def get_redis_client() -> redis.Redis:
     return redis_client
 
 
-async def close_redis():
-    """Close Redis connection."""
+async def close_redis() -> None:
+    """Close the global Redis connection gracefully."""
     global redis_client
-    if redis_client:
+    if redis_client is not None:
         await redis_client.close()
+        redis_client = None
 
 
 async def cache_get(key: str) -> Optional[str]:
-    """
-    Get value from cache.
-    
-    Args:
-        key: Cache key
-        
-    Returns:
-        Optional[str]: Cached value or None
-    """
+    """Get a string value from Redis by key."""
     client = await get_redis_client()
     return await client.get(key)
 
 
 async def cache_set(key: str, value: str, expire: int = 3600) -> bool:
-    """
-    Set value in cache.
-    
-    Args:
-        key: Cache key
-        value: Value to cache
-        expire: Expiration time in seconds (default: 1 hour)
-        
-    Returns:
-        bool: True if successful
-    """
+    """Set a string value with TTL in Redis."""
     client = await get_redis_client()
-    return await client.setex(key, expire, value)
+    return bool(await client.setex(key, expire, value))
 
 
 async def cache_delete(key: str) -> bool:
-    """
-    Delete value from cache.
-    
-    Args:
-        key: Cache key
-        
-    Returns:
-        bool: True if successful
-    """
+    """Delete a key from Redis."""
     client = await get_redis_client()
-    return await client.delete(key) > 0
+    return bool(await client.delete(key) > 0)

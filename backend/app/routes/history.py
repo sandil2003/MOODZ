@@ -1,86 +1,75 @@
-"""History routes for both chat history (PostgreSQL) and session memory (Redis)."""
+"""History routes for PostgreSQL chat transcripts and Redis session buffering."""
 
+from typing import List, Dict, Any
+from uuid import UUID
 from fastapi import APIRouter, HTTPException, Query, Depends
 from sqlalchemy import select, func, desc
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List, Dict, Any
-from uuid import UUID
 from pydantic import BaseModel
 
 from app.database import get_db
 from app.models import ChatHistory
-from app.schemas import (
-    ChatMessageResponse,
-    ChatSessionSummary,
-    ChatSessionDetail,
-)
+from app.schemas import ChatMessageResponse, ChatSessionSummary, ChatSessionDetail
 from app.services import get_session_manager
 
-
-# ==========================================
-# Router Definitions
-# ==========================================
 chat_history_router = APIRouter(prefix="/chat-history", tags=["chat-history"])
 history_router = APIRouter(prefix="/history", tags=["history"])
 
-# Combined router for all history endpoints
+# Combined router
 router = APIRouter()
 router.include_router(chat_history_router)
 router.include_router(history_router)
 
 
-# ==========================================
-# APIRouter 1: Chat History (PostgreSQL) Endpoints
-# ==========================================
+# ============================================================================
+# 1. PostgreSQL Chat History Endpoints
+# ============================================================================
 
 @chat_history_router.get("/sessions", response_model=List[ChatSessionSummary])
 async def get_chat_sessions(
     user_id: UUID = Query(..., description="User ID to fetch sessions for"),
     limit: int = Query(50, ge=1, le=100, description="Max sessions to return"),
     db: AsyncSession = Depends(get_db)
-):
+) -> List[ChatSessionSummary]:
+    """Retrieve distinct conversation session summaries for a user."""
     try:
-        query = (
+        session_query = (
             select(
                 ChatHistory.session_id,
-                func.count(ChatHistory.id).label('message_count'),
-                func.max(ChatHistory.timestamp).label('last_message_time')
+                func.count(ChatHistory.id).label("message_count"),
+                func.max(ChatHistory.timestamp).label("last_message_time")
             )
             .where(ChatHistory.user_id == user_id)
             .group_by(ChatHistory.session_id)
-            .order_by(desc('last_message_time'))
+            .order_by(desc("last_message_time"))
             .limit(limit)
         )
-        result = await db.execute(query)
-        sessions_data = result.all()
-        
-        session_summaries = []
-        for session_data in sessions_data:
+        sessions_data = (await db.execute(session_query)).all()
+
+        summaries: List[ChatSessionSummary] = []
+        for row in sessions_data:
             first_msg_query = (
                 select(ChatHistory.content)
                 .where(
-                    ChatHistory.session_id == session_data.session_id,
-                    ChatHistory.role == 'user'
+                    ChatHistory.session_id == row.session_id,
+                    ChatHistory.role == "user"
                 )
                 .order_by(ChatHistory.timestamp)
                 .limit(1)
             )
-            first_msg_result = await db.execute(first_msg_query)
-            first_message = first_msg_result.scalar()
-            
-            first_msg = first_message or "New Chat"
+            first_msg = (await db.execute(first_msg_query)).scalar() or "New Chat"
             title = first_msg[:50] + "..." if len(first_msg) > 50 else first_msg
-            
-            session_summaries.append(
+
+            summaries.append(
                 ChatSessionSummary(
-                    session_id=session_data.session_id,
+                    session_id=row.session_id,
                     title=title,
-                    last_message_time=session_data.last_message_time,
-                    message_count=session_data.message_count,
-                    first_message=first_message
+                    last_message_time=row.last_message_time,
+                    message_count=row.message_count,
+                    first_message=first_msg
                 )
             )
-        return session_summaries
+        return summaries
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -90,9 +79,10 @@ async def get_chat_session(
     session_id: UUID,
     user_id: UUID = Query(..., description="User ID for authorization"),
     db: AsyncSession = Depends(get_db)
-):
+) -> ChatSessionDetail:
+    """Retrieve all messages in a specific chat session transcript."""
     try:
-        query = (
+        msg_query = (
             select(ChatHistory)
             .where(
                 ChatHistory.session_id == session_id,
@@ -100,13 +90,12 @@ async def get_chat_session(
             )
             .order_by(ChatHistory.timestamp)
         )
-        result = await db.execute(query)
-        messages = result.scalars().all()
-        
+        messages = (await db.execute(msg_query)).scalars().all()
+
         if not messages:
             raise HTTPException(status_code=404, detail=f"No messages found for session {session_id}")
-            
-        message_responses = [
+
+        responses = [
             ChatMessageResponse(
                 id=msg.id,
                 user_id=msg.user_id,
@@ -120,8 +109,8 @@ async def get_chat_session(
         ]
         return ChatSessionDetail(
             session_id=session_id,
-            messages=message_responses,
-            message_count=len(message_responses)
+            messages=responses,
+            message_count=len(responses)
         )
     except HTTPException:
         raise
@@ -129,9 +118,9 @@ async def get_chat_session(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# ==========================================
-# APIRouter 2: Short-Term History (Redis) Endpoints
-# ==========================================
+# ============================================================================
+# 2. Redis Short-Term History Endpoints
+# ============================================================================
 
 class SessionHistoryResponse(BaseModel):
     session_id: str
@@ -141,29 +130,28 @@ class SessionHistoryResponse(BaseModel):
 
 
 @history_router.get("/session/{session_id}", response_model=SessionHistoryResponse)
-async def get_redis_session_history(session_id: UUID, limit: int = 50):
+async def get_redis_session_history(session_id: UUID, limit: int = 50) -> SessionHistoryResponse:
+    """Retrieve in-memory conversation buffer from Redis for an active session."""
     try:
-        if limit > 100:
-            limit = 100
-        session_manager = await get_session_manager()
-        
-        exists = await session_manager.session_exists(session_id)
-        if not exists:
-            raise HTTPException(status_code=404, detail="Session not found")
-            
-        if limit == -1:
-            messages = await session_manager.get_full_history(session_id)
-        else:
-            messages = await session_manager.get_recent_history(session_id, limit=limit)
-            
-        message_count = await session_manager.get_session_length(session_id)
-        ttl = await session_manager.get_session_ttl(session_id)
-        
+        actual_limit = min(100, limit)
+        sm = await get_session_manager()
+
+        if not await sm.session_exists(session_id):
+            raise HTTPException(status_code=404, detail="Session not found in cache")
+
+        messages = (
+            await sm.get_full_history(session_id)
+            if actual_limit == -1
+            else await sm.get_recent_history(session_id, limit=actual_limit)
+        )
+        count = await sm.get_session_length(session_id)
+        ttl = await sm.get_session_ttl(session_id)
+
         return SessionHistoryResponse(
             session_id=str(session_id),
-            message_count=message_count,
+            message_count=count,
             messages=messages,
-            ttl_seconds=ttl if ttl > 0 else 0
+            ttl_seconds=max(0, ttl)
         )
     except HTTPException:
         raise
@@ -172,34 +160,28 @@ async def get_redis_session_history(session_id: UUID, limit: int = 50):
 
 
 @history_router.get("/sessions/active")
-async def get_active_sessions():
+async def get_active_sessions() -> Dict[str, Any]:
+    """List all active session keys currently tracked in Redis."""
     try:
-        session_manager = await get_session_manager()
-        sessions = await session_manager.get_active_sessions()
-        return {
-            "active_sessions": sessions,
-            "count": len(sessions)
-        }
+        sm = await get_session_manager()
+        sessions = await sm.get_active_sessions()
+        return {"active_sessions": sessions, "count": len(sessions)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @history_router.delete("/session/{session_id}")
-async def clear_session_history(session_id: UUID):
+async def clear_session_history(session_id: UUID) -> Dict[str, Any]:
+    """Purge in-memory conversation state for a session from Redis."""
     try:
-        session_manager = await get_session_manager()
-        exists = await session_manager.session_exists(session_id)
-        if not exists:
+        sm = await get_session_manager()
+        if not await sm.session_exists(session_id):
             raise HTTPException(status_code=404, detail="Session not found")
-            
-        success = await session_manager.clear_session(session_id)
-        if not success:
+
+        if not await sm.clear_session(session_id):
             raise HTTPException(status_code=500, detail="Failed to clear session")
-            
-        return {
-            "message": "Session cleared successfully",
-            "session_id": str(session_id)
-        }
+
+        return {"message": "Session cleared successfully", "session_id": str(session_id)}
     except HTTPException:
         raise
     except Exception as e:

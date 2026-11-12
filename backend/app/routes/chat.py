@@ -1,16 +1,19 @@
-"""Chat routes for real-time conversation streaming, chat completion, and status updates."""
+"""Chat routes for real-time conversation streaming, chat completion, and feedback tracking."""
+
+import json
+import time
+import asyncio
+import logging
+from typing import AsyncGenerator, Dict, Any, Optional
+from uuid import UUID
 
 from fastapi import APIRouter, BackgroundTasks, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.responses import StreamingResponse
-from typing import AsyncGenerator, Dict, Any, Optional
-import json
-from time import time
-import asyncio
-from uuid import UUID
 
 from app.database import AsyncSessionLocal
 from app.models import ChatHistory, MoodHistory, UserFact, ChatFeedback
 from app.core.pii_scrubber import PIIScrubber
+from app.core.telemetry import trace_span
 from app.schemas import ChatRequest, ChatResponse, ChatFeedbackRequest, ChatFeedbackResponse
 from app.services import (
     get_mood_agent,
@@ -21,76 +24,75 @@ from app.services import (
 )
 from app.utils import get_chat_logger
 
+logger = logging.getLogger(__name__)
+
 
 def normalize_text(content: Any) -> str:
-    """Normalize LLM output into a single plain string for database and frontend."""
+    """Normalize LLM content chunks into a plain string."""
     if content is None:
         return ""
     if isinstance(content, str):
         return content
     if isinstance(content, list):
         return "".join(
-            part.get("text", "") if isinstance(part, dict) else str(part) 
+            part.get("text", "") if isinstance(part, dict) else str(part)
             for part in content
         )
     return str(content)
 
 
-# ==========================================
-# Router Definitions
-# ==========================================
+# ============================================================================
+# Router & Connection Management
+# ============================================================================
+
 router = APIRouter(prefix="/moods/chat", tags=["chat"])
-chat_router = router  # alias for backwards compatibility
+chat_router = router  # Backwards-compatibility alias
 
 
-# WebSocket connection manager for status updates
 class ConnectionManager:
+    """WebSocket connection registry for live chat status notifications."""
+
     def __init__(self):
         self.active_connections: Dict[str, WebSocket] = {}
-    
-    async def connect(self, websocket: WebSocket, session_id: str):
+
+    async def connect(self, websocket: WebSocket, session_id: str) -> None:
         await websocket.accept()
         self.active_connections[session_id] = websocket
-        print(f"WebSocket connected for session: {session_id}")
-    
-    def disconnect(self, session_id: str):
+        logger.info(f"WebSocket connected for session: {session_id}")
+
+    def disconnect(self, session_id: str) -> None:
         if session_id in self.active_connections:
             del self.active_connections[session_id]
-            print(f"🔌 WebSocket disconnected for session: {session_id}")
-    
-    async def send_status(self, session_id: str, status: str):
-        print(f"Attempting to send status to session {session_id}: {status}")
+            logger.info(f"WebSocket disconnected for session: {session_id}")
+
+    async def send_status(self, session_id: str, status: str) -> None:
         if session_id in self.active_connections:
             try:
                 await self.active_connections[session_id].send_json({
                     "type": "status",
                     "content": status
                 })
-                print(f"Status sent successfully: {status}")
             except Exception as e:
-                print(f"Error sending status: {e}")
-        else:
-            print(f"No WebSocket connection found for session: {session_id}")
+                logger.error(f"Error sending WebSocket status to {session_id}: {e}")
 
 
 manager = ConnectionManager()
 
 
-# ==========================================
-# Chat Database Helpers
-# ==========================================
+# ============================================================================
+# Database Helpers
+# ============================================================================
 
 async def save_chat_message_to_db(
-    user_id,
-    session_id,
+    user_id: UUID,
+    session_id: UUID,
     role: str,
     content: str,
     deep_search: bool = False
-):
+) -> None:
+    """Persist a scrubbed user or assistant message to the PostgreSQL chat_history table."""
     try:
-        # Privacy Protection: Scrub PII before storing in ChatHistory
         content_str = PIIScrubber.scrub_text(normalize_text(content))
-        print(f"Saving {role} message to database...")
         async with AsyncSessionLocal() as db:
             message = ChatHistory(
                 user_id=user_id,
@@ -101,31 +103,26 @@ async def save_chat_message_to_db(
             )
             db.add(message)
             await db.commit()
-        print(f"{role.capitalize()} message saved to database")
     except Exception as e:
-        print(f"Error saving {role} message to database: {e}")
-        import traceback
-        traceback.print_exc()
+        logger.error(f"Error saving {role} message to database: {e}")
 
 
 async def save_conversation_intelligently(
-    user_id,
-    session_id,
+    user_id: UUID,
+    session_id: UUID,
     message: str,
     response: str,
     classification: Dict[str, Any]
-):
-    print(f"\n{'='*60}\nSAVE_CONVERSATION_INTELLIGENTLY CALLED\n{'='*60}")
+) -> None:
+    """Legacy helper persisting facts and mood rating to PostgreSQL and Pinecone."""
+    if not classification.get("save", False):
+        return
+
     try:
-        if not classification.get("save", False):
-            print(f"Skipping database save - classifier said save=False")
-            return
-            
         vector_service = get_vector_service_gemini()
-        
-        # Try to save user message and response to Pinecone
+
+        # 1. Save turns to Pinecone
         try:
-            print(f"Saving user message to Pinecone...")
             await vector_service.add_text(
                 user_id=user_id,
                 text=message,
@@ -134,8 +131,6 @@ async def save_conversation_intelligently(
                 mood_label=classification.get("mood", "neutral"),
                 context_id=str(session_id)
             )
-            
-            print(f"Saving assistant response to Pinecone...")
             await vector_service.add_text(
                 user_id=user_id,
                 text=response,
@@ -144,90 +139,65 @@ async def save_conversation_intelligently(
                 context_id=str(session_id)
             )
         except Exception as pc_err:
-            print(f"Warning: Failed to save text to Pinecone / generate embeddings: {pc_err}")
-            print("Continuing with PostgreSQL database writes...")
-            
-        # PostgreSQL writes for facts
-        if classification.get("extracted_facts"):
-            print(f"Saving {len(classification['extracted_facts'])} facts to PostgreSQL...")
-            async with AsyncSessionLocal() as db:
-                for fact_text in classification["extracted_facts"]:
-                    fact = UserFact(
-                        user_id=user_id,
-                        fact_text=fact_text,
-                        category="auto_extracted",
-                        source="conversation_classifier"
-                    )
-                    db.add(fact)
-                await db.commit()
-                
-            # Try saving facts to Pinecone
-            try:
-                for fact_text in classification["extracted_facts"]:
-                    await vector_service.add_text(
-                        user_id=user_id,
-                        text=fact_text,
-                        data_type="user_fact",
-                        source="conversation_classifier",
-                        context_id=str(session_id),
-                        additional_info={"category": "auto_extracted"}
-                    )
-            except Exception as pc_err:
-                print(f"Warning: Failed to save facts to Pinecone: {pc_err}")
-                
-        mood_value = classification.get("mood", "neutral")
-        if mood_value and mood_value != "neutral":
-            print(f"Saving mood '{mood_value}' to PostgreSQL...")
-            mood_scores = {
-                "happy": 8, "joyful": 9, "excited": 8, "content": 7,
-                "sad": 3, "depressed": 2, "down": 3, "melancholic": 3,
-                "Anxious": 4, "worried": 4, "nervous": 4, "stressed": 3,
-                "angry": 3, "frustrated": 4, "irritated": 4,
-                "calm": 7, "peaceful": 8, "relaxed": 7,
-                "neutral": 5, "confused": 5, "uncertain": 5,
-                "hopeful": 7, "optimistic": 8
-            }
-            mood_score = mood_scores.get(mood_value, 5)
-            async with AsyncSessionLocal() as db:
-                mood = MoodHistory(
+            logger.warning(f"Failed to save text to Pinecone: {pc_err}")
+
+        # 2. Save facts and mood to PostgreSQL
+        async with AsyncSessionLocal() as db:
+            for fact_text in classification.get("extracted_facts", []):
+                db.add(UserFact(
                     user_id=user_id,
-                    mood_score=mood_score,
+                    fact_text=PIIScrubber.scrub_text(fact_text),
+                    category="auto_extracted",
+                    source="conversation_classifier"
+                ))
+
+            mood_value = classification.get("mood", "neutral")
+            if mood_value and mood_value != "neutral":
+                mood_scores = {
+                    "happy": 8, "joyful": 9, "excited": 8, "content": 7,
+                    "sad": 3, "depressed": 2, "down": 3, "melancholic": 3,
+                    "anxious": 4, "worried": 4, "nervous": 4, "stressed": 3,
+                    "angry": 3, "frustrated": 4, "irritated": 4,
+                    "calm": 7, "peaceful": 8, "relaxed": 7,
+                    "neutral": 5, "confused": 5, "uncertain": 5,
+                    "hopeful": 7, "optimistic": 8
+                }
+                db.add(MoodHistory(
+                    user_id=user_id,
+                    mood_score=mood_scores.get(mood_value, 5),
                     sentiment_label=mood_value,
-                    summary=message,
+                    summary=PIIScrubber.scrub_text(message[:255]),
                     session_id=session_id
-                )
-                db.add(mood)
-                await db.commit()
-                
-        print(f"\n{'='*60}\nSAVE COMPLETED SUCCESSFULLY\n{'='*60}")
+                ))
+            await db.commit()
     except Exception as e:
-        print(f"Error saving conversation intelligently: {e}")
-        import traceback
-        traceback.print_exc()
+        logger.error(f"Error in save_conversation_intelligently: {e}")
 
 
-# ==========================================
-# Chat Endpoints
-# ==========================================
+# ============================================================================
+# Streaming & Endpoints
+# ============================================================================
 
 async def stream_chat_response(
-    user_id,
-    session_id,
+    user_id: UUID,
+    session_id: UUID,
     message: str
 ) -> AsyncGenerator[str, None]:
-    start_time = time()
+    """Execute conversational turn via LangGraph and yield Server-Sent Events (SSE)."""
+    start_time = time.time()
     try:
         chain = await get_mood_agent()
         session_manager = await get_session_manager()
-        
+
+        # Buffer message in Redis and database
         await session_manager.add_user_message(session_id, message)
         await save_chat_message_to_db(user_id, session_id, "user", message)
-        
+
         full_response = ""
-        result_holder = {}
+        result_holder: Dict[str, Any] = {}
+
         async for chunk in chain.astream(user_id, session_id, message, result_holder):
             if chunk == "CRISIS":
-                print("[ChatRoute] Crisis detected by safety gate")
                 crisis_message = (
                     "I'm really concerned about what you're sharing. Please reach out to a mental health "
                     "professional or crisis helpline immediately. You can reach the 988 Suicide & Crisis Lifeline "
@@ -238,25 +208,25 @@ async def stream_chat_response(
                 yield f"data: {json.dumps({'chunk': crisis_message})}\n\n"
                 yield f"data: {json.dumps({'done': True, 'session_id': str(session_id), 'crisis_detected': True})}\n\n"
                 return
-                
+
             if chunk == API_ERROR_WARNING:
                 yield f"data: {json.dumps({'chunk': chunk})}\n\n"
                 continue
-                
+
             full_response += chunk
             yield f"data: {json.dumps({'chunk': chunk})}\n\n"
-            
-        latency = time() - start_time
+
+        latency = time.time() - start_time
         clean_response = full_response
-        
+
+        # Save assistant response
         await session_manager.add_assistant_message(session_id, clean_response)
         await save_chat_message_to_db(user_id, session_id, "assistant", clean_response)
-        
-        # Immediate classification summary for SSE done event
+
+        # Classification summary for terminal event
         classification = mock_classify(message)
-        
-        logger = get_chat_logger()
-        await logger.log_chat(
+        logger_service = get_chat_logger()
+        await logger_service.log_chat(
             user_id=user_id,
             session_id=session_id,
             prompt=message,
@@ -269,18 +239,18 @@ async def stream_chat_response(
                 "extracted_facts": classification.get("extracted_facts", [])
             }
         )
-        
+
         completion_data = {
-            'done': True,
-            'session_id': str(session_id),
-            'latency': round(latency, 3),
-            'classification': classification
+            "done": True,
+            "session_id": str(session_id),
+            "latency": round(latency, 3),
+            "classification": classification
         }
         yield f"data: {json.dumps(completion_data)}\n\n"
+
     except Exception as e:
-        error_msg = f"Error: {str(e)}"
-        print(f"Error in stream_chat_response: {e}")
-        yield f"data: {json.dumps({'error': error_msg})}\n\n"
+        logger.error(f"Error in stream_chat_response: {e}")
+        yield f"data: {json.dumps({'error': f'Error: {str(e)}'})}\n\n"
 
 
 @router.post("/stream", response_class=StreamingResponse)
@@ -288,25 +258,21 @@ async def chat_stream(
     request: ChatRequest,
     background_tasks: BackgroundTasks
 ):
+    """Real-time SSE token streaming endpoint with background intelligence profiling."""
     async def generate():
         full_response = ""
-        
-        async for event in stream_chat_response(
-            request.user_id,
-            request.session_id,
-            request.message
-        ):
+
+        async for event in stream_chat_response(request.user_id, request.session_id, request.message):
             if '"chunk"' in event:
                 try:
                     data = json.loads(event.replace("data: ", "").strip())
-                    if "chunk" in data:
-                        if data["chunk"] != API_ERROR_WARNING:
-                            full_response += data["chunk"]
-                except:
+                    if "chunk" in data and data["chunk"] != API_ERROR_WARNING:
+                        full_response += data["chunk"]
+                except Exception:
                     pass
             yield event
-            
-        # Trigger Asynchronous Background Profiler Sub-Agent
+
+        # Schedule non-blocking background analysis after stream ends
         if full_response:
             from app.services.mood_graph import get_mood_graph
             graph = await get_mood_graph()
@@ -317,7 +283,7 @@ async def chat_stream(
                 request.message,
                 full_response
             )
-            
+
     return StreamingResponse(
         generate(),
         media_type="text/event-stream",
@@ -333,28 +299,26 @@ async def chat_stream(
 async def chat(
     request: ChatRequest,
     background_tasks: BackgroundTasks
-):
-    start_time = time()
+) -> ChatResponse:
+    """Synchronous chat endpoint with background intelligence extraction."""
+    start_time = time.time()
     try:
         chain = await get_mood_agent()
-        result_holder = {}
+        result_holder: Dict[str, Any] = {}
         response = await chain.invoke(
             user_id=request.user_id,
             session_id=request.session_id,
             user_message=request.message,
             result_holder=result_holder
         )
-        latency = time() - start_time
-        
+        latency = time.time() - start_time
+
         await save_chat_message_to_db(request.user_id, request.session_id, "user", request.message)
-        
-        clean_response = response
-        if API_ERROR_WARNING in response:
-            clean_response = response.replace(API_ERROR_WARNING, "")
-            
+
+        clean_response = response.replace(API_ERROR_WARNING, "") if API_ERROR_WARNING in response else response
         await save_chat_message_to_db(request.user_id, request.session_id, "assistant", clean_response)
-        
-        # Schedule Asynchronous Background Profiler Sub-Agent
+
+        # Trigger background profiler
         from app.services.mood_graph import get_mood_graph
         graph = await get_mood_graph()
         background_tasks.add_task(
@@ -364,35 +328,30 @@ async def chat(
             request.message,
             clean_response
         )
-        
-        logger = get_chat_logger()
+
+        chat_logger = get_chat_logger()
         background_tasks.add_task(
-            logger.log_chat,
+            chat_logger.log_chat,
             request.user_id,
             request.session_id,
             request.message,
             clean_response,
             latency,
-            {
-                "streaming": False,
-                "save_to_db": True
-            }
+            {"streaming": False, "save_to_db": True}
         )
+
         return ChatResponse(
             response=response,
             session_id=str(request.session_id)
         )
     except Exception as e:
+        logger.error(f"Error in chat endpoint: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/feedback", response_model=ChatFeedbackResponse)
-async def submit_chat_feedback(feedback: ChatFeedbackRequest):
-    """
-    AgentOps endpoint to record user feedback (thumbs up/down, mood correction)
-    and tag traces in Phoenix / Prometheus.
-    """
-    from app.core.telemetry import trace_span
+async def submit_chat_feedback(feedback: ChatFeedbackRequest) -> ChatFeedbackResponse:
+    """AgentOps endpoint to record user feedback rating and tag traces in Arize Phoenix."""
     with trace_span(
         "agentops.user_feedback",
         span_type="feedback.user",
@@ -404,9 +363,7 @@ async def submit_chat_feedback(feedback: ChatFeedbackRequest):
         }
     ) as span:
         span.set_attribute("feedback.rating", feedback.rating)
-        print(f"[AgentOps] Recorded user feedback for session {feedback.session_id}: rating={feedback.rating}")
-        
-        # Persist feedback in PostgreSQL for the AgentOps flywheel
+
         feedback_record = ChatFeedback(
             session_id=feedback.session_id,
             message_id=feedback.message_id,
@@ -428,6 +385,7 @@ async def submit_chat_feedback(feedback: ChatFeedbackRequest):
 
 @router.websocket("/ws/status/{session_id}")
 async def websocket_status(websocket: WebSocket, session_id: str):
+    """WebSocket channel for live status and thought notifications."""
     await manager.connect(websocket, session_id)
     try:
         while True:
@@ -439,9 +397,9 @@ async def websocket_status(websocket: WebSocket, session_id: str):
         manager.disconnect(session_id)
 
 
-# ==========================================
-# Backwards Compatibility Re-exports
-# ==========================================
+# ============================================================================
+# Backwards-Compatibility Re-exports
+# ============================================================================
 from app.routes.history import history_router, chat_history_router  # noqa: E402
 from app.routes.mood import mood_data_router  # noqa: E402
 

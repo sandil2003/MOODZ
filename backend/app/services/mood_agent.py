@@ -1,46 +1,30 @@
 """Empathetic Mood Agent Service.
 
-Adapter layer delegating execution to the LangGraph Hybrid Engine (MoodHybridGraph)
-and Google ADK, preserving backward compatibility for existing routes and callers.
+Adapter layer delegating execution to the LangGraph Hybrid Engine (MoodHybridGraph),
+preserving backward compatibility for legacy routes and callers.
 """
 
-from typing import List, Dict, Any, Optional, AsyncGenerator
+from typing import List, Optional, AsyncGenerator
 from uuid import UUID
 from pydantic import BaseModel, Field
 
-from config import settings
 from app.services.session_manager import SessionManager, get_session_manager
 from app.services.vector_service import VectorService, get_vector_service_gemini
 from app.services.crisis_detector import CrisisDetector
-from app.services.fallback_mocks import API_ERROR_WARNING
 from app.services.mood_graph import MoodHybridGraph, get_mood_graph, ProfileAnalysisResult
 
 
 class MoodzAgentOutput(BaseModel):
-    """
-    Combined Pydantic schema for empathetic wellness response and conversation classification.
-    Maintained for backwards compatibility.
-    """
-    response: str = Field(
-        description="Your warm, empathetic response message to the user."
-    )
-    save: bool = Field(
-        description="Set to true if the user's message contains meaningful personal facts, goals, or strong emotional shifts. Set to false for casual greetings, small talk, test messages, or generic chatter."
-    )
-    extracted_facts: List[str] = Field(
-        default_factory=list,
-        description="Extract new personal facts about the user (e.g. hobbies, family members, jobs, events). Return empty list if no new facts are shared."
-    )
-    mood: str = Field(
-        description="Detected mood/emotion of the user's current message (e.g. happy, sad, anxious, excited, calm, neutral)"
-    )
+    """Legacy Pydantic schema for empathetic wellness response and conversation classification."""
+    response: str = Field(description="Warm, empathetic response message to the user.")
+    save: bool = Field(description="Set to true if user message contains personal facts or strong emotional shifts.")
+    extracted_facts: List[str] = Field(default_factory=list, description="Extracted personal facts about the user.")
+    mood: str = Field(description="Detected emotional state of the user.")
 
 
 class MoodAgentChainV2:
-    """
-    Empathetic Mood Agent powered by the LangGraph Hybrid Engine.
-    Provides fast foreground pure-Markdown streaming and asynchronous background intelligence profiling.
-    """
+    """Adapter class wrapping MoodHybridGraph to maintain existing API contracts."""
+
     def __init__(
         self,
         session_manager: SessionManager,
@@ -52,7 +36,7 @@ class MoodAgentChainV2:
         self.vector_service = vector_service
         self.crisis_detector = crisis_detector
         self._graph: Optional[MoodHybridGraph] = None
-        
+
     async def _get_graph(self) -> MoodHybridGraph:
         if self._graph is None:
             self._graph = await get_mood_graph()
@@ -78,11 +62,7 @@ class MoodAgentChainV2:
         user_message: str,
         result_holder: Optional[dict] = None
     ) -> AsyncGenerator[str, None]:
-        """
-        Fast Foreground Stream:
-        Yields pure Markdown tokens progressively directly to SSE.
-        Populates result_holder with full response and context metadata.
-        """
+        """Stream Markdown tokens progressively via Server-Sent Events."""
         if result_holder is None:
             result_holder = {}
         graph = await self._get_graph()
@@ -94,7 +74,7 @@ _mood_agent: Optional[MoodAgentChainV2] = None
 
 
 async def get_mood_agent() -> MoodAgentChainV2:
-    """Returns the singleton MoodAgentChainV2 instance."""
+    """Returns the singleton MoodAgentChainV2 adapter instance."""
     global _mood_agent
     if _mood_agent is None:
         sm = await get_session_manager()

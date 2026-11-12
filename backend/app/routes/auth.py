@@ -1,4 +1,4 @@
-"""Authentication routes for user registration and login."""
+"""Authentication endpoints for user registration and JWT login."""
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -6,26 +6,11 @@ from sqlalchemy import select
 
 from app.database import get_db
 from app.models import User
-from app.schemas import UserCreate, UserLogin, UserResponse
+from app.schemas import UserCreate, UserLogin, UserResponse, AuthResponse
 from app.utils.auth_utils import hash_password, verify_password, create_access_token
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
-
-# ---------- Response Schemas ----------
-
-from pydantic import BaseModel
-from uuid import UUID
-
-
-class AuthResponse(BaseModel):
-    """Response returned after successful login or registration."""
-    access_token: str
-    token_type: str = "bearer"
-    user: UserResponse
-
-
-# ---------- Endpoints ----------
 
 @router.post(
     "/register",
@@ -33,35 +18,25 @@ class AuthResponse(BaseModel):
     status_code=status.HTTP_201_CREATED,
     summary="Register a new user",
 )
-async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
-    """
-    Register a new user account.
-
-    - Validates email uniqueness
-    - Hashes the password
-    - Creates the user in the database
-    - Returns a JWT access token
-    """
-    # Check if email already exists
+async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)) -> AuthResponse:
+    """Register a new user account with hashed password and return an access token."""
+    # 1. Check email uniqueness
     if user_data.email:
-        result = await db.execute(
-            select(User).where(User.email == user_data.email)
-        )
-        existing_user = result.scalar_one_or_none()
-        if existing_user:
+        result = await db.execute(select(User).where(User.email == user_data.email))
+        if result.scalar_one_or_none():
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="A user with this email already exists",
             )
 
-    # Require password for registration
+    # 2. Enforce password presence
     if not user_data.password:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Password is required for registration",
         )
 
-    # Create user
+    # 3. Create and persist user
     new_user = User(
         name=user_data.name,
         email=user_data.email,
@@ -70,10 +45,10 @@ async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
         role=user_data.role or "user",
         is_active=True,
     )
-
     db.add(new_user)
+
     try:
-        await db.flush()          # Populate the id
+        await db.flush()
     except Exception:
         await db.rollback()
         raise HTTPException(
@@ -82,9 +57,8 @@ async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
         )
     await db.refresh(new_user)
 
-    # Generate JWT
+    # 4. Generate JWT bearer token
     token = create_access_token(data={"sub": str(new_user.id)})
-
     return AuthResponse(
         access_token=token,
         user=UserResponse.model_validate(new_user),
@@ -96,27 +70,12 @@ async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
     response_model=AuthResponse,
     summary="Login with email and password",
 )
-async def login(credentials: UserLogin, db: AsyncSession = Depends(get_db)):
-    """
-    Authenticate a user with email and password.
-
-    - Looks up user by email
-    - Verifies bcrypt password
-    - Returns a JWT access token
-    """
-    # Find user by email
-    result = await db.execute(
-        select(User).where(User.email == credentials.email)
-    )
+async def login(credentials: UserLogin, db: AsyncSession = Depends(get_db)) -> AuthResponse:
+    """Authenticate a user using email and password, returning an access token."""
+    result = await db.execute(select(User).where(User.email == credentials.email))
     user = result.scalar_one_or_none()
 
-    if not user or not user.hashed_password:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password",
-        )
-
-    if not verify_password(credentials.password, user.hashed_password):
+    if not user or not user.hashed_password or not verify_password(credentials.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password",
@@ -128,10 +87,7 @@ async def login(credentials: UserLogin, db: AsyncSession = Depends(get_db)):
             detail="Account is deactivated",
         )
 
-    # Update last_active
     user.update_last_active()
-
-    # Generate JWT
     token = create_access_token(data={"sub": str(user.id)})
 
     return AuthResponse(

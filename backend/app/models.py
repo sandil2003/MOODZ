@@ -1,17 +1,22 @@
+"""SQLAlchemy ORM models for the MOODZ mental wellness platform."""
+
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text, ForeignKey, Index
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
 from app.database import Base
 
 
+def _utc_now():
+    """Helper returning current UTC datetime."""
+    return datetime.now(timezone.utc)
+
+
 class User(Base):
-    """
-    User model for storing user information and preferences.
-    """
+    """User account model storing identity, encrypted credentials, and preferences."""
     __tablename__ = "users"
-    
+
     id = Column(
         UUID(as_uuid=True),
         primary_key=True,
@@ -19,61 +24,61 @@ class User(Base):
         unique=True,
         nullable=False,
         index=True,
-        comment="Primary Key - UUID"
+        comment="Primary Key - User UUID"
     )
     email = Column(
         String(255),
         unique=True,
         nullable=True,
         index=True,
-        comment="Good for future auth/login"
+        comment="Unique user email address"
     )
     name = Column(
         String(255),
         nullable=False,
-        comment="So the agent knows what to call the user"
+        comment="Display name for personalized companion dialogue"
     )
     preferences = Column(
         JSONB,
         nullable=False,
         default=dict,
-        comment="Store things like {'tone': 'friendly', 'verbose': false}."
+        comment="User conversational settings (e.g., {'tone': 'friendly', 'verbose': false})"
     )
     created_at = Column(
         DateTime,
         nullable=False,
-        default=datetime.utcnow,
-        comment="To calculate 'how long have we known each other'"
+        default=_utc_now,
+        comment="Account registration timestamp"
     )
     last_active = Column(
         DateTime,
         nullable=False,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow,
-        comment="To welcome back a user"
+        default=_utc_now,
+        onupdate=_utc_now,
+        comment="Last active interaction timestamp"
     )
     hashed_password = Column(
         Text,
         nullable=True,
-        comment="Stored encrypted password"
+        comment="Bcrypt-hashed user password"
     )
     is_active = Column(
         Boolean,
         nullable=False,
         default=True,
-        comment="Active status flag"
+        comment="Active account status flag"
     )
     role = Column(
         String(50),
         nullable=False,
         default="user",
-        comment="User role (user, admin, etc.)"
+        comment="User access role (e.g., 'user', 'admin')"
     )
-    
-    def __repr__(self):
+
+    def __repr__(self) -> str:
         return f"<User(id={self.id}, name='{self.name}', email='{self.email}', role='{self.role}')>"
-        
-    def to_dict(self):
+
+    def to_dict(self) -> dict:
         return {
             "id": str(self.id),
             "email": self.email,
@@ -84,72 +89,71 @@ class User(Base):
             "is_active": self.is_active,
             "role": self.role
         }
-        
-    def update_last_active(self):
-        self.last_active = datetime.utcnow()
+
+    def update_last_active(self) -> None:
+        """Update last active timestamp to current UTC time."""
+        self.last_active = _utc_now()
 
 
 class ChatHistory(Base):
-    """
-    ChatHistory model for storing individual chat messages.
-    """
+    """Stores individual message turns between user and companion."""
     __tablename__ = "chat_history"
-    
+
     id = Column(
         UUID(as_uuid=True),
         primary_key=True,
         default=uuid.uuid4,
         unique=True,
         nullable=False,
-        comment="Primary Key - UUID"
+        comment="Primary Key - Message UUID"
     )
     user_id = Column(
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
-        comment="User who sent/received this message"
+        comment="Foreign Key referencing users.id"
     )
     session_id = Column(
         UUID(as_uuid=True),
         nullable=False,
         index=True,
-        comment="Groups messages into conversations"
+        comment="Chat conversation session UUID"
     )
     role = Column(
         String(20),
         nullable=False,
-        comment="Either 'user' or 'assistant'"
+        comment="Message role ('user' or 'assistant')"
     )
     content = Column(
         Text,
         nullable=False,
-        comment="The actual message text"
+        comment="Message text content (PII sanitized)"
     )
     timestamp = Column(
         DateTime,
         nullable=False,
-        default=datetime.utcnow,
+        default=_utc_now,
         index=True,
-        comment="When the message was created"
+        comment="Message creation timestamp"
     )
     deep_search = Column(
         Boolean,
         nullable=False,
         default=False,
-        comment="Whether deep search was used"
+        comment="Flag indicating if deep context search was invoked"
     )
-    
+
     __table_args__ = (
-        Index('idx_user_session', 'user_id', 'session_id'),
-        Index('idx_user_timestamp', 'user_id', 'timestamp'),
+        Index("idx_user_session", "user_id", "session_id"),
+        Index("idx_user_timestamp", "user_id", "timestamp"),
     )
-    
-    def __repr__(self):
-        content_preview = self.content[:50] + "..." if len(self.content) > 50 else self.content
-        return f"<ChatHistory(id={self.id}, role='{self.role}', content='{content_preview}')>"
-        
-    def to_dict(self):
+
+    def __repr__(self) -> str:
+        preview = self.content[:50] + "..." if len(self.content) > 50 else self.content
+        return f"<ChatHistory(id={self.id}, role='{self.role}', content='{preview}')>"
+
+    def to_dict(self) -> dict:
         return {
             "id": str(self.id),
             "user_id": str(self.user_id),
@@ -162,11 +166,9 @@ class ChatHistory(Base):
 
 
 class MoodHistory(Base):
-    """
-    MoodHistory model for tracking user mood entries over time.
-    """
+    """Tracks numerical mood ratings (1-10) and sentiment trends over time."""
     __tablename__ = "moodhistory"
-    
+
     id = Column(
         Integer,
         primary_key=True,
@@ -180,48 +182,48 @@ class MoodHistory(Base):
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
-        comment="Foreign Key to users table"
+        comment="Foreign Key referencing users.id"
     )
     mood_score = Column(
         Integer,
         nullable=False,
-        comment="1-10 scale"
+        comment="Numerical wellness score from 1 (distress) to 10 (optimal)"
     )
     sentiment_label = Column(
         String(50),
         nullable=True,
-        comment="Sentiment label like 'Happy', 'Anxious', 'Neutral'"
+        comment="Emotional state label (e.g., 'happy', 'anxious', 'calm')"
     )
     topics = Column(
         JSONB,
         nullable=True,
-        comment="Topics list"
+        comment="Extracted conversation topic tags"
     )
     summary = Column(
         Text,
         nullable=False,
-        comment="Text summary of mood entry"
+        comment="Turn summary or user message excerpt"
     )
     session_id = Column(
         UUID(as_uuid=True),
         nullable=True,
         index=True,
-        comment="Links this mood entry to a specific chat session"
+        comment="Session UUID associated with this mood check-in"
     )
     created_at = Column(
         DateTime,
         nullable=False,
-        default=datetime.utcnow,
+        default=_utc_now,
         index=True,
-        comment="Timestamp"
+        comment="Creation timestamp"
     )
-    
+
     user = relationship("User", backref="mood_entries")
-    
-    def __repr__(self):
+
+    def __repr__(self) -> str:
         return f"<MoodHistory(id={self.id}, user_id={self.user_id}, mood_score={self.mood_score}, sentiment='{self.sentiment_label}')>"
-        
-    def to_dict(self):
+
+    def to_dict(self) -> dict:
         return {
             "id": self.id,
             "user_id": str(self.user_id),
@@ -235,11 +237,9 @@ class MoodHistory(Base):
 
 
 class UserFact(Base):
-    """
-    UserFact model for storing facts about users.
-    """
+    """Stores durable personal facts learned about the user across conversations."""
     __tablename__ = "userfacts"
-    
+
     id = Column(
         Integer,
         primary_key=True,
@@ -253,38 +253,39 @@ class UserFact(Base):
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
-        comment="Foreign Key to users table"
+        comment="Foreign Key referencing users.id"
     )
     fact_text = Column(
         Text,
         nullable=False,
-        comment="Factual text"
+        comment="Personal fact statement (e.g., 'User has a dog named Max')"
     )
     category = Column(
         String(50),
         nullable=False,
         index=True,
-        comment="Category for filtering"
+        comment="Category tag (e.g., 'Personal', 'Work', 'Health', 'Hobbies')"
     )
     source = Column(
         String(50),
         nullable=False,
-        comment="Source of learning"
+        comment="Extraction source (e.g., 'adk_profiler', 'manual_input')"
     )
     created_at = Column(
         DateTime,
         nullable=False,
-        default=datetime.utcnow,
+        default=_utc_now,
         index=True,
-        comment="Creation timestamp"
+        comment="Extraction timestamp"
     )
-    
+
     user = relationship("User", backref="facts")
-    
-    def __repr__(self):
-        return f"<UserFact(id={self.id}, user_id={self.user_id}, category='{self.category}', fact='{self.fact_text[:50]}...')>"
-        
-    def to_dict(self):
+
+    def __repr__(self) -> str:
+        preview = self.fact_text[:50] + "..." if len(self.fact_text) > 50 else self.fact_text
+        return f"<UserFact(id={self.id}, user_id={self.user_id}, category='{self.category}', fact='{preview}')>"
+
+    def to_dict(self) -> dict:
         return {
             "id": self.id,
             "user_id": str(self.user_id),
@@ -296,10 +297,7 @@ class UserFact(Base):
 
 
 class ChatFeedback(Base):
-    """
-    ChatFeedback model for storing user ratings (thumbs up/down) and qualitative feedback.
-    Enables the AgentOps continuous improvement flywheel.
-    """
+    """User ratings and feedback enabling the AgentOps continuous improvement flywheel."""
     __tablename__ = "chat_feedback"
 
     id = Column(
@@ -309,7 +307,7 @@ class ChatFeedback(Base):
         unique=True,
         nullable=False,
         index=True,
-        comment="Primary Key - UUID"
+        comment="Primary Key - Feedback UUID"
     )
     session_id = Column(
         UUID(as_uuid=True),
@@ -321,12 +319,12 @@ class ChatFeedback(Base):
         UUID(as_uuid=True),
         nullable=True,
         index=True,
-        comment="Optional UUID of the specific message being evaluated"
+        comment="Optional Message UUID evaluated"
     )
     rating = Column(
         Integer,
         nullable=False,
-        comment="1 for positive feedback (thumbs up), -1 for negative feedback (thumbs down)"
+        comment="User score: +1 for thumbs up, -1 for thumbs down"
     )
     comment = Column(
         Text,
@@ -336,20 +334,20 @@ class ChatFeedback(Base):
     corrected_mood = Column(
         String(50),
         nullable=True,
-        comment="User-corrected emotional tone label if the model misclassified"
+        comment="User-corrected emotional tone label if misclassified"
     )
     created_at = Column(
         DateTime,
         nullable=False,
-        default=datetime.utcnow,
+        default=_utc_now,
         index=True,
-        comment="Timestamp when feedback was submitted"
+        comment="Submission timestamp"
     )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<ChatFeedback(id={self.id}, session_id={self.session_id}, rating={self.rating})>"
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         return {
             "id": str(self.id),
             "session_id": str(self.session_id),

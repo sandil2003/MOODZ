@@ -1,9 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException
+"""Health check endpoints for application readiness, database, and cache status."""
+
+from typing import Dict, Any
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
+import redis.asyncio as redis
+
 from app.database import get_db
 from app.redis_client import get_redis_client
-import redis.asyncio as redis
 
 router = APIRouter(prefix="/health", tags=["Health"])
 test_router = APIRouter(prefix="/test", tags=["test"])
@@ -14,21 +18,9 @@ TEST_MARKDOWN = """# Markdown Rendering Test
 This is a **test response** to verify that markdown rendering is working correctly in the frontend.
 
 ## Features to Check
-
-### Text Formatting
 - **Bold text** should appear bold
 - *Italic text* should appear italic
 - `Inline code` should have a different background
-
-### Lists
-1. First ordered item
-2. Second ordered item
-3. Third ordered item
-
-Unordered list:
-- Apple
-- Banana
-- Cherry
 
 ### Code Block
 ```python
@@ -37,20 +29,13 @@ def test_function():
 ```
 
 ### Blockquote
-> This is a blockquote.
-> It should have a left border.
-
-## Summary
-If all the above elements render correctly, then **markdown is working**! ✅
-
----
-*Test completed successfully*
+> This is a blockquote. It should have a left border.
 """
 
 
-@router.get("/")
-async def health_check():
-    """Basic health check endpoint."""
+@router.get("/", summary="Basic health status")
+async def health_check() -> Dict[str, Any]:
+    """Basic health check indicating the ASGI service is responsive."""
     return {
         "status": "healthy",
         "service": "MOOD AI Agent",
@@ -58,9 +43,9 @@ async def health_check():
     }
 
 
-@router.get("/db")
-async def health_check_db(db: AsyncSession = Depends(get_db)):
-    """Database health check endpoint."""
+@router.get("/db", summary="PostgreSQL connection health check")
+async def health_check_db(db: AsyncSession = Depends(get_db)) -> Dict[str, Any]:
+    """Execute a simple query to verify PostgreSQL database connectivity."""
     try:
         await db.execute(text("SELECT 1"))
         return {
@@ -69,14 +54,14 @@ async def health_check_db(db: AsyncSession = Depends(get_db)):
         }
     except Exception as e:
         raise HTTPException(
-            status_code=503,
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=f"Database connection failed: {str(e)}"
         )
 
 
-@router.get("/redis")
-async def health_check_redis(redis_client: redis.Redis = Depends(get_redis_client)):
-    """Redis health check endpoint."""
+@router.get("/redis", summary="Redis cache health check")
+async def health_check_redis(redis_client: redis.Redis = Depends(get_redis_client)) -> Dict[str, Any]:
+    """Ping Redis to verify cache connectivity."""
     try:
         await redis_client.ping()
         return {
@@ -85,14 +70,14 @@ async def health_check_redis(redis_client: redis.Redis = Depends(get_redis_clien
         }
     except Exception as e:
         raise HTTPException(
-            status_code=503,
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=f"Redis connection failed: {str(e)}"
         )
 
 
-@test_router.get("/markdown")
-async def test_markdown_rendering():
-    """Test endpoint that returns markdown-formatted text."""
+@test_router.get("/markdown", summary="Markdown test snippet")
+async def test_markdown_rendering() -> Dict[str, Any]:
+    """Test endpoint returning sample Markdown for frontend render validation."""
     return {
         "response": TEST_MARKDOWN,
         "session_id": "test-session",
