@@ -11,11 +11,16 @@
         <!-- Header -->
         <div class="auth-header">
             <a routerLink="/" class="auth-logo">MOODZ</a>
-            <h1 class="auth-title">Welcome back</h1>
-            <p class="auth-subtitle">Sign in to continue your journey</p>
+            @if (!mfaRequired()) {
+                <h1 class="auth-title">Welcome back</h1>
+                <p class="auth-subtitle">Sign in to continue your journey</p>
+            } @else {
+                <h1 class="auth-title">Security Verification</h1>
+                <p class="auth-subtitle">Two-Factor Authentication enabled</p>
+            }
         </div>
 
-        <!-- Error -->
+        <!-- Error Alert -->
         @if (error()) {
         <div class="auth-error" id="login-error">
             <span class="material-symbols-outlined">error</span>
@@ -23,49 +28,93 @@
         </div>
         }
 
-        <!-- Form -->
-        <form class="auth-form" (submit)="$event.preventDefault(); onSubmit()">
-            <div class="form-group">
-                <label class="form-label" for="login-email">Email</label>
-                <div class="input-wrapper">
-                    <span class="input-icon material-symbols-outlined">mail</span>
-                    <input type="email" id="login-email" class="form-input" placeholder="you@example.com"
-                        [ngModel]="email()" (ngModelChange)="email.set($event)" (keypress)="onKeyPress($event)"
-                        name="email" autocomplete="email" />
+        @if (!mfaRequired()) {
+            <!-- Standard Password Form -->
+            <form class="auth-form" (submit)="$event.preventDefault(); onSubmit()">
+                <div class="form-group">
+                    <label class="form-label" for="login-email">Email</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon material-symbols-outlined">mail</span>
+                        <input type="email" id="login-email" class="form-input" placeholder="you@example.com"
+                            [ngModel]="email()" (ngModelChange)="email.set($event)" (keypress)="onKeyPress($event)"
+                            name="email" autocomplete="email" />
+                    </div>
                 </div>
-            </div>
 
-            <div class="form-group">
-                <label class="form-label" for="login-password">Password</label>
-                <div class="input-wrapper">
-                    <span class="input-icon material-symbols-outlined">lock</span>
-                    <input [type]="showPassword() ? 'text' : 'password'" id="login-password" class="form-input"
-                        placeholder="Enter your password" [ngModel]="password()"
-                        (ngModelChange)="password.set($event)" (keypress)="onKeyPress($event)" name="password"
-                        autocomplete="current-password" />
-                    <button type="button" class="toggle-password" (click)="togglePasswordVisibility()">
-                        <span class="material-symbols-outlined">
-                            {{ showPassword() ? 'visibility_off' : 'visibility' }}
+                <div class="form-group">
+                    <label class="form-label" for="login-password">Password</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon material-symbols-outlined">lock</span>
+                        <input [type]="showPassword() ? 'text' : 'password'" id="login-password" class="form-input"
+                            placeholder="Enter your password" [ngModel]="password()"
+                            (ngModelChange)="password.set($event)" (keypress)="onKeyPress($event)" name="password"
+                            autocomplete="current-password" />
+                        <button type="button" class="toggle-password" (click)="togglePasswordVisibility()">
+                            <span class="material-symbols-outlined">
+                                {{ showPassword() ? 'visibility_off' : 'visibility' }}
+                            </span>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="auth-submit" [disabled]="isLoading()" id="login-submit-btn">
+                    @if (isLoading()) {
+                    <span class="spinner"></span>
+                    Signing in...
+                    } @else {
+                    Sign In
+                    <span class="material-symbols-outlined">arrow_forward</span>
+                    }
+                </button>
+            </form>
+
+            <!-- Footer -->
+            <div class="auth-footer">
+                <span>Don't have an account?</span>
+                <a routerLink="/register" class="auth-link">Create one</a>
+            </div>
+        } @else {
+            <!-- MFA Challenge Form -->
+            <form class="auth-form" (submit)="$event.preventDefault(); onVerifyMfa()">
+                <div class="form-group">
+                    <label class="form-label" for="mfa-code">
+                        {{ isBackupCode() ? 'Backup Recovery Code' : '6-Digit Authenticator Code' }}
+                    </label>
+                    <div class="input-wrapper">
+                        <span class="input-icon material-symbols-outlined">
+                            {{ isBackupCode() ? 'key' : 'pin' }}
                         </span>
+                        <input type="text" id="mfa-code" class="form-input"
+                            [placeholder]="isBackupCode() ? 'e.g. A1B2-C3D4' : '123456'"
+                            [ngModel]="mfaCode()" (ngModelChange)="mfaCode.set($event)" (keypress)="onKeyPress($event)"
+                            name="mfaCode" autocomplete="one-time-code" autofocus />
+                    </div>
+                    <p class="auth-subtitle" style="margin-top: 0.5rem; font-size: 0.85rem;">
+                        {{ isBackupCode() ? 'Enter one of your single-use recovery backup codes.' : 'Open Google Authenticator or your authenticator app.' }}
+                    </p>
+                </div>
+
+                <button type="submit" class="auth-submit" [disabled]="isLoading()" id="mfa-submit-btn">
+                    @if (isLoading()) {
+                    <span class="spinner"></span>
+                    Verifying...
+                    } @else {
+                    Verify & Sign In
+                    <span class="material-symbols-outlined">verified_user</span>
+                    }
+                </button>
+
+                <div style="display: flex; justify-content: space-between; margin-top: 1rem; font-size: 0.9rem;">
+                    <button type="button" class="auth-link" style="background: none; border: none; cursor: pointer; padding: 0;"
+                        (click)="toggleBackupCodeMode()">
+                        {{ isBackupCode() ? 'Use Authenticator App' : 'Use a backup code' }}
+                    </button>
+                    <button type="button" class="auth-link" style="background: none; border: none; cursor: pointer; padding: 0; color: #888;"
+                        (click)="cancelMfa()">
+                        Back to login
                     </button>
                 </div>
-            </div>
-
-            <button type="submit" class="auth-submit" [disabled]="isLoading()" id="login-submit-btn">
-                @if (isLoading()) {
-                <span class="spinner"></span>
-                Signing in...
-                } @else {
-                Sign In
-                <span class="material-symbols-outlined">arrow_forward</span>
-                }
-            </button>
-        </form>
-
-        <!-- Footer -->
-        <div class="auth-footer">
-            <span>Don't have an account?</span>
-            <a routerLink="/register" class="auth-link">Create one</a>
-        </div>
+            </form>
+        }
     </div>
 </div>

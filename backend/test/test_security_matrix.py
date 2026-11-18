@@ -861,8 +861,8 @@ def test_sec_20_password_security_and_cryptographic_hashing():
     hash_1 = hash_password(pw)
     hash_2 = hash_password(pw)
 
-    # 1. Bcrypt signature
-    assert hash_1.startswith("$2b$") or hash_1.startswith("$2a$")
+    # 1. Cryptographic signature (Argon2id or bcrypt)
+    assert hash_1.startswith("$argon2id$") or hash_1.startswith("$2b$") or hash_1.startswith("$2a$")
 
     # 2. Unique salts: Identical passwords produce different hashes
     assert hash_1 != hash_2

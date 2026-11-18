@@ -93,10 +93,18 @@ class Settings(BaseSettings):
     # Session Management
     session_ttl_seconds: int = 3600  # 1 hour default
 
-    # Security
+    # Security & Authentication Hardening
     secret_key: str = "your-secret-key-change-in-production"
     algorithm: str = "HS256"
-    access_token_expire_minutes: int = 30
+    access_token_expire_minutes: int = 15  # 15 minutes short-lived access tokens
+    refresh_token_expire_days: int = 7     # 7 days revocable refresh tokens
+    cookie_secure: bool = False            # True in production HTTPS
+    cookie_samesite: str = "lax"           # CSRF defense
+    cookie_domain: Optional[str] = None
+    max_failed_login_attempts: int = 5     # Brute-force threshold
+    lockout_duration_minutes: int = 15     # Account lockout duration
+    session_inactivity_timeout_minutes: int = 30  # 30-min idle timeout
+    hibp_check_enabled: bool = True        # Breached password check
 
 
 # Global settings singleton

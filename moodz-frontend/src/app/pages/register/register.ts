@@ -1,4 +1,4 @@
-import { Component, signal, inject } from '@angular/core';
+import { Component, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -22,6 +22,43 @@ export class RegisterComponent {
     isLoading = signal(false);
     showPassword = signal(false);
 
+    // Dynamic NIST password strength score: 0 to 4
+    passwordStrength = computed(() => {
+        const pw = this.password();
+        if (!pw) return 0;
+        if (pw.length < 10) return 1;
+
+        let score = 1;
+        if (pw.length >= 12) score++;
+        if (pw.length >= 16) score++;
+        if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
+        if (/[0-9]/.test(pw) || /[^A-Za-z0-9]/.test(pw)) score++;
+        return Math.min(score, 4);
+    });
+
+    strengthLabel = computed(() => {
+        const s = this.passwordStrength();
+        switch (s) {
+            case 0: return '';
+            case 1: return 'Weak (needs 10+ characters)';
+            case 2: return 'Fair (longer phrases are safer)';
+            case 3: return 'Good';
+            case 4: return 'Excellent passphrase';
+            default: return '';
+        }
+    });
+
+    strengthColor = computed(() => {
+        const s = this.passwordStrength();
+        switch (s) {
+            case 1: return '#ef4444';
+            case 2: return '#f59e0b';
+            case 3: return '#3b82f6';
+            case 4: return '#10b981';
+            default: return '#e5e7eb';
+        }
+    });
+
     togglePasswordVisibility(): void {
         this.showPassword.update(v => !v);
     }
@@ -37,8 +74,8 @@ export class RegisterComponent {
             return;
         }
 
-        if (passwordVal.length < 8) {
-            this.error.set('Password must be at least 8 characters');
+        if (passwordVal.length < 10) {
+            this.error.set('Password must be at least 10 characters per NIST SP 800-63B standards');
             return;
         }
 

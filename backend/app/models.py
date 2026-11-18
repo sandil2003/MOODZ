@@ -9,8 +9,8 @@ from app.database import Base
 
 
 def _utc_now():
-    """Helper returning current UTC datetime."""
-    return datetime.now(timezone.utc)
+    """Helper returning current UTC datetime as a naive datetime for PostgreSQL TIMESTAMP WITHOUT TIME ZONE."""
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 class User(Base):
@@ -74,6 +74,40 @@ class User(Base):
         default="user",
         comment="User access role (e.g., 'user', 'admin')"
     )
+    mfa_secret = Column(
+        String(64),
+        nullable=True,
+        comment="Base32 TOTP secret key for 2FA"
+    )
+    mfa_enabled = Column(
+        Boolean,
+        nullable=False,
+        default=False,
+        comment="Whether TOTP 2FA is active"
+    )
+    mfa_backup_codes = Column(
+        JSONB,
+        nullable=False,
+        default=list,
+        comment="Hashed single-use recovery backup codes"
+    )
+    failed_login_attempts = Column(
+        Integer,
+        nullable=False,
+        default=0,
+        comment="Consecutive failed authentication attempts"
+    )
+    locked_until = Column(
+        DateTime,
+        nullable=True,
+        comment="Account lockout expiration timestamp"
+    )
+    password_changed_at = Column(
+        DateTime,
+        nullable=False,
+        default=_utc_now,
+        comment="Timestamp of last password change"
+    )
 
     def __repr__(self) -> str:
         return f"<User(id={self.id}, name='{self.name}', email='{self.email}', role='{self.role}')>"
@@ -87,7 +121,8 @@ class User(Base):
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "last_active": self.last_active.isoformat() if self.last_active else None,
             "is_active": self.is_active,
-            "role": self.role
+            "role": self.role,
+            "mfa_enabled": self.mfa_enabled
         }
 
     def update_last_active(self) -> None:
@@ -356,4 +391,76 @@ class ChatFeedback(Base):
             "comment": self.comment,
             "corrected_mood": self.corrected_mood,
             "created_at": self.created_at.isoformat() if self.created_at else None
+        }
+
+
+class UserSession(Base):
+    """Tracks active sessions, device metadata, and refresh token families for revocation."""
+    __tablename__ = "user_sessions"
+
+    id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+        unique=True,
+        nullable=False,
+        index=True,
+        comment="Primary Key - Session UUID"
+    )
+    user_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+        comment="User owning this session"
+    )
+    refresh_token_hash = Column(
+        String(128),
+        nullable=False,
+        index=True,
+        comment="SHA-256 hash of active refresh token"
+    )
+    family_id = Column(
+        UUID(as_uuid=True),
+        nullable=False,
+        index=True,
+        comment="Token family identifier for reuse detection"
+    )
+    ip_address = Column(
+        String(45),
+        nullable=True,
+        comment="Client IP address"
+    )
+    user_agent = Column(
+        Text,
+        nullable=True,
+        comment="Client User-Agent header"
+    )
+    is_revoked = Column(
+        Boolean,
+        nullable=False,
+        default=False,
+        comment="Whether session has been explicitly revoked"
+    )
+    created_at = Column(
+        DateTime,
+        nullable=False,
+        default=_utc_now,
+        comment="Session creation timestamp"
+    )
+    expires_at = Column(
+        DateTime,
+        nullable=False,
+        comment="Refresh token expiration timestamp"
+    )
+
+    def to_dict(self) -> dict:
+        return {
+            "id": str(self.id),
+            "user_id": str(self.user_id),
+            "ip_address": self.ip_address,
+            "user_agent": self.user_agent,
+            "is_revoked": self.is_revoked,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "expires_at": self.expires_at.isoformat() if self.expires_at else None,
         }

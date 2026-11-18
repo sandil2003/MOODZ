@@ -24,9 +24,15 @@ pinecone
 httpx
 python-multipart
 
-# Authentication
+# Authentication & Security Hardening
 python-jose[cryptography]
 bcrypt
+argon2-cffi>=23.1.0
+pwdlib[argon2]>=0.2.0
+slowapi>=0.1.9
+pyotp>=2.9.0
+qrcode>=7.4.2
+aiosqlite>=0.20.0
 
 
 # LangChain and Embeddings (Python 3.14 compatible)

@@ -3,6 +3,7 @@ import { Router, NavigationEnd, RouterLink, RouterLinkActive } from '@angular/ro
 import { CommonModule } from '@angular/common';
 import { filter } from 'rxjs/operators';
 import { ThemeService } from '../../services/theme.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-navbar',
@@ -18,10 +19,15 @@ export class Navbar implements OnInit {
   isOnMoodAgent = signal<boolean>(false);
   isOnAboutUs = signal<boolean>(false);
   mobileMenuOpen = signal<boolean>(false);
+  userDropdownOpen = signal<boolean>(false);
 
   private fullTexts = ['Mood Dashboard', 'Toggle Dark Mode', 'Home'];
   private typingIntervals: any[] = [];
   private router = inject(Router);
+  public authService = inject(AuthService);
+
+  currentUser = this.authService.currentUser;
+  isAuthenticated = this.authService.isAuthenticated;
 
   constructor(public themeService: ThemeService) { }
 
@@ -34,6 +40,8 @@ export class Navbar implements OnInit {
       filter(event => event instanceof NavigationEnd)
     ).subscribe((event: any) => {
       this.checkRoute(event.urlAfterRedirects);
+      this.userDropdownOpen.set(false);
+      this.mobileMenuOpen.set(false);
     });
   }
 
@@ -93,5 +101,18 @@ export class Navbar implements OnInit {
 
   closeMobileMenu(): void {
     this.mobileMenuOpen.set(false);
+  }
+
+  toggleUserDropdown(): void {
+    this.userDropdownOpen.update(v => !v);
+  }
+
+  closeUserDropdown(): void {
+    this.userDropdownOpen.set(false);
+  }
+
+  async logout(): Promise<void> {
+    this.closeUserDropdown();
+    await this.authService.logout();
   }
 }

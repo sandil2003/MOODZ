@@ -150,6 +150,7 @@ class UserResponse(UserBase):
     created_at: datetime
     last_active: datetime
     is_active: bool
+    mfa_enabled: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -162,9 +163,50 @@ class UserLogin(BaseModel):
 
 class AuthResponse(BaseModel):
     """Authentication response returning bearer token and user profile."""
-    access_token: str
+    access_token: Optional[str] = None
     token_type: str = "bearer"
-    user: UserResponse
+    user: Optional[UserResponse] = None
+    mfa_required: bool = False
+    mfa_ticket: Optional[str] = None
+    message: Optional[str] = None
+
+
+class MfaVerifyRequest(BaseModel):
+    """Payload for completing TOTP or backup code verification."""
+    mfa_ticket: str
+    code: str = Field(..., min_length=6, max_length=12, description="6-digit TOTP code or backup code")
+
+
+class MfaSetupResponse(BaseModel):
+    """Provisioning details for setting up TOTP MFA."""
+    secret: str
+    provisioning_uri: str
+    qr_code_data_uri: str
+
+
+class MfaActivateRequest(BaseModel):
+    """Request to confirm and activate TOTP with initial code."""
+    secret: str
+    code: str = Field(..., min_length=6, max_length=8)
+
+
+class MfaActivateResponse(BaseModel):
+    """Activation result including single-use backup recovery codes."""
+    message: str
+    mfa_enabled: bool
+    backup_codes: List[str]
+
+
+class SessionResponse(BaseModel):
+    """Active user session representation for device inspection and remote logout."""
+    id: UUID
+    ip_address: Optional[str] = None
+    user_agent: Optional[str] = None
+    is_current: bool = False
+    created_at: datetime
+    expires_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ============================================================================

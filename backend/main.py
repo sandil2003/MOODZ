@@ -6,6 +6,9 @@ from app.database import init_db, close_db
 from app.redis_client import close_redis
 from app.routes import health, chat, history, mood, auth
 from app.core.telemetry import setup_telemetry
+from app.core.rate_limiter import limiter
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
 
 @asynccontextmanager
@@ -45,6 +48,10 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc",
 )
+
+# Register SlowAPI rate limiter
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Configure CORS
 app.add_middleware(
