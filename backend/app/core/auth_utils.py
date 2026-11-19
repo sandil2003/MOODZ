@@ -142,11 +142,17 @@ def clear_auth_cookies(response: Response) -> None:
         key="access_token",
         path="/",
         domain=settings.cookie_domain,
+        httponly=True,
+        secure=settings.cookie_secure,
+        samesite=settings.cookie_samesite,
     )
     response.delete_cookie(
         key="refresh_token",
         path="/api/auth",
         domain=settings.cookie_domain,
+        httponly=True,
+        secure=settings.cookie_secure,
+        samesite=settings.cookie_samesite,
     )
 
 

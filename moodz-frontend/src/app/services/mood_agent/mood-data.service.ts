@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { environment } from '../../../environments/environment';
 
 export interface MoodHistoryEntry {
     id: number;
@@ -34,7 +35,7 @@ export interface MoodStats {
     providedIn: 'root'
 })
 export class MoodDataService {
-    private readonly API_BASE_URL = 'http://localhost:8000';
+    private readonly API_BASE_URL = environment.apiBaseUrl;
 
     async getMoodHistory(
         userId: string,

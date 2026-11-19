@@ -1,0 +1,281 @@
+<div class="security-page">
+    <div class="security-bg">
+        <div class="bg-blob bg-blob-1"></div>
+        <div class="bg-blob bg-blob-2"></div>
+    </div>
+
+    <div class="security-container">
+        <!-- Back & Page Header -->
+        <div class="page-top">
+            <a routerLink="/" class="back-link">
+                <span class="material-symbols-outlined">arrow_back</span>
+                Back to Home
+            </a>
+            <div class="header-row">
+                <div>
+                    <h1 class="page-title">Security &amp; 2FA Settings</h1>
+                    <p class="page-subtitle">Protect your wellness reflections and personal chat history with multi-factor security.</p>
+                </div>
+                <div class="status-pill" [class.active]="currentUser()?.mfa_enabled">
+                    <span class="material-symbols-outlined">
+                        {{ currentUser()?.mfa_enabled ? 'verified_user' : 'gpp_maybe' }}
+                    </span>
+                    {{ currentUser()?.mfa_enabled ? '2FA Enabled' : '2FA Not Enabled' }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Feedback Alerts -->
+        @if (error()) {
+        <div class="alert alert-error" role="alert">
+            <span class="material-symbols-outlined">error</span>
+            <span>{{ error() }}</span>
+        </div>
+        }
+
+        @if (successMessage()) {
+        <div class="alert alert-success" role="status">
+            <span class="material-symbols-outlined">check_circle</span>
+            <span>{{ successMessage() }}</span>
+        </div>
+        }
+
+        <!-- 1. Recovery Backup Codes Card (Shown immediately after activating 2FA) -->
+        @if (backupCodes(); as codes) {
+        <section class="security-card backup-card">
+            <div class="card-header">
+                <div class="card-icon icon-amber">
+                    <span class="material-symbols-outlined">key</span>
+                </div>
+                <div>
+                    <h2 class="card-title">Save Your Recovery Backup Codes</h2>
+                    <p class="card-desc">
+                        Store these 10 single-use codes in a safe place. You will only see them <strong>once</strong>.
+                        If you lose access to your authenticator app, each code lets you sign in one time.
+                    </p>
+                </div>
+            </div>
+
+            <div class="backup-grid">
+                @for (code of codes; track code) {
+                <div class="backup-code-item">{{ code }}</div>
+                }
+            </div>
+
+            <div class="backup-actions">
+                <button type="button" class="btn btn-secondary" (click)="copyAllBackupCodes()">
+                    <span class="material-symbols-outlined">{{ copiedBackupCodes() ? 'check' : 'content_copy' }}</span>
+                    {{ copiedBackupCodes() ? 'Copied to Clipboard' : 'Copy All Codes' }}
+                </button>
+                <button type="button" class="btn btn-primary" (click)="downloadBackupCodes()">
+                    <span class="material-symbols-outlined">download</span>
+                    Download .txt
+                </button>
+                <button type="button" class="btn btn-ghost" (click)="dismissBackupCodes()">
+                    I've Saved My Codes
+                </button>
+            </div>
+        </section>
+        }
+
+        <!-- 2. Two-Factor Authentication (TOTP) Card -->
+        <section class="security-card">
+            <div class="card-header-between">
+                <div class="card-header">
+                    <div class="card-icon" [class.icon-green]="currentUser()?.mfa_enabled" [class.icon-blue]="!currentUser()?.mfa_enabled">
+                        <span class="material-symbols-outlined">phonelink_lock</span>
+                    </div>
+                    <div>
+                        <h2 class="card-title">Authenticator App (TOTP 2FA)</h2>
+                        <p class="card-desc">
+                            Use Google Authenticator, Authy, 1Password, or Apple Passwords to generate a 6-digit verification code on login.
+                        </p>
+                    </div>
+                </div>
+
+                @if (!currentUser()?.mfa_enabled && !setupData()) {
+                <button type="button" class="btn btn-primary" [disabled]="isSettingUp()" (click)="startMfaSetup()" id="enable-2fa-btn">
+                    @if (isSettingUp()) {
+                    <span class="spinner"></span>
+                    Preparing...
+                    } @else {
+                    <span class="material-symbols-outlined">add_moderator</span>
+                    Enable 2FA
+                    }
+                </button>
+                }
+            </div>
+
+            <!-- State A: Setup Wizard (QR + 6-digit confirmation) -->
+            @if (setupData(); as setup) {
+            <div class="mfa-setup-wizard">
+                <div class="wizard-steps">
+                    <div class="qr-column">
+                        <div class="step-badge">Step 1</div>
+                        <p class="step-text">Scan this QR code with your authenticator app:</p>
+                        <div class="qr-frame">
+                            <img [src]="setup.qr_code_data_uri" alt="2FA QR Code" class="qr-image" />
+                        </div>
+
+                        <button type="button" class="manual-toggle" (click)="showManualSecret.set(!showManualSecret())">
+                            {{ showManualSecret() ? 'Hide manual setup key' : "Can't scan? Enter key manually" }}
+                        </button>
+
+                        @if (showManualSecret()) {
+                        <div class="manual-secret-box">
+                            <code class="secret-text">{{ setup.secret }}</code>
+                            <button type="button" class="copy-icon-btn" (click)="copySecret()" title="Copy secret key">
+                                <span class="material-symbols-outlined">{{ copiedSecret() ? 'check' : 'content_copy' }}</span>
+                            </button>
+                        </div>
+                        }
+                    </div>
+
+                    <div class="verify-column">
+                        <div class="step-badge">Step 2</div>
+                        <p class="step-text">Enter the 6-digit code shown in your authenticator app to confirm:</p>
+
+                        <form class="verify-form" (submit)="$event.preventDefault(); confirmMfaActivation()">
+                            <label class="form-label" for="totp-setup-code">Verification Code</label>
+                            <input
+                                type="text"
+                                id="totp-setup-code"
+                                name="totpSetupCode"
+                                class="code-input"
+                                placeholder="000000"
+                                maxlength="6"
+                                inputmode="numeric"
+                                autocomplete="one-time-code"
+                                [ngModel]="verificationCode()"
+                                (ngModelChange)="verificationCode.set($event)"
+                                required />
+
+                            <div class="verify-actions">
+                                <button type="submit" class="btn btn-primary" [disabled]="isActivating()" id="confirm-2fa-btn">
+                                    @if (isActivating()) {
+                                    <span class="spinner"></span>
+                                    Verifying...
+                                    } @else {
+                                    Verify &amp; Activate 2FA
+                                    }
+                                </button>
+                                <button type="button" class="btn btn-ghost" (click)="cancelMfaSetup()">
+                                    Cancel
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            }
+
+            <!-- State B: Currently Active -->
+            @if (currentUser()?.mfa_enabled) {
+            <div class="mfa-active-box">
+                <div class="active-details">
+                    <span class="material-symbols-outlined active-check">check_circle</span>
+                    <div>
+                        <div class="active-heading">Two-Factor Authentication is protecting your account</div>
+                        <div class="active-sub">You will be asked for a 6-digit code (or single-use backup code) when signing in.</div>
+                    </div>
+                </div>
+
+                @if (!confirmDisable()) {
+                <button type="button" class="btn btn-danger-outline" (click)="requestDisableMfa()" id="disable-2fa-btn">
+                    Disable 2FA
+                </button>
+                } @else {
+                <div class="inline-confirm">
+                    <span class="confirm-text">Are you sure? Your account will rely on password only.</span>
+                    <div class="confirm-btns">
+                        <button type="button" class="btn btn-danger" [disabled]="isDisabling()" (click)="confirmDisableMfa()" id="confirm-disable-2fa-btn">
+                            {{ isDisabling() ? 'Disabling...' : 'Yes, Disable 2FA' }}
+                        </button>
+                        <button type="button" class="btn btn-ghost" (click)="cancelDisableMfa()">Cancel</button>
+                    </div>
+                </div>
+                }
+            </div>
+            }
+        </section>
+
+        <!-- 3. Passkeys (FIDO2 / WebAuthn) Phase 2 Roadmap Notice -->
+        <section class="security-card card-muted">
+            <div class="card-header-between">
+                <div class="card-header">
+                    <div class="card-icon icon-purple">
+                        <span class="material-symbols-outlined">fingerprint</span>
+                    </div>
+                    <div>
+                        <div class="title-with-tag">
+                            <h2 class="card-title">Passkeys (FIDO2 / WebAuthn)</h2>
+                            <span class="phase-tag">Phase 2 Roadmap</span>
+                        </div>
+                        <p class="card-desc">
+                            Phishing-resistant biometric sign-in using Face ID, Touch ID, Windows Hello, or hardware security keys.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Active Sessions & Devices Card -->
+        <section class="security-card">
+            <div class="card-header-between">
+                <div class="card-header">
+                    <div class="card-icon icon-slate">
+                        <span class="material-symbols-outlined">devices</span>
+                    </div>
+                    <div>
+                        <h2 class="card-title">Active Sessions &amp; Devices</h2>
+                        <p class="card-desc">
+                            Inspect browsers currently signed in to your MOODZ account using Refresh Token Rotation.
+                        </p>
+                    </div>
+                </div>
+
+                @if (!confirmLogoutAll()) {
+                <button type="button" class="btn btn-danger-outline" (click)="confirmLogoutAll.set(true)" [disabled]="sessions().length === 0">
+                    Sign Out All Devices
+                </button>
+                } @else {
+                <div class="confirm-btns">
+                    <button type="button" class="btn btn-danger" [disabled]="isLoggingOutAll()" (click)="logoutAllDevices()">
+                        {{ isLoggingOutAll() ? 'Signing out...' : 'Confirm Sign Out All' }}
+                    </button>
+                    <button type="button" class="btn btn-ghost" (click)="confirmLogoutAll.set(false)">Cancel</button>
+                </div>
+                }
+            </div>
+
+            @if (loadingSessions()) {
+            <div class="sessions-loading">Loading active sessions...</div>
+            } @else if (sessions().length === 0) {
+            <div class="sessions-empty">No active device sessions found.</div>
+            } @else {
+            <div class="sessions-list">
+                @for (session of sessions(); track session.id) {
+                <div class="session-item" [class.session-current]="session.is_current">
+                    <div class="session-icon">
+                        <span class="material-symbols-outlined">
+                            {{ (session.user_agent || '').includes('Mobile') || (session.user_agent || '').includes('iPhone') || (session.user_agent || '').includes('Android') ? 'smartphone' : 'laptop_mac' }}
+                        </span>
+                    </div>
+                    <div class="session-info">
+                        <div class="session-device">
+                            {{ formatUserAgent(session.user_agent) }}
+                            @if (session.is_current) {
+                            <span class="current-badge">Current Device</span>
+                            }
+                        </div>
+                        <div class="session-meta">
+                            IP: {{ session.ip_address || 'Unknown' }} &middot; Signed in: {{ formatDate(session.created_at) }}
+                        </div>
+                    </div>
+                </div>
+                }
+            </div>
+            }
+        </section>
+    </div>
+</div>

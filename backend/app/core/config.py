@@ -4,6 +4,7 @@ Loads settings from environment variables and .env files with sensible defaults.
 """
 
 from typing import List, Optional, Any
+from urllib.parse import quote_plus
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -43,24 +44,34 @@ class Settings(BaseSettings):
     postgres_db: str = "moodz_db"
     postgres_host: str = "localhost"
     postgres_port: int = 5432
+    postgres_ssl: bool = False
 
     @property
     def database_url(self) -> str:
-        """Construct async PostgreSQL database URL."""
-        return (
-            f"postgresql+asyncpg://{self.postgres_user}:{self.postgres_password}"
+        """Construct async PostgreSQL database URL (auto-enables SSL for Azure PostgreSQL)."""
+        user = quote_plus(self.postgres_user)
+        password = quote_plus(self.postgres_password)
+        url = (
+            f"postgresql+asyncpg://{user}:{password}"
             f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
         )
+        if self.postgres_ssl or self.postgres_host.endswith(".postgres.database.azure.com"):
+            url += "?ssl=require"
+        return url
 
     # Redis Configuration
     redis_host: str = "localhost"
     redis_port: int = 6379
     redis_db: int = 0
+    redis_password: Optional[str] = None
+    redis_ssl: bool = False
 
     @property
     def redis_url(self) -> str:
-        """Construct Redis URL."""
-        return f"redis://{self.redis_host}:{self.redis_port}/{self.redis_db}"
+        """Construct Redis URL with optional password and TLS support."""
+        scheme = "rediss" if self.redis_ssl else "redis"
+        auth = f":{quote_plus(self.redis_password)}@" if self.redis_password else ""
+        return f"{scheme}://{auth}{self.redis_host}:{self.redis_port}/{self.redis_db}"
 
     # AI Provider Keys & Models
     openai_api_key: Optional[str] = None

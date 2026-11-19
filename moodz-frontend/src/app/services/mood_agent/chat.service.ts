@@ -1,6 +1,7 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { v4 as uuidv4 } from 'uuid';
 import { AuthService } from '../auth.service';
+import { environment } from '../../../environments/environment';
 
 export interface ChatMessage {
     id: string;
@@ -53,7 +54,7 @@ export interface ChatSessionDetail {
 })
 export class ChatService {
     // API Configuration
-    private readonly API_BASE_URL = 'http://localhost:8000';
+    private readonly API_BASE_URL = environment.apiBaseUrl;
     private readonly STREAM_ENDPOINT = '/api/moods/chat/stream';
     private readonly DEMO_USER_ID = 'c47209cb-b2f1-4c76-a7ae-19805f3926b4';
 
@@ -86,7 +87,7 @@ export class ChatService {
                 return;
             }
 
-            const wsUrl = `ws://localhost:8000/api/moods/chat/ws/status/${this.sessionId}`;
+            const wsUrl = `${environment.wsBaseUrl}/api/moods/chat/ws/status/${this.sessionId}`;
             console.log('🔌 Connecting to WebSocket:', wsUrl);
             this.statusWebSocket = new WebSocket(wsUrl);
 

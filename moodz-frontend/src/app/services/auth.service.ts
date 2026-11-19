@@ -2,6 +2,7 @@ import { Injectable, signal, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface AuthUser {
     id: string;
@@ -32,11 +33,20 @@ export interface MfaActivateResult {
     backup_codes: string[];
 }
 
+export interface SessionInfo {
+    id: string;
+    ip_address?: string;
+    user_agent?: string;
+    is_current: boolean;
+    created_at: string;
+    expires_at: string;
+}
+
 @Injectable({
     providedIn: 'root'
 })
 export class AuthService {
-    private readonly API_BASE_URL = 'http://localhost:8000';
+    private readonly API_BASE_URL = environment.apiBaseUrl;
     private readonly USER_KEY = 'moodz_user_profile';
     private http = inject(HttpClient);
     private router = inject(Router);
@@ -192,8 +202,9 @@ export class AuthService {
         }
 
         const result: MfaActivateResult = await response.json();
-        if (this.currentUser()) {
-            this.currentUser.update(u => u ? { ...u, mfa_enabled: true } : null);
+        const user = this.currentUser();
+        if (user) {
+            this.setSessionUser({ ...user, mfa_enabled: true });
         }
         return result;
     }
@@ -213,9 +224,28 @@ export class AuthService {
             throw new Error(err.detail || 'Failed to disable MFA');
         }
 
-        if (this.currentUser()) {
-            this.currentUser.update(u => u ? { ...u, mfa_enabled: false } : null);
+        const user = this.currentUser();
+        if (user) {
+            this.setSessionUser({ ...user, mfa_enabled: false });
         }
+    }
+
+    /**
+     * Retrieve active authenticated sessions for device management
+     */
+    async getActiveSessions(): Promise<SessionInfo[]> {
+        const response = await fetch(`${this.API_BASE_URL}/api/auth/sessions`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+        });
+
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({}));
+            throw new Error(err.detail || 'Failed to load active sessions');
+        }
+
+        return response.json();
     }
 
     /**
