@@ -1,5 +1,7 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, inject } from '@angular/core';
 import { v4 as uuidv4 } from 'uuid';
+import { AuthService } from '../auth.service';
+import { environment } from '../../../environments/environment';
 
 export interface ChatMessage {
     id: string;
@@ -8,6 +10,7 @@ export interface ChatMessage {
     timestamp: Date;
     isStreaming?: boolean;
     isCrisis?: boolean;
+    feedback?: number;
 }
 
 export interface ChatRequest {
@@ -51,16 +54,13 @@ export interface ChatSessionDetail {
 })
 export class ChatService {
     // API Configuration
-    private readonly API_BASE_URL = 'http://localhost:8000';
+    private readonly API_BASE_URL = environment.apiBaseUrl;
     private readonly STREAM_ENDPOINT = '/api/moods/chat/stream';
-
-    // IMPORTANT: Using the demo user that exists in the database
-    // This is the user_id created by create_demo_user.py
-    // For production, replace this with actual user authentication
     private readonly DEMO_USER_ID = 'c47209cb-b2f1-4c76-a7ae-19805f3926b4';
 
+    private authService = inject(AuthService, { optional: true });
+
     // User and Session IDs
-    private userId: string = this.DEMO_USER_ID;
     private sessionId: string = uuidv4();
 
     // Signals for reactive state management
@@ -87,7 +87,7 @@ export class ChatService {
                 return;
             }
 
-            const wsUrl = `ws://localhost:8000/api/moods/chat/ws/status/${this.sessionId}`;
+            const wsUrl = `${environment.wsBaseUrl}/api/moods/chat/ws/status/${this.sessionId}`;
             console.log('🔌 Connecting to WebSocket:', wsUrl);
             this.statusWebSocket = new WebSocket(wsUrl);
 
@@ -212,7 +212,7 @@ export class ChatService {
      */
     private async streamResponse(message: string, assistantMessageId: string, deepSearch: boolean = false): Promise<void> {
         const requestBody: ChatRequest = {
-            user_id: this.userId,
+            user_id: this.getUserId(),
             session_id: this.sessionId,
             message,
             deep_search: deepSearch
@@ -223,6 +223,7 @@ export class ChatService {
             headers: {
                 'Content-Type': 'application/json',
             },
+            credentials: 'include',
             body: JSON.stringify(requestBody)
         });
 
@@ -318,10 +319,11 @@ export class ChatService {
     }
 
     /**
-     * Get current user ID (for debugging)
+     * Get current user ID (dynamic authenticated user or fallback)
      */
     getUserId(): string {
-        return this.userId;
+        const authUser = this.authService?.currentUser();
+        return authUser?.id || this.DEMO_USER_ID;
     }
 
     /**
@@ -337,12 +339,13 @@ export class ChatService {
     async loadChatSessions(): Promise<void> {
         try {
             const response = await fetch(
-                `${this.API_BASE_URL}/api/chat-history/sessions?user_id=${this.userId}`,
+                `${this.API_BASE_URL}/api/chat-history/sessions?user_id=${this.getUserId()}`,
                 {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json'
-                    }
+                    },
+                    credentials: 'include'
                 }
             );
 
@@ -365,12 +368,13 @@ export class ChatService {
     async loadChatSession(sessionId: string): Promise<void> {
         try {
             const response = await fetch(
-                `${this.API_BASE_URL}/api/chat-history/sessions/${sessionId}?user_id=${this.userId}`,
+                `${this.API_BASE_URL}/api/chat-history/sessions/${sessionId}?user_id=${this.getUserId()}`,
                 {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json'
-                    }
+                    },
+                    credentials: 'include'
                 }
             );
 
@@ -404,5 +408,38 @@ export class ChatService {
         this.error.set(null);
         this.currentStreamingMessage.set('');
         console.log('✨ Started new chat session:', this.sessionId);
+    }
+
+    /**
+     * Submit user feedback (1 for thumbs up, -1 for thumbs down) for AgentOps
+     */
+    async submitFeedback(messageId: string, rating: number, comment?: string): Promise<boolean> {
+        try {
+            const response = await fetch(`${this.API_BASE_URL}/api/moods/chat/feedback`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({
+                    session_id: this.sessionId,
+                    message_id: messageId.includes('-') && messageId.length === 36 ? messageId : null,
+                    rating,
+                    comment: comment || null
+                })
+            });
+
+            if (!response.ok) {
+                console.warn('Feedback API response not OK:', response.status);
+                return false;
+            }
+
+            // Update local feedback flag for this message
+            this.messages.update(msgs =>
+                msgs.map(m => m.id === messageId ? { ...m, feedback: rating } : m)
+            );
+            return true;
+        } catch (error) {
+            console.error('Error submitting feedback:', error);
+            return false;
+        }
     }
 }

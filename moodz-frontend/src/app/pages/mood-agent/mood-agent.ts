@@ -130,4 +130,14 @@ export class MoodAgent {
   trackBySessionId(index: number, session: any): string {
     return session.session_id;
   }
+
+  /**
+   * Submit thumbs up / down feedback for an assistant response
+   */
+  async submitFeedback(message: ChatMessage, rating: number): Promise<void> {
+    if (message.feedback === rating) {
+      return; // already selected
+    }
+    await this.chatService.submitFeedback(message.id, rating);
+  }
 }

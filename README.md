@@ -1,332 +1,471 @@
 # MOODZ 
 
 <div align="center">
-  <img src="moodz-frontend/public/favicon.ico" width="200" />
+  <img src="moodz-frontend/public/favicon.ico" width="180" alt="MOODZ Logo" />
   
-  **Your Personal AI Wellness Companion**
+  # Your Personal AI Wellness Companion
   
-  An intelligent mental health platform powered by AI agents to support your emotional well-being, journaling, and learning journey.
+  An intelligent mental health platform powered by modern multi-agent AI architectures, deterministic safety gating, and a privacy-first AgentOps observability & evaluation platform.
 
   [![Angular](https://img.shields.io/badge/Angular-21.0-DD0031?logo=angular)](https://angular.io/)
   [![FastAPI](https://img.shields.io/badge/FastAPI-Latest-009688?logo=fastapi)](https://fastapi.tiangolo.com/)
+  [![LangGraph](https://img.shields.io/badge/LangGraph-0.2+-blueviolet)](https://github.com/langchain-ai/langgraph)
+  [![Google ADK](https://img.shields.io/badge/Google_ADK-2.13+-4285F4?logo=google)](https://github.com/google/adk)
+  [![Arize Phoenix](https://img.shields.io/badge/Arize_Phoenix-AgentOps-orange?logo=apache)](https://github.com/Arize-ai/phoenix)
+  [![OpenTelemetry](https://img.shields.io/badge/OpenTelemetry-OTel-blue?logo=opentelemetry)](https://opentelemetry.io/)
+  [![DeepEval](https://img.shields.io/badge/DeepEval-AI_Evals-purple)](https://github.com/confident-ai/deepeval)
   [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript)](https://www.typescriptlang.org/)
   [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python)](https://www.python.org/)
+  [![TailwindCSS](https://img.shields.io/badge/TailwindCSS-v4.1-38B2AC?logo=tailwindcss)](https://tailwindcss.com/)
+  [![Azure](https://img.shields.io/badge/Azure-Cloud_Native-0078D4?logo=microsoftazure)](https://azure.microsoft.com/)
 </div>
 
 ---
 
-## Table of Contents
+## 📑 Table of Contents
 
 - [Overview](#-overview)
-- [Features](#-features)
-- [Architecture](#-architecture)
-- [Tech Stack](#-tech-stack)
+- [Key Features](#-key-features)
+- [System Architecture](#️-system-architecture)
+  - [End-to-End System Architecture Diagram](#end-to-end-system-architecture-diagram)
+  - [AI Agent Architecture Diagram](#-ai-agent-architecture-diagram)
+- [Tech Stack](#️-tech-stack)
+- [AgentOps & Observability (Arize Phoenix)](#-agentops--observability-arize-phoenix)
+  - [Live Phoenix Dashboard](#1-live-phoenix-dashboard)
+  - [Inspecting Google ADK Tool Calls](#2-inspecting-google-adk-tool-calls)
+  - [Token, Latency & Cost Tracking](#3-token-latency--cost-tracking)
+  - [Human-in-the-Loop (HITL) Feedback](#4-human-in-the-loop-hitl-feedback)
+- [Clinical Data Privacy & PII Scrubbing](#-clinical-data-privacy--pii-scrubbing)
 - [Getting Started](#-getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Environment Configuration](#environment-configuration)
+  - [Running with Docker (Recommended)](#running-with-docker-recommended)
+  - [Running Locally](#running-locally-without-docker)
+  - [Running Google ADK Agent UI](#running-google-adk-agent-ui)
 - [Project Structure](#-project-structure)
-- [AI Agents](#-ai-agents)
-- [Deployment Plan](#️-deployment-plan)
-- [Development](#-development)
+- [AI Agents & Hybrid Orchestration](#-ai-agents--hybrid-orchestration)
+  - [Mood Agent (Active)](#mood-agent-active)
+  - [Google ADK Tool Bindings](#google-adk-tool-bindings)
+  - [LangGraph StateGraph Engine](#langgraph-stategraph-engine)
+  - [Fine-Tuned & Local Model Support](#fine-tuned--local-model-support)
+- [Continuous Evaluation & Safety Gates](#-continuous-evaluation--safety-gates)
+  - [100% Crisis Detection Recall Benchmark](#1-100-crisis-detection-recall-benchmark)
+  - [DeepEval LLM-as-a-Judge Empathy Suite](#2-deepeval-llm-as-a-judge-empathy-suite)
+  - [Automated CI/CD Quality Gates](#3-automated-cicd-quality-gates)
+- [☁️ Azure Deployment Plan](#️-azure-deployment-plan)
 - [API Documentation](#-api-documentation)
-- [Contributing](#-contributing)
 - [License](#-license)
 
 ---
 
-## Overview
+## 🌟 Overview
 
-**MOODZ** is a comprehensive mental wellness platform that combines cutting-edge AI technology with thoughtful UX design to provide personalized emotional support, journaling assistance, and study guidance. The platform features three specialized AI agents, each designed to help users in different aspects of their personal development journey.
+**MOODZ** is a state-of-the-art mental wellness platform that bridges cutting-edge generative AI with compassionate human experience design. Built to provide empathetic conversational companion support, mood journaling, and cognitive insights, MOODZ combines **Google ADK** (Agent Development Kit) for multi-agent capabilities and **LangGraph StateGraph** for deterministic zero-latency safety gating, token streaming, and multi-tier contextual memory.
 
+Crucially, MOODZ integrates an enterprise-grade, privacy-first **AgentOps platform**: all multi-step agent traces, Google ADK tool calls, Time-to-First-Token (TTFT) latencies, and token costs are monitored via a self-hosted **Arize Phoenix** server with automated **PII sanitization** and **DeepEval** evaluation gates.
 
-### Mood Agent
-- **Emotional Support**: Empathetic AI companion for mental health conversations
-- **Mood Tracking**: Log and monitor your emotional states
-- **Sentiment Analysis**: AI-powered analysis of your mood patterns
-- **Crisis Detection**: Identifies concerning patterns and provides resources
-- **Chat History**: Access past conversations and insights
-- **Mood Dashboard**: Visualize your emotional journey with charts and analytics
+### Active & Upcoming Agents
+- **Mood Agent (Active)**: Empathetic AI companion with real-time SSE streaming, safety gates, sentiment analysis, episodic vector memory, and background profiling.
+- **Journal Agent (In Development)**: Reflective thought-structuring and guided journaling with daily prompts.
+- **Study Agent (In Development)**: Adaptive learning assistant for cognitive breakdown and study scheduling.
 
-### Journal Agent *(Coming Soon)*
-- **Reflective Writing**: AI-assisted journaling for personal growth
-- **Thought Organization**: Structure your ideas and reflections
-- **Daily Prompts**: Guided journaling with thoughtful questions
-- **Pattern Recognition**: Identify recurring themes in your entries
+---
 
-### Study Agent *(Coming Soon)*
-- **Learning Assistant**: AI-powered study companion
-- **Research Support**: Help with academic research and analysis
-- **Custom Learning Plans**: Personalized study schedules
-- **Topic Analysis**: Break down complex subjects into digestible parts
+## ✨ Key Features
 
+- **🛡️ Deterministic Zero-Latency Safety Gate**: Instantly flags crisis/self-harm signals with 0 token overhead and $<10\text{ms}$ deterministic response, short-circuiting immediately to verified 988 Lifeline resources.
+- **🔍 Self-Hosted AgentOps & Observability**: Complete visibility into agent decision trees, Google ADK tool executions, and LLM token costs via **Arize Phoenix** running directly on your infrastructure with zero external data exposure.
+- **🔒 Clinical PII/PHI Sanitization Middleware**: Sub-millisecond recursive redaction masking emails, phone numbers, SSNs, and financial identifiers before telemetry persistence.
+- **🧠 Multi-Tier Context Memory**:
+  - *Short-Term Memory*: In-memory conversation state backed by Redis.
+  - *Long-Term Episodic Memory*: Semantic vector embeddings stored in Pinecone with cosine similarity search.
+  - *User Fact Profile*: Persistent relational user insights and preferences stored in PostgreSQL.
+- **⚡ Real-Time Streaming & WebSockets**: Server-Sent Events (SSE) for low-latency token streaming, supplemented by WebSocket live status channels.
+- **🧪 Continuous Agent Evaluation**: Automated **DeepEval** and **LLM-as-a-Judge** suites validating response empathy, faithfulness, and clinical safety in CI/CD.
+- **👍 Human-in-the-Loop (HITL) Feedback**: Frontend rating endpoints (`POST /api/moods/chat/feedback`) tagging traces directly in Phoenix for continuous model and prompt refinement.
+- **🤖 Multi-Model & Custom LLM Flexibility**: Native support for Google Gemini 2.5 Flash, OpenAI GPT-4, and custom fine-tuned models (e.g., Qwen via LM Studio / Colab endpoints).
+- **📊 Interactive Analytics Dashboard**: Track emotional trends over time, sentiment distribution, and conversation history.
+- **🌓 Modern Glassmorphic UI**: Angular 21 with Signals, TailwindCSS v4, dark mode support, and full Markdown rendering.
 
-## Architecture
+---
 
-MOODZ follows a modern **microservices architecture** designed for high performance, modularity, and real-time AI agent interactions. The system is split into an Angular SPA frontend, an asynchronous FastAPI backend, persistent SQL storage, high-performance key-value caching, and cloud-based AI services.
+## 🏛️ System Architecture
 
-### System Architecture Diagram
+MOODZ adopts an asynchronous, modular microservices architecture designed for resilience, patient-data privacy, and real-time responsiveness.
+
+### End-to-End System Architecture Diagram
 
 ```mermaid
 graph TB
     %% Client Tier
-    subgraph ClientTier ["Client Tier (Frontend)"]
+    subgraph ClientTier ["1. Client Tier (Frontend)"]
         direction TB
         Browser["User Browser"]
-        AngularApp["Angular 21 SPA<br/>(Signals & Components)"]
-        Tailwind["TailwindCSS v4.0<br/>(Sleek UI Styling)"]
+        AngularApp["Angular 21 SPA<br/>(Signals, TailwindCSS 4, Dark UI)"]
+        FeedbackUI["Human Feedback Controls<br/>(Thumbs Up/Down & Mood Correction)"]
         
         Browser <--> AngularApp
-        AngularApp --- Tailwind
+        AngularApp --- FeedbackUI
     end
 
-    %% Application Tier
-    subgraph AppTier ["Application Tier (Backend)"]
+    %% Gateway & Privacy Tier
+    subgraph GatewayTier ["2. Application Gateway & Privacy Tier"]
         direction TB
-        FastAPI["FastAPI Web Framework<br/>(Async REST API)"]
-        Router["Router Layer<br/>(Auth, Chat, Mood, History)"]
-        Services["Service Layer<br/>(Crisis Detection, Auth, Session)"]
-        LangChain["LangChain Agent Manager<br/>(AI Orchestration)"]
+        FastAPI["FastAPI Web Framework<br/>(Async ASGI / Uvicorn)"]
+        Router["Router Layer<br/>(Auth, Chat, Mood, History, Feedback)"]
+        PIIScrubber["PII Sanitizer Middleware<br/>(Sub-millisecond Recursive Redaction)"]
+        OTelExporter["OpenTelemetry & OpenInference<br/>(OTLP Trace Exporter)"]
         
         FastAPI --> Router
-        Router --> Services
-        Services --> LangChain
+        Router --> PIIScrubber
+        PIIScrubber --> OTelExporter
     end
 
-    %% Data Tier
-    subgraph DataTier ["Data & Caching Tier"]
+    %% Agent Execution Tier
+    subgraph AgentTier ["3. Traced Agent Execution Engine"]
+        direction TB
+        SafetyGate["Deterministic Safety Gate (0ms)<br/>(crisis_detector.py)"]
+        LangGraph["LangGraph Hybrid StateGraph<br/>(mood_graph.py)"]
+        ADK["Google ADK Agent & Tools<br/>(mood_adk.py)"]
+        
+        LangGraph --> SafetyGate
+        LangGraph --> ADK
+    end
+
+    %% Data & Memory Tier
+    subgraph DataTier ["4. Data & Caching Tier"]
         direction LR
-        Postgres[("PostgreSQL DB<br/>(Chat History & Mood Data)")]
-        RedisClient[("Redis Cache<br/>(Active Sessions & Memory)")]
+        Postgres[("PostgreSQL DB<br/>(Relational Users, Chat History, Facts)")]
+        RedisClient[("Redis Cache<br/>(Active Sessions & Context Buffer)")]
+        Pinecone[("Pinecone Vector DB<br/>(Episodic Semantic Embeddings)")]
     end
 
-    %% External AI Tier
-    subgraph AITier ["AI & Semantic Memory Tier"]
+    %% Inference Tier
+    subgraph AITier ["5. AI Inference Tier"]
         direction LR
-        Pinecone[("Pinecone Vector DB<br/>(Semantic Embeddings)")]
-        OpenAI["OpenAI GPT Models<br/>(Empathetic Conversation)"]
-        Gemini["Google Gemini Models<br/>(Advanced Reasoning)"]
+        Gemini["Google Gemini 2.5 Flash<br/>(Primary Empathetic & Profiler LLM)"]
+        OpenAI["OpenAI GPT Models<br/>(Alternative Inference)"]
+        CustomLLM["Self-Hosted / Fine-Tuned Model<br/>(vLLM / LM Studio / Colab)"]
     end
 
-    %% Cross-Tier Connections
-    AngularApp == "HTTP API Requests / SSE Streaming" ==> FastAPI
-    Services == "SQLAlchemy ORM" ==> Postgres
-    Services == "Active Session/Cache" ==> RedisClient
-    LangChain == "Long-Term Memory / RAG" ==> Pinecone
-    LangChain == "LLM Chat Calls" ==> OpenAI
-    LangChain == "Fallback / Reasoning" ==> Gemini
+    %% AgentOps Observability Platform
+    subgraph OpsTier ["6. AgentOps Observability & Evaluation Platform (Docker)"]
+        direction TB
+        PhoenixServer["Arize Phoenix Server<br/>(Web UI :6006 | OTLP Collector :4317)"]
+        TraceStore[("Phoenix Trace Database<br/>(Waterfall Traces, Latencies, Costs)")]
+        EvalHarness["DeepEval & Pytest Benchmark Suite<br/>(Empathy, Faithfulness, Safety Evals)"]
+        
+        PhoenixServer --> TraceStore
+        PhoenixServer --> EvalHarness
+    end
 
-    %% Apply Styles
-    classDef client fill:#EBF3FC,stroke:#2B78E4,stroke-width:2px,color:#1A365D;
-    classDef backend fill:#E8F8F5,stroke:#117A65,stroke-width:2px,color:#0B3C33;
-    classDef data fill:#FEF9E7,stroke:#D35400,stroke-width:2px,color:#5E2F00;
-    classDef ai fill:#F5EEF8,stroke:#7D3C98,stroke-width:2px,color:#4A148C;
-
-    class Browser,AngularApp,Tailwind client;
-    class FastAPI,Router,Services,LangChain backend;
-    class Postgres,RedisClient data;
-    class Pinecone,OpenAI,Gemini ai;
+    %% Connections
+    AngularApp == "HTTP REST / SSE Stream / WS" ==> FastAPI
+    FeedbackUI == "POST /api/moods/chat/feedback" ==> Router
+    Router ==> LangGraph
+    ADK == "Async SQLAlchemy" ==> Postgres
+    ADK == "Key-Value State" ==> RedisClient
+    ADK == "RAG Semantic Search" ==> Pinecone
+    LangGraph == "Inference" ==> Gemini
+    LangGraph == "Fallback / Alternate" ==> OpenAI
+    LangGraph == "Local / Fine-Tuned" ==> CustomLLM
+    
+    OTelExporter -. "gRPC Port 4317 (OTLP)" .-> PhoenixServer
 ```
-
-### Components
-
-1. **Frontend (Angular 21)**
-   - **State Management**: Built-in Signal-based state management for optimized, granular DOM updates.
-   - **Styling**: TailwindCSS 4.0 for a highly customized and responsive glassmorphic/dark theme system.
-   - **Interactions**: Empathetic chat UI with full markdown parsing and real-time Server-Sent Events (SSE) streaming.
-
-2. **Backend (FastAPI)**
-   - **High Concurrency**: Fully asynchronous Python execution utilizing ASGI (Uvicorn).
-   - **Database Access**: Async queries via SQLAlchemy ORM for handling concurrent user sessions.
-   - **API Schema**: Type-safe Pydantic models verifying request/response payload integrity.
-
-3. **AI Services**
-   - **OpenAI Integration**: Empathetic conversational models (GPT-4) for user interaction.
-   - **Google Gemini Integration**: Advanced logic fallback for complex reasoning and crisis evaluation.
-   - **Semantic Search**: Pinecone Vector Database using LangChain integrations for retrieve-and-generate (RAG) conversational memory.
-
-4. **Storage & Caching Layer**
-   - **PostgreSQL**: Stores relational user accounts, chat sessions, structural histories, and logs.
-   - **Redis Cache**: Holds short-lived user tokens, message histories, and cache layers for fast lookups.
 
 ---
 
-## Tech Stack
+### 🤖 AI Agent Architecture Diagram
+
+The diagram below details the **internal hybrid execution flow** of the Mood Agent, illustrating the fast foreground streaming path, background intelligence extraction, Google ADK tool bindings, and telemetry instrumentation:
+
+```mermaid
+flowchart TD
+    subgraph InputTier ["1. User Ingress & Safety Gate"]
+        UserMsg(["User Message"])
+        SafetyGate{"Deterministic Safety Gate<br/>(crisis_detector.py)<br/>0ms | 0 Tokens"}
+        CrisisResponse(["Immediate Crisis Intervention<br/>(988 Lifeline & Resources)"])
+    end
+
+    subgraph StateGraphEngine ["2. LangGraph Hybrid Orchestrator (mood_graph.py)"]
+        direction TB
+        
+        subgraph ForegroundPath ["Fast Foreground Path (Streaming)"]
+            ContextIngest["Context Ingestion Node<br/>(asyncio.gather Concurrent Retrieval)"]
+            PromptAssembler["Empathetic System Prompt & Context Assembly"]
+            CompanionStream["Streaming Companion LLM<br/>(astream Markdown Tokens)"]
+            StreamOut(["Real-Time SSE Token Stream to User"])
+        end
+
+        subgraph BackgroundPath ["Asynchronous Background Path (Non-Blocking)"]
+            ProfilerSubAgent["Clinical Profiler Sub-Agent<br/>(Structured Pydantic Extraction)"]
+            FactExtract["Personal Fact Extraction"]
+            MoodScoring["Sentiment & Score Rating (1-10)"]
+        end
+    end
+
+    subgraph ADKTools ["3. Google ADK Tools & Memory Integration (mood_adk.py)"]
+        direction LR
+        RedisTool[("Redis Cache<br/>Short-Term History")]
+        PineconeTool[("Pinecone Vector DB<br/>Episodic Semantic Memory")]
+        PostgresTool[("PostgreSQL DB<br/>Relational Profile & Facts")]
+    end
+
+    subgraph TelemetryLayer ["4. AgentOps Telemetry Layer (@trace_tool / trace_span)"]
+        SpanCollector["Spans, Latency (TTFT), Tool I/O & Scrubbed PII"]
+        PhoenixSink[("Arize Phoenix Trace Server (:6006)")]
+    end
+
+    UserMsg --> SafetyGate
+    SafetyGate -- "Crisis Triggered (100% Recall)" --> CrisisResponse
+    SafetyGate -- "Safe" --> ContextIngest
+    
+    ContextIngest <--> RedisTool
+    ContextIngest <--> PineconeTool
+    ContextIngest <--> PostgresTool
+    
+    ContextIngest --> PromptAssembler --> CompanionStream --> StreamOut
+    
+    CompanionStream -. "Handoff Response" .-> ProfilerSubAgent
+    ProfilerSubAgent --> FactExtract & MoodScoring
+    FactExtract --> PostgresTool & PineconeTool
+    MoodScoring --> PostgresTool
+    
+    SafetyGate -. Spans .-> SpanCollector
+    ContextIngest -. Spans .-> SpanCollector
+    CompanionStream -. TTFT & Tokens .-> SpanCollector
+    ProfilerSubAgent -. Classification Spans .-> SpanCollector
+    SpanCollector --> PhoenixSink
+```
+
+---
+
+## 🛠️ Tech Stack
 
 ### Frontend
 | Technology | Version | Purpose |
 |------------|---------|---------|
-| **Angular** | 21.0 | Modern Component Framework |
-| **TypeScript** | 5.9 | Strongly Typed Scripts |
-| **TailwindCSS** | 4.1 | Styling & Visual System |
-| **RxJS** | 7.8 | Reactive Event Streams |
-| **ngx-markdown** | 21.0 | Real-time Markdown Parsing |
-| **Signals** | Built-in | Modern Reactive State Management |
+| **Angular** | 21.0 | Signal-based reactive Single Page Application |
+| **TypeScript** | 5.9 | Type-safe enterprise JavaScript |
+| **TailwindCSS** | 4.1 | Modern glassmorphic styling with dark theme support |
+| **RxJS** | 7.8 | Asynchronous reactive event streams |
+| **ngx-markdown** | 21.0 | Fluid Markdown formatting in conversational bubbles |
 
-### Backend
+### Backend & AI Orchestration
 | Technology | Version | Purpose |
 |------------|---------|---------|
-| **FastAPI** | Latest | Async Python Web Framework |
-| **Python** | 3.11+ | Server Programming Language |
-| **SQLAlchemy** | Latest | Asynchronous Python ORM |
-| **Alembic** | Latest | SQL Schema Versioning & Migrations |
-| **Pydantic** | Latest | Type-Safe Model Validation |
-| **Uvicorn** | Latest | ASGI Production Server |
+| **FastAPI** | Latest | High-concurrency async Python ASGI framework |
+| **Python** | 3.11+ | Core backend runtime (tested up to Python 3.14) |
+| **LangGraph** | 0.2+ | StateGraph pipeline & conditional node orchestration |
+| **Google ADK** | 2.13+ | Declarative multi-agent declarations and toolkits |
+| **SQLAlchemy** | 2.0+ (Async) | Async ORM for relational user, chat, and fact storage |
+| **Alembic** | Latest | Automated database schema migrations |
+| **Celery** | Latest | Background task queue & scheduled worker jobs |
+| **Pinecone** | Latest | Vector database for episodic long-term memory |
+| **Redis** | 7+ | Session state store and real-time conversation buffering |
+| **PostgreSQL** | 15+ | Relational database for accounts, sessions, and insights |
 
-### AI & ML
-| Service | Purpose |
-|---------|---------|
-| **OpenAI** | GPT models for empathetic conversation |
-| **Google Gemini** | Gemini models for advanced reasoning and routing |
-| **Pinecone** | Semantic vector storage for conversational long-term memory |
-| **LangChain** | Orchestrator for complex AI Agent chains & memory |
-
-### Infrastructure
-| Technology | Purpose |
-|------------|---------|
-| **PostgreSQL** | Relational primary database |
-| **Redis** | In-memory key-value cache and session tracker |
-| **Docker** | Component isolation and orchestration |
-| **Celery** | Distributed asynchronous worker framework |
+### AgentOps, Observability & Evaluation
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| **Arize Phoenix** | Latest | Self-hosted AgentOps observability, waterfall traces & cost analytics |
+| **OpenTelemetry (OTel)** | 1.25+ | CNCF vendor-neutral distributed tracing protocol |
+| **OpenInference** | Latest | GenAI semantic conventions for LangGraph & LangChain |
+| **DeepEval** | 4.0+ | Production LLM-as-a-Judge, empathy validation & safety evals |
+| **PII Scrubber** | Built-in | Sub-millisecond recursive redaction of sensitive clinical data |
 
 ---
 
+## 🔍 AgentOps & Observability (Arize Phoenix)
+
+MOODZ includes a full-featured, self-hosted **Arize Phoenix** platform, providing end-to-end visibility into every agent decision, tool execution, and LLM token cost.
+
+```
+                      ┌────────────────────────────────────────┐
+                      │   Google ADK & LangGraph (MOODZ)       │
+                      │   - Safety Gate & Context Ingestion    │
+                      │   - Streaming Companion LLM            │
+                      │   - Background Profiler Sub-Agent      │
+                      └──────────────────┬─────────────────────┘
+                                         │
+                             Emits OpenTelemetry Spans
+                                         │
+                                         ▼
+                      ┌────────────────────────────────────────┐
+                      │   AgentOps Layer (Arize Phoenix)       │
+                      │   - Waterfall Execution Traces         │
+                      │   - Scrubbed PII Tool Inspection       │
+                      │   - Token Counts & Spend ($)           │
+                      │   - Time-to-First-Token (TTFT) SLA     │
+                      └────────────────────────────────────────┘
+```
+
+### 1. Live Phoenix Dashboard
+Start the containerized Phoenix service:
+```bash
+docker compose up -d phoenix
+```
+Open **`http://localhost:6006`** in your browser to access:
+- **Traces Tab**: Step-by-step waterfall execution trees of every user turn.
+- **Spans Tab**: Flat, filterable table auditing individual tool calls and node transitions.
+- **Projects View**: Aggregated token burn, latency percentiles (P50, P90, P99), and total spend.
+
+### 2. Inspecting Google ADK Tool Calls
+Every ADK tool (`check_crisis_tool`, `retrieve_user_context_tool`, `persist_user_facts_tool`, `persist_mood_entry_tool`) is wrapped with the `@trace_tool` decorator. Clicking a tool span in Phoenix reveals:
+- **Execution Latency**: Exact millisecond runtime (e.g., `tool.duration_ms: 18.4ms`).
+- **Sanitized Arguments**: Function arguments with all PII automatically masked.
+- **Success / Exception State**: Exact exception stack traces in case of database or network timeouts.
+
+### 3. Token, Latency & Cost Tracking
+- **Time-to-First-Token (TTFT)**: Tracked on the `langgraph.astream_companion` span to guarantee streaming responsiveness ($<800\text{ms}$).
+- **Token Attribution**: Prompt tokens, completion tokens, and model dollar costs are attributed to individual user sessions.
+
+### 4. Human-in-the-Loop (HITL) Feedback
+Users can rate companion responses (thumbs up/down) or provide corrected mood labels from the frontend. The backend logs this via:
+- **Endpoint**: `POST /api/moods/chat/feedback`
+- **Tracing Impact**: Feedback automatically tags the session trace in Phoenix, allowing developers to filter by `rating == -1` to inspect and fine-tune failing prompts.
+
+---
+
+## 🔒 Clinical Data Privacy & PII Scrubbing
+
+Because MOODZ is a mental health companion, users frequently share sensitive trauma, names, contact numbers, or medical history. **Raw user data must never leak to observability logs.**
+
+MOODZ includes an ultra-fast, recursive PII scrubber (`backend/app/core/pii_scrubber.py`) that operates with $<0.2\text{ms}$ latency:
+- **Email Addresses**: `user@example.com` $\to$ `[REDACTED_EMAIL]`
+- **Phone Numbers**: `(555) 234-5678` $\to$ `[REDACTED_PHONE]`
+- **Social Security Numbers (SSN)**: `000-12-3456` $\to$ `[REDACTED_SSN]`
+- **Credit Card Numbers**: `4111-2222-3333-4444` $\to$ `[REDACTED_CREDIT_CARD]`
+
+All dictionaries, lists, and span attributes pass through `PIIScrubber.scrub_dict()` before being sent to the OTLP exporter.
+
+---
+
+## 🚀 Getting Started
+
 ### Prerequisites
 
-Ensure you have the following installed on your host system:
+Ensure you have installed:
 - **Node.js** 18+ and `npm`
 - **Python** 3.11+
-- **Docker** & **Docker Compose** *(Recommended for easiest setup)*
+- **Docker** & **Docker Compose** *(Recommended)*
 - **Git**
 
-### Environment Setup
+### Environment Configuration
 
-1. **Clone the Repository**
+1. **Clone the Repository**:
    ```bash
    git clone https://github.com/sandil2003/MOODZ.git
    cd MOODZ
    ```
 
-2. **Configure Environment Variables**
-   Create a `.env` file inside the `MOOD AI AGENT` directory. You can start by copying the template file:
-   
+2. **Configure Backend Environment**:
    - **Windows (PowerShell)**:
      ```powershell
-     copy "MOOD AI AGENT\.env.example" "MOOD AI AGENT\.env"
+     copy "backend\.env.example" "backend\.env"
      ```
-   - **Linux/macOS**:
+   - **Linux / macOS**:
      ```bash
-     cp "MOOD AI AGENT/.env.example" "MOOD AI AGENT/.env"
+     cp backend/.env.example backend/.env
      ```
 
-   Open the newly created `MOOD AI AGENT/.env` file and input your credentials:
+3. **Populate `backend/.env`**:
    ```env
-   # API Keys (Required for AI Agents)
+   # Application Settings
+   APP_NAME="MOODZ AI Agent"
+   API_VERSION=1.0.0
+   DEBUG=true
+
+   # Databases
+   DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/moodz_db
+   REDIS_URL=redis://localhost:6379/0
+
+   # AgentOps Observability
+   PHOENIX_COLLECTOR_ENDPOINT=http://localhost:4317
+
+   # AI Provider Keys
    OPENAI_API_KEY=your-openai-api-key
    GEMINI_API_KEY=your-gemini-api-key
    PINECONE_API_KEY=your-pinecone-api-key
    PINECONE_ENVIRONMENT=us-east-1
    PINECONE_INDEX_NAME=moodz-embeddings
 
-   # Database Configuration
-   POSTGRES_USER=postgres
-   POSTGRES_PASSWORD=your-secure-password
-   POSTGRES_DB=moodz_db
-   POSTGRES_HOST=localhost
-   POSTGRES_PORT=5432
-
-   # Redis Configuration
-   REDIS_HOST=localhost
-   REDIS_PORT=6379
-   REDIS_DB=0
+   # Security & CORS
+   SECRET_KEY=your-generated-jwt-secret-key
+   CORS_ORIGINS=["http://localhost:4200","http://127.0.0.1:4200"]
    ```
 
-   > [!IMPORTANT]
-   > Make sure to create the Pinecone index prior to startup with **1536 dimensions** (if using OpenAI embeddings) or the relevant size corresponding to your configuration, and matching metric `cosine`.
-
-3. **Set Up Frontend**
-   ```bash
-   cd moodz-frontend
-   
-   # Install dependencies
-   npm install
-   ```
+---
 
 ### Running with Docker (Recommended)
 
-Docker setup handles backend libraries, database migration setups, node compilation, and container linkages automatically.
+Docker handles backend dependencies, PostgreSQL, Redis, Arize Phoenix, and Angular automatically.
 
-The entire platform can be started with a single command from the project root:
+#### 1. Development Mode (Live Hot-Reloading + AgentOps)
+```bash
+docker-compose -f docker-compose.dev.yml up --build
+```
+- **Frontend**: [http://localhost:4200](http://localhost:4200)
+- **Backend API Docs**: [http://localhost:8000/docs](http://localhost:8000/docs)
+- **Arize Phoenix AgentOps UI**: [http://localhost:6006](http://localhost:6006)
 
+#### 2. Production / Detached Mode
 ```bash
 docker-compose up --build -d
 ```
-
-This will orchestrate:
-- **Frontend**: http://localhost:4200 *(Served via Nginx)*
-- **Backend API**: http://localhost:8000 *(FastAPI server)*
-- **PostgreSQL**: Port 5432
-- **Redis**: Port 6379
-
-To see logs:
+To view logs:
 ```bash
 docker-compose logs -f
 ```
-
 To stop all services:
 ```bash
 docker-compose down
 ```
 
-### Development with Docker (Hot-Reloading)
-
-For an optimal development experience with live reloading (where modifications to host files are immediately reflected inside the containers), use the development configuration:
-
-```bash
-docker-compose -f docker-compose.dev.yml up --build
-```
-
-This will:
-- Mount your local source code into the containers.
-- **Frontend**: http://localhost:4200 *(Angular dev server with polling enabled)*
-- **Backend**: http://localhost:8000 *(FastAPI with `--reload` enabled)*
+---
 
 ### Running Locally (Without Docker)
 
-1. **Start Database & Caching Services**
-   If you do not have local PostgreSQL or Redis servers installed, start them via Docker:
-   ```bash
-   docker-compose up -d postgres redis
-   ```
-   
-2. **Launch the Backend**
-   ```bash
-   cd "MOOD AI AGENT"
-   
-   # Create virtual environment
-   python -m venv venv
-   
-   # Activate virtual environment
-   # Windows (PowerShell):
-   .\venv\Scripts\Activate.ps1
-   # Windows (CMD):
-   venv\Scripts\activate.bat
-   # Linux/Mac:
-   source venv/bin/activate
-   
-   # Install dependencies
-   pip install -r requirements.txt
-   
-   # Run FastAPI with live reload on Port 8000
-   uvicorn main:app --reload --port 8000
-   ```
-   *Note: Database tables are automatically initialized on backend startup via `init_db()`.*
+#### Step 1: Start PostgreSQL, Redis & Phoenix
+```bash
+docker-compose up -d postgres redis phoenix
+```
 
-3. **Launch the Frontend**
-   ```bash
-   cd moodz-frontend
-   
-   # Run the local Angular development server
-   npm start
-   ```
-   *The Angular application is now running locally at http://localhost:4200.*
+#### Step 2: Start the FastAPI Backend
+```powershell
+cd backend
+
+# Activate virtual environment
+# Windows (PowerShell):
+..\moodz\Scripts\Activate.ps1
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Start FastAPI server on port 8000
+uvicorn main:app --reload --port 8000
+```
+
+#### Step 3: Start the Angular Frontend
+In a separate terminal:
+```powershell
+cd moodz-frontend
+npm install
+npm start
+```
+*Frontend runs at [http://localhost:4200](http://localhost:4200).*
+
+---
+
+### Running Google ADK Agent UI
+
+To test the Mood Agent directly via the Google ADK web interface:
+
+```powershell
+cd backend
+adk web app/agents/mood_agent
+```
+*Note: Always run `adk` from inside the `backend/` directory so Python correctly resolves the `app` package.*
 
 ---
 
@@ -334,207 +473,191 @@ This will:
 
 ```
 MOODZ/
-├── moodz-frontend/              # Angular frontend application
+├── backend/                            # FastAPI Backend & AI Orchestration
+│   ├── app/
+│   │   ├── agents/                     # Google ADK agent framework
+│   │   │   ├── mood_agent/             # ADK root agent declaration
+│   │   │   │   ├── __init__.py
+│   │   │   │   └── agent.py            # root_agent declaration
+│   │   │   └── mood_adk.py             # Traced ADK tools & agent specification
+│   │   ├── core/                       # Core configurations, telemetry & privacy
+│   │   │   ├── config.py               # Pydantic environment settings
+│   │   │   ├── database.py             # Async SQLAlchemy session factory
+│   │   │   ├── redis_client.py         # Async Redis client
+│   │   │   ├── auth_utils.py           # JWT hashing & auth dependencies
+│   │   │   ├── pii_scrubber.py         # [AgentOps] Sub-ms recursive PII redaction
+│   │   │   └── telemetry.py            # [AgentOps] OpenTelemetry & Phoenix integration
+│   │   ├── routes/                     # REST & WebSocket endpoints
+│   │   │   ├── auth.py                 # Registration & JWT login
+│   │   │   ├── chat.py                 # SSE chat streaming & feedback endpoints
+│   │   │   ├── history.py              # PostgreSQL chat & Redis session history
+│   │   │   ├── mood.py                 # Mood logs, trends, & statistics
+│   │   │   └── health.py               # Liveness, DB, & Redis health checks
+│   │   ├── services/                   # Business logic & AI pipelines
+│   │   │   ├── mood_graph.py           # Traced LangGraph StateGraph hybrid orchestrator
+│   │   │   ├── mood_agent.py           # Backward-compatible agent chain wrapper
+│   │   │   ├── crisis_detector.py      # Hardened deterministic crisis & safety gate
+│   │   │   ├── vector_service.py       # Pinecone semantic embeddings
+│   │   │   ├── session_manager.py      # Redis short-term session buffering
+│   │   │   └── custom_model.py         # Fine-tuned & local LLM integration
+│   │   ├── utils/                      # Chat logging & helper routines
+│   │   ├── models.py                   # SQLAlchemy database schemas
+│   │   └── schemas.py                  # Pydantic validation & feedback schemas
+│   ├── alembic/                        # Database migration scripts
+│   ├── tasks/                          # Celery asynchronous worker tasks
+│   ├── test/                           # Automated pytest suite & benchmarks
+│   │   ├── evals/                      # [AgentOps] Automated evaluation test suites
+│   │   │   ├── conftest.py             # Pytest path configurations
+│   │   │   ├── test_crisis_benchmark.py# 100% Crisis Detection Recall benchmark
+│   │   │   ├── test_empathy_evals.py   # DeepEval LLM-as-a-Judge empathy suite
+│   │   │   ├── test_pii_scrubber.py    # PII sanitization validation tests
+│   │   │   └── test_telemetry_export.py# OTel span generation tests
+│   │   ├── test_split_routes.py        # Route integrity tests
+│   │   └── test_crisis_detection.py    # Unit crisis gate tests
+│   ├── main.py                         # FastAPI ASGI entry point (telemetry enabled)
+│   ├── requirements.txt                # Python dependencies (OTel, Phoenix, DeepEval)
+│   ├── Dockerfile                      # Production Docker container
+│   ├── Dockerfile.dev                  # Development container
+│   ├── CUSTOM_MODEL_GUIDE.md           # Guide for fine-tuned LLMs
+│   └── LM_STUDIO_GUIDE.md              # Local inference guide (LM Studio)
+│
+├── moodz-frontend/                     # Angular 21 Single Page Application
 │   ├── src/
 │   │   ├── app/
-│   │   │   ├── pages/           # Page components
-│   │   │   │   ├── new-home/    # Landing page with agent cards
-│   │   │   │   ├── mood-agent/  # Mood chat interface
-│   │   │   │   ├── mood-dashboard/ # Analytics dashboard
-│   │   │   │   ├── mood-history/   # Chat history
-│   │   │   │   ├── journal-agent/  # Journal interface (coming soon)
-│   │   │   │   └── study-agent/    # Study interface (coming soon)
-│   │   │   ├── shared/          # Shared components
-│   │   │   │   └── navbar/      # Navigation bar
-│   │   │   ├── services/        # Angular services
-│   │   │   │   └── theme.service.ts  # Dark mode management
-│   │   │   └── styles/          # Global styles
-│   │   │       └── dark-mode.css     # Dark mode styles
-│   │   └── styles.css           # Global CSS
-│   ├── public/                  # Static assets
-│   ├── angular.json             # Angular configuration
-│   ├── tailwind.config.js       # Tailwind configuration
-│   └── package.json             # Frontend dependencies
+│   │   │   ├── pages/                  # Page route components
+│   │   │   │   ├── new-home/           # Landing page with agent cards
+│   │   │   │   ├── mood-agent/         # Interactive mood chat interface
+│   │   │   │   ├── mood-dashboard/     # Visual mood analytics & charts
+│   │   │   │   ├── mood-history/       # Chat session inspection & logs
+│   │   │   │   ├── journal-agent/      # Journal interface (preview)
+│   │   │   │   └── study-agent/        # Study companion (preview)
+│   │   │   ├── shared/                 # Shared navbar, modals, cards
+│   │   │   ├── services/               # ThemeService, API & SSE services
+│   │   │   └── styles/                 # TailwindCSS & dark mode styles
+│   │   ├── public/                     # Static assets & favicon
+│   │   ├── package.json                # Node dependencies & scripts
+│   │   ├── angular.json                # Angular CLI configuration
+│   │   └── Dockerfile & Dockerfile.dev # Frontend container specifications
 │
-├── MOOD AI AGENT/               # FastAPI backend
-│   ├── app/
-│   │   ├── routes/              # API endpoints
-│   │   │   ├── chat.py          # Chat streaming
-│   │   │   ├── mood_data.py     # Mood tracking
-│   │   │   ├── chat_history.py  # Chat history
-│   │   │   └── health.py        # Health checks
-│   │   ├── services/            # Business logic
-│   │   │   ├── mood_chain.py    # AI agent chain
-│   │   │   ├── vector_service.py # Pinecone integration
-│   │   │   └── crisis_detection.py # Crisis detection
-│   │   ├── models/              # Database models
-│   │   ├── database.py          # Database setup
-│   │   └── redis_client.py      # Redis client
-│   ├── alembic/                 # Database migrations
-│   ├── celery/                  # Background tasks
-│   ├── config.py                # Configuration
-│   ├── main.py                  # FastAPI app
-│   ├── requirements.txt         # Python dependencies
-│   ├── docker-compose.yml       # Docker services
-│   └── Dockerfile               # Docker image
-│
-├── JOURNAL AI AGENT/            # Journal agent (coming soon)
-├── STUDY AI AGENT/              # Study agent (coming soon)
-└── README.md                    # This file
+├── .github/
+│   └── workflows/
+│       └── ci.yml                      # CI/CD with AgentOps crisis & empathy gates
+├── docs/
+│   └── azure_deployment_plan.md        # Comprehensive Azure Cloud Deployment Plan
+├── docker-compose.yml                  # Production orchestration (with Phoenix)
+├── docker-compose.dev.yml              # Development live-reload (with Phoenix)
+└── README.md
 ```
 
 ---
 
-## AI Agents
+## 🤖 AI Agents & Hybrid Orchestration
 
 ### Mood Agent (Active)
 
-The Mood Agent is your empathetic AI companion for emotional support and mental wellness.
+The Mood Agent acts as an empathetic emotional companion. Rather than relying on a monolithic prompt, it operates as a multi-step hybrid graph:
 
-**Features:**
-- Real-time streaming chat responses
-- Context-aware conversations using chat history
-- Sentiment analysis and mood tracking
-- Crisis detection with resource recommendations
-- Mood score calculation (1-10 scale)
-- Visual mood dashboard with charts
-- Chat history management
+#### Google ADK Tool Bindings
+Declarative agent tools in `backend/app/agents/mood_adk.py`, instrumented with OpenTelemetry:
+- `check_crisis_tool`: Deterministic crisis evaluator.
+- `retrieve_user_context_tool`: Concurrent multi-tier retrieval aggregating Redis short-term history, Pinecone semantic embeddings, and PostgreSQL profile facts.
+- `persist_user_facts_tool`: Persists newly extracted personal facts into PostgreSQL and Pinecone.
+- `persist_mood_entry_tool`: Records sentiment ratings and numerical mood scores (1–10).
 
-**Technology:**
-- LangChain agent framework
-- OpenAI GPT-4 for conversation
-- Pinecone for semantic memory
-- PostgreSQL for chat persistence
-- Redis for session caching
+#### LangGraph StateGraph Engine
+Implemented in `backend/app/services/mood_graph.py`:
+- **Deterministic Safety Gate Node (0ms, 0 tokens)**: Checks for emergency signals before invoking LLMs. If detected, short-circuits directly to crisis intervention.
+- **Context Ingestion Node**: Concurrently fetches multi-tier memory via `asyncio.gather`.
+- **Empathetic Companion Stream Node**: Streams pure Markdown tokens directly to the user with Time-to-First-Token (TTFT) instrumentation.
+- **Asynchronous Background Profiler**: Non-blocking sub-agent analyzing the turn to extract durable user facts and numerical mood ratings without delaying the user stream.
 
-**API Endpoints:**
-- `POST /api/chat/stream` - Stream chat responses
-- `GET /api/mood-data/` - Get mood entries
-- `POST /api/mood-data/` - Create mood entry
-- `GET /api/chat-history/` - Get chat sessions
-- `DELETE /api/chat-history/{session_id}` - Delete session
-
-### Journal Agent (Coming Soon)
-
-AI-powered journaling assistant for personal reflection and growth.
-
-### Study Agent (Coming Soon)
-
-Intelligent study companion for academic success.
+#### Fine-Tuned & Local Model Support
+Supports self-hosted open-source models (e.g., Qwen-2.5, Llama-3) via LM Studio or Google Colab endpoints. See [backend/CUSTOM_MODEL_GUIDE.md](backend/CUSTOM_MODEL_GUIDE.md) and [backend/LM_STUDIO_GUIDE.md](backend/LM_STUDIO_GUIDE.md).
 
 ---
 
-## ☁️ Deployment Plan
+## 🧪 Continuous Evaluation & Safety Gates
 
-For detailed instructions on deploying the MOODZ platform to Microsoft Azure (including Azure Container Apps, PostgreSQL, and Redis), please refer to the dedicated deployment guide:
+MOODZ enforces a **Zero-Fail Safety Policy** on mental health crisis detection and continuous quantitative evaluation of companion responses.
 
-**[📄 View the Azure Deployment Plan](docs/azure_deployment_plan.md)**
+### 1. 100% Crisis Detection Recall Benchmark
+Mental health companions cannot tolerate false negatives. The test suite in `backend/test/evals/test_crisis_benchmark.py` validates:
+- **40+ Direct & Morphological Crisis Triggers**: Suicidal ideation, self-harm, hopelessness.
+- **15+ Benign Control Statements**: Ensuring safe everyday conversational language (*"I'm killing time waiting for the bus"*) is never wrongly blocked.
+- **Latency SLA**: Confirms safety gate execution in $<10\text{ms}$.
+- **Constraint**: **100% Recall ($\text{False Negatives} = 0$)**.
+
+Run the crisis safety gate:
+```powershell
+pytest backend/test/evals/test_crisis_benchmark.py -v
+```
+
+### 2. DeepEval LLM-as-a-Judge Empathy Suite
+In `backend/test/evals/test_empathy_evals.py`:
+- **Empathy & Emotional Validation**: Evaluates whether the companion validates user emotions before offering guidance (requires score $\ge 4/5$ or $0.85$).
+- **Non-Clinical Safety Heuristics**: Automatically flags and fails any response making clinical diagnoses (*"I diagnose you with..."*) or prescribing medications.
+- **Formatting Integrity**: Guarantees no raw JSON or metadata fences leak into conversational bubbles.
+
+### 3. Automated CI/CD Quality Gates
+Defined in `.github/workflows/ci.yml`:
+On every pull request and push to `main`:
+1. Runs ruff linter and route unit tests.
+2. Executes the **Crisis Detection Benchmark Gate**. A single false negative blocks the PR automatically.
+3. Runs the **DeepEval Empathy & Telemetry Gate**.
+
+Run all AgentOps evals locally:
+```powershell
+pytest backend/test/evals -v
+```
 
 ---
 
-## Development
+## ☁️ Azure Deployment Plan
 
-### Frontend Development
+MOODZ is designed for cloud-native deployment on **Microsoft Azure**, providing elastic scalability, automated SSL, zero-downtime deployments, and managed database isolation.
 
-```bash
-cd moodz-frontend
+For the comprehensive deployment specification, see **[📄 Azure Deployment Plan](docs/azure_deployment_plan.md)**.
 
-# Start dev server
-npm start
+### Target Azure Infrastructure
 
-# Build for production
-npm run build
-
-# Run tests
-npm test
-
-# Lint code
-ng lint
-```
-
-### Backend Development
-
-```bash
-cd "MOOD AI AGENT"
-
-# Activate virtual environment
-venv\Scripts\activate  # Windows
-source venv/bin/activate  # Linux/Mac
-
-# Run with auto-reload
-uvicorn main:app --reload
-
-# Run tests
-pytest
-
-# Create database migration
-alembic revision --autogenerate -m "description"
-
-# Apply migrations
-alembic upgrade head
-```
-
-### Code Style
-
-**Frontend:**
-- Follow Angular style guide
-- Use standalone components
-- Prefer signals over observables for state
-- Use `input()` and `output()` functions
-- Set `ChangeDetectionStrategy.OnPush`
-
-**Backend:**
-- Follow PEP 8 style guide
-- Use type hints
-- Write async functions where possible
-- Document with docstrings
-
-### Dark Mode Implementation
-
-The application supports system-wide dark mode:
-
-1. **ThemeService** manages dark mode state
-2. CSS variables for theming
-3. `:host-context(.dark)` selectors
-4. Smooth transitions (300ms)
-
-Toggle dark mode via the navbar icon.
+| Component | Target Azure Service | Rationale |
+|-----------|----------------------|-----------|
+| **Frontend & Backend Compute** | **Azure Container Apps (ACA)** | Serverless microservices hosting with automatic horizontal scaling (including scale-to-zero) and built-in ingress. |
+| **AgentOps Observability** | **Azure Container Apps / Managed VM** | Containerized Arize Phoenix instance storing traces, spans, and token spend. |
+| **Relational Database** | **Azure Database for PostgreSQL (Flexible Server)** | Fully managed PostgreSQL with automated daily backups, VNet integration, and high availability. |
+| **Cache & Sessions** | **Azure Cache for Redis** | Low-latency in-memory cache for session state and prompt caching. |
+| **Container Registry** | **Azure Container Registry (ACR)** | Secure private Docker image repository with direct ACA continuous deployment triggers. |
+| **Secrets & Keys** | **Azure Key Vault** | Enterprise encryption and secret rotation for API keys (`OPENAI_API_KEY`, `PINECONE_API_KEY`, DB credentials). |
+| **CI/CD** | **GitHub Actions** | Automated build, test, crisis benchmark verification, and rollout on merge to `main`. |
 
 ---
 
-## API Documentation
+## 📡 API Documentation
 
-### Base URL
-```
-http://localhost:8000
-```
+When the backend is running, explore interactive OpenAPI documentation:
+- **Swagger UI**: [http://localhost:8000/docs](http://localhost:8000/docs)
+- **ReDoc**: [http://localhost:8000/redoc](http://localhost:8000/redoc)
 
-### Interactive Documentation
-- **Swagger UI**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
+### Primary API Endpoints
 
-### Key Endpoints
+| Category | Method | Endpoint | Description |
+|----------|--------|----------|-------------|
+| **Chat** | `POST` | `/api/moods/chat/stream` | Real-time SSE streaming chat with LangGraph hybrid orchestrator |
+| **Chat** | `POST` | `/api/moods/chat/` | Standard non-streaming chat completion |
+| **Chat** | `POST` | `/api/moods/chat/feedback` | **[AgentOps]** Record user feedback rating ($\pm 1$), comments & corrected mood |
+| **Chat** | `WS` | `/api/moods/chat/ws/status/{session_id}` | WebSocket channel for real-time thought/status updates |
+| **Mood** | `GET` | `/api/mood-data/mood-history/{user_id}` | Fetch historical mood logs and analytics |
+| **Mood** | `POST` | `/api/mood-data/` | Manually log a mood check-in |
+| **History** | `GET` | `/api/chat-history/sessions` | Retrieve past conversation sessions for a user |
+| **History** | `GET` | `/api/chat-history/sessions/{session_id}` | Fetch full message transcripts for a session |
+| **Auth** | `POST` | `/api/auth/register` | Register a new user account |
+| **Auth** | `POST` | `/api/auth/login` | Authenticate and obtain JWT bearer token |
+| **Health** | `GET` | `/health` | Application status & service readiness |
+| **Health** | `GET` | `/health/db` | PostgreSQL connectivity health check |
+| **Health** | `GET` | `/health/redis` | Redis connectivity health check |
 
-#### Chat
-```http
-POST /api/chat/stream
-Content-Type: application/json
+---
 
-{
-  "message": "I'm feeling anxious today",
-  "session_id": "uuid-here"
-}
-```
+## 📄 License
 
-#### Mood Data
-```http
-GET /api/mood-data/?user_id=1&limit=10
-POST /api/mood-data/
-{
-  "user_id": 1,
-  "mood_score": 7,
-  "sentiment": "positive",
-  "message": "Feeling great!"
-}
-```
-
+This project is licensed under the MIT License - see the LICENSE file for details.

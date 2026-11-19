@@ -1,0 +1,69 @@
+# FastAPI Core
+fastapi
+uvicorn[standard]
+pydantic
+pydantic-settings
+email-validator
+
+# Database
+sqlalchemy
+asyncpg
+alembic
+
+# Redis
+redis
+
+# Environment Management
+python-dotenv
+
+# AI Services
+openai
+pinecone
+
+# Utilities
+httpx
+python-multipart
+
+# Authentication & Security Hardening
+python-jose[cryptography]
+bcrypt
+argon2-cffi>=23.1.0
+pwdlib[argon2]>=0.2.0
+slowapi>=0.1.9
+pyotp>=2.9.0
+qrcode[pil]>=7.4.2
+aiosqlite>=0.20.0
+
+
+# LangChain and Embeddings (Python 3.14 compatible)
+langchain-core
+langchain-community
+langchain-openai
+# Note: langchain-pinecone has compatibility issues with Python 3.14
+# Using direct pinecone-client integration instead
+
+# Async file operations
+aiofiles
+
+# Multi-Agent and Orchestration
+google-adk>=2.13.0
+langgraph>=0.2.0
+langgraph-checkpoint>=2.0.0
+
+# Search (free, no API key required)
+duckduckgo-search
+langchain-google-genai
+google-generativeai
+Celery
+
+# Development & Testing
+pytest
+pytest-asyncio
+ruff
+
+# AgentOps & Observability
+arize-phoenix>=4.0.0
+openinference-instrumentation-langchain>=0.1.20
+openinference-instrumentation-fastapi>=0.1.10
+opentelemetry-sdk>=1.25.0
+opentelemetry-exporter-otlp>=1.25.0

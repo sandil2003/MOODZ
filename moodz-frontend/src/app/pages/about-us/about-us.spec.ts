@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 
 import { AboutUs } from './about-us';
 
@@ -8,13 +9,18 @@ describe('AboutUs', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [AboutUs]
+      imports: [AboutUs],
+      providers: [provideRouter([])]
     })
     .compileComponents();
 
     fixture = TestBed.createComponent(AboutUs);
     component = fixture.componentInstance;
     await fixture.whenStable();
+  });
+
+  afterEach(() => {
+    fixture?.destroy();
   });
 
   it('should create', () => {

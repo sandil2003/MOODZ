@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { environment } from '../../../environments/environment';
 
 export interface MoodHistoryEntry {
     id: number;
@@ -34,7 +35,7 @@ export interface MoodStats {
     providedIn: 'root'
 })
 export class MoodDataService {
-    private readonly API_BASE_URL = 'http://localhost:8000';
+    private readonly API_BASE_URL = environment.apiBaseUrl;
 
     async getMoodHistory(
         userId: string,
@@ -46,7 +47,7 @@ export class MoodDataService {
             url += `&days=${days}`;
         }
 
-        const response = await fetch(url);
+        const response = await fetch(url, { credentials: 'include' });
         if (!response.ok) {
             throw new Error(`Failed to fetch mood history: ${response.status}`);
         }
@@ -64,7 +65,7 @@ export class MoodDataService {
             url += `&category=${category}`;
         }
 
-        const response = await fetch(url);
+        const response = await fetch(url, { credentials: 'include' });
         if (!response.ok) {
             throw new Error(`Failed to fetch user facts: ${response.status}`);
         }
@@ -75,7 +76,7 @@ export class MoodDataService {
     async getMoodStats(userId: string, days: number = 30): Promise<MoodStats> {
         const url = `${this.API_BASE_URL}/api/mood-data/mood-stats/${userId}?days=${days}`;
 
-        const response = await fetch(url);
+        const response = await fetch(url, { credentials: 'include' });
         if (!response.ok) {
             throw new Error(`Failed to fetch mood stats: ${response.status}`);
         }

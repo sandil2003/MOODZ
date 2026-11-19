@@ -1,0 +1,213 @@
+diff --git a/moodz-frontend/package.json b/moodz-frontend/package.json
+--- a/moodz-frontend/package.json
++++ b/moodz-frontend/package.json
+@@ -6,7 +6,7 @@
+     "start": "ng serve",
+     "build": "ng build",
+     "watch": "ng build --watch --configuration development",
+-    "test": "ng test"
++    "test": "ng test --watch=false"
+   },
+   "prettier": {
+     "printWidth": 100,
+diff --git a/moodz-frontend/src/app/app.spec.ts b/moodz-frontend/src/app/app.spec.ts
+--- a/moodz-frontend/src/app/app.spec.ts
++++ b/moodz-frontend/src/app/app.spec.ts
+@@ -1,10 +1,12 @@
+ import { TestBed } from '@angular/core/testing';
++import { provideRouter } from '@angular/router';
+ import { App } from './app';
+ 
+ describe('App', () => {
+   beforeEach(async () => {
+     await TestBed.configureTestingModule({
+       imports: [App],
++      providers: [provideRouter([])]
+     }).compileComponents();
+   });
+ 
+@@ -14,10 +16,18 @@
+     expect(app).toBeTruthy();
+   });
+ 
+-  it('should render title', async () => {
++  it('should have the title signal initialized to moodz-frontend', () => {
++    const fixture = TestBed.createComponent(App);
++    const app = fixture.componentInstance;
++    expect((app as any).title()).toBe('moodz-frontend');
++  });
++
++  it('should render router-outlet and navbar', async () => {
+     const fixture = TestBed.createComponent(App);
++    fixture.detectChanges();
+     await fixture.whenStable();
+     const compiled = fixture.nativeElement as HTMLElement;
+-    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, moodz-frontend');
++    expect(compiled.querySelector('router-outlet')).toBeTruthy();
++    expect(compiled.querySelector('app-navbar')).toBeTruthy();
+   });
+ });
+diff --git a/moodz-frontend/src/app/pages/about-us/about-us.spec.ts b/moodz-frontend/src/app/pages/about-us/about-us.spec.ts
+--- a/moodz-frontend/src/app/pages/about-us/about-us.spec.ts
++++ b/moodz-frontend/src/app/pages/about-us/about-us.spec.ts
+@@ -1,4 +1,5 @@
+ import { ComponentFixture, TestBed } from '@angular/core/testing';
++import { provideRouter } from '@angular/router';
+ 
+ import { AboutUs } from './about-us';
+ 
+@@ -8,13 +9,18 @@
+ 
+   beforeEach(async () => {
+     await TestBed.configureTestingModule({
+-      imports: [AboutUs]
++      imports: [AboutUs],
++      providers: [provideRouter([])]
+     })
+     .compileComponents();
+ 
+     fixture = TestBed.createComponent(AboutUs);
+     component = fixture.componentInstance;
+     await fixture.whenStable();
++  });
++
++  afterEach(() => {
++    fixture?.destroy();
+   });
+ 
+   it('should create', () => {
+diff --git a/moodz-frontend/src/app/pages/home/home.spec.ts b/moodz-frontend/src/app/pages/home/home.spec.ts
+--- a/moodz-frontend/src/app/pages/home/home.spec.ts
++++ b/moodz-frontend/src/app/pages/home/home.spec.ts
+@@ -1,4 +1,5 @@
+ import { ComponentFixture, TestBed } from '@angular/core/testing';
++import { provideRouter } from '@angular/router';
+ 
+ import { Home } from './home';
+ 
+@@ -8,7 +9,8 @@
+ 
+   beforeEach(async () => {
+     await TestBed.configureTestingModule({
+-      imports: [Home]
++      imports: [Home],
++      providers: [provideRouter([])]
+     })
+     .compileComponents();
+ 
+diff --git a/moodz-frontend/src/app/pages/mood-agent/mood-agent.spec.ts b/moodz-frontend/src/app/pages/mood-agent/mood-agent.spec.ts
+--- a/moodz-frontend/src/app/pages/mood-agent/mood-agent.spec.ts
++++ b/moodz-frontend/src/app/pages/mood-agent/mood-agent.spec.ts
+@@ -1,4 +1,5 @@
+ import { ComponentFixture, TestBed } from '@angular/core/testing';
++import { provideRouter } from '@angular/router';
+ 
+ import { MoodAgent } from './mood-agent';
+ 
+@@ -8,7 +9,8 @@
+ 
+   beforeEach(async () => {
+     await TestBed.configureTestingModule({
+-      imports: [MoodAgent]
++      imports: [MoodAgent],
++      providers: [provideRouter([])]
+     })
+     .compileComponents();
+ 
+diff --git a/moodz-frontend/src/app/pages/mood-dashboard/mood-dashboard.spec.ts b/moodz-frontend/src/app/pages/mood-dashboard/mood-dashboard.spec.ts
+--- a/moodz-frontend/src/app/pages/mood-dashboard/mood-dashboard.spec.ts
++++ b/moodz-frontend/src/app/pages/mood-dashboard/mood-dashboard.spec.ts
+@@ -1,4 +1,5 @@
+ import { ComponentFixture, TestBed } from '@angular/core/testing';
++import { provideRouter } from '@angular/router';
+ 
+ import { MoodDashboard } from './mood-dashboard';
+ 
+@@ -8,13 +9,18 @@
+ 
+   beforeEach(async () => {
+     await TestBed.configureTestingModule({
+-      imports: [MoodDashboard]
++      imports: [MoodDashboard],
++      providers: [provideRouter([])]
+     })
+     .compileComponents();
+ 
+     fixture = TestBed.createComponent(MoodDashboard);
+     component = fixture.componentInstance;
+     await fixture.whenStable();
++  });
++
++  afterEach(() => {
++    fixture?.destroy();
+   });
+ 
+   it('should create', () => {
+diff --git a/moodz-frontend/src/app/pages/new-home/new-home.spec.ts b/moodz-frontend/src/app/pages/new-home/new-home.spec.ts
+--- a/moodz-frontend/src/app/pages/new-home/new-home.spec.ts
++++ b/moodz-frontend/src/app/pages/new-home/new-home.spec.ts
+@@ -1,18 +1,20 @@
+ import { ComponentFixture, TestBed } from '@angular/core/testing';
++import { provideRouter } from '@angular/router';
+ 
+-import { NewHome } from './new-home';
++import { NewHomeComponent } from './new-home';
+ 
+-describe('NewHome', () => {
+-  let component: NewHome;
+-  let fixture: ComponentFixture<NewHome>;
++describe('NewHomeComponent', () => {
++  let component: NewHomeComponent;
++  let fixture: ComponentFixture<NewHomeComponent>;
+ 
+   beforeEach(async () => {
+     await TestBed.configureTestingModule({
+-      imports: [NewHome]
++      imports: [NewHomeComponent],
++      providers: [provideRouter([])]
+     })
+     .compileComponents();
+ 
+-    fixture = TestBed.createComponent(NewHome);
++    fixture = TestBed.createComponent(NewHomeComponent);
+     component = fixture.componentInstance;
+     await fixture.whenStable();
+   });
+diff --git a/moodz-frontend/src/app/shared/footer/footer.spec.ts b/moodz-frontend/src/app/shared/footer/footer.spec.ts
+--- a/moodz-frontend/src/app/shared/footer/footer.spec.ts
++++ b/moodz-frontend/src/app/shared/footer/footer.spec.ts
+@@ -1,4 +1,5 @@
+ import { ComponentFixture, TestBed } from '@angular/core/testing';
++import { provideRouter } from '@angular/router';
+ 
+ import { Footer } from './footer';
+ 
+@@ -8,7 +9,8 @@
+ 
+   beforeEach(async () => {
+     await TestBed.configureTestingModule({
+-      imports: [Footer]
++      imports: [Footer],
++      providers: [provideRouter([])]
+     })
+     .compileComponents();
+ 
+diff --git a/moodz-frontend/src/app/shared/navbar/navbar.spec.ts b/moodz-frontend/src/app/shared/navbar/navbar.spec.ts
+--- a/moodz-frontend/src/app/shared/navbar/navbar.spec.ts
++++ b/moodz-frontend/src/app/shared/navbar/navbar.spec.ts
+@@ -1,4 +1,5 @@
+ import { ComponentFixture, TestBed } from '@angular/core/testing';
++import { provideRouter } from '@angular/router';
+ 
+ import { Navbar } from './navbar';
+ 
+@@ -8,7 +9,8 @@
+ 
+   beforeEach(async () => {
+     await TestBed.configureTestingModule({
+-      imports: [Navbar]
++      imports: [Navbar],
++      providers: [provideRouter([])]
+     })
+     .compileComponents();
+ 

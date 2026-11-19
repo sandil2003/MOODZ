@@ -1,0 +1,122 @@
+"""Application configuration module using Pydantic Settings.
+
+Loads settings from environment variables and .env files with sensible defaults.
+"""
+
+from typing import List, Optional, Any
+from urllib.parse import quote_plus
+from pydantic import field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    """Application settings loaded from environment variables."""
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore"
+    )
+
+    # Application Settings
+    app_name: str = "MOOD AI Agent"
+    debug: bool = False
+    api_version: str = "v1"
+
+    @field_validator("debug", mode="before")
+    @classmethod
+    def parse_debug_flag(cls, v: Any) -> bool:
+        """Parse boolean debug flag safely from strings like 'release', 'prod', or booleans."""
+        if isinstance(v, bool):
+            return v
+        if isinstance(v, str):
+            val = v.strip().lower()
+            if val in {"release", "prod", "production", "false", "0", "no", "off"}:
+                return False
+            if val in {"debug", "dev", "development", "true", "1", "yes", "on"}:
+                return True
+        return bool(v)
+
+    # Database Configuration
+    postgres_user: str = "moodz_user"
+    postgres_password: str = "moodz_password"
+    postgres_db: str = "moodz_db"
+    postgres_host: str = "localhost"
+    postgres_port: int = 5432
+    postgres_ssl: bool = False
+
+    @property
+    def database_url(self) -> str:
+        """Construct async PostgreSQL database URL (auto-enables SSL for Azure PostgreSQL)."""
+        user = quote_plus(self.postgres_user)
+        password = quote_plus(self.postgres_password)
+        url = (
+            f"postgresql+asyncpg://{user}:{password}"
+            f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
+        )
+        if self.postgres_ssl or self.postgres_host.endswith(".postgres.database.azure.com"):
+            url += "?ssl=require"
+        return url
+
+    # Redis Configuration
+    redis_host: str = "localhost"
+    redis_port: int = 6379
+    redis_db: int = 0
+    redis_password: Optional[str] = None
+    redis_ssl: bool = False
+
+    @property
+    def redis_url(self) -> str:
+        """Construct Redis URL with optional password and TLS support."""
+        scheme = "rediss" if self.redis_ssl else "redis"
+        auth = f":{quote_plus(self.redis_password)}@" if self.redis_password else ""
+        return f"{scheme}://{auth}{self.redis_host}:{self.redis_port}/{self.redis_db}"
+
+    # AI Provider Keys & Models
+    openai_api_key: Optional[str] = None
+    openai_model: str = "gpt-4-turbo-preview"
+
+    gemini_api_key: Optional[str] = None
+    gemini_model: str = "gemini-2.5-flash"
+
+    # Custom Model Configuration
+    use_custom_model: bool = False
+    custom_model_type: str = "custom"  # "custom" for /generate endpoint, "openai" for OpenAI-compatible
+    custom_model_url: str = "https://unharping-unhumidified-chara.ngrok-free.dev"
+    custom_model_temperature: float = 0.7
+    custom_model_max_tokens: int = 2048
+    custom_model_timeout: int = 60
+
+    # Pinecone Configuration
+    pinecone_api_key: Optional[str] = None
+    pinecone_environment: Optional[str] = None
+    pinecone_index_name: str = "moodz-embeddings"
+
+    # CORS Settings
+    allowed_origins: str = "http://localhost:3000,http://localhost:4200,http://localhost:8000"
+
+    @property
+    def cors_origins(self) -> List[str]:
+        """Convert comma-separated origins to list."""
+        return [origin.strip() for origin in self.allowed_origins.split(",") if origin.strip()]
+
+    # Session Management
+    session_ttl_seconds: int = 3600  # 1 hour default
+
+    # Security & Authentication Hardening
+    secret_key: str = "your-secret-key-change-in-production"
+    algorithm: str = "HS256"
+    access_token_expire_minutes: int = 15  # 15 minutes short-lived access tokens
+    refresh_token_expire_days: int = 7     # 7 days revocable refresh tokens
+    cookie_secure: bool = False            # True in production HTTPS
+    cookie_samesite: str = "lax"           # CSRF defense
+    cookie_domain: Optional[str] = None
+    max_failed_login_attempts: int = 5     # Brute-force threshold
+    lockout_duration_minutes: int = 15     # Account lockout duration
+    session_inactivity_timeout_minutes: int = 30  # 30-min idle timeout
+    hibp_check_enabled: bool = True        # Breached password check
+
+
+# Global settings singleton
+settings = Settings()
